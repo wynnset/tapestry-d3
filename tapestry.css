@@ -18,11 +18,6 @@
     fill: #11a6d8;
 }
 
-.node {
-    position: relative;
-    fill: red;
-}
-
 .title {
     font-family: Helvetica Neue;
     font-size: 20px;
@@ -32,6 +27,10 @@
 .imageOverlay {
     opacity: 0.5;
     transition: 0.2s all;
+}
+
+.node .expandGrandchildren {
+    fill: #DDD;
 }
 
 .node:hover .expandGrandchildren {

@@ -10,7 +10,11 @@ const
     ROOT_RADIUS_DIFF = 50,
     GRANDCHILD_RADIUS_DIFF = -100,
     NODE_IMAGE_HEIGHT = 330,
-    NODE_IMAGE_WIDTH = 700;
+    NODE_IMAGE_WIDTH = 700,
+    TRANSITION_DURATION = 800,
+    COLOR_STROKE = "#072d42",
+    COLOR_GRANDCHILD = "#CCC",
+    COLOR_LINK = "#999";
 
 const 
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
@@ -222,7 +226,6 @@ var links = createLinks();
 var nodes = createNodes();
 
 filterLinks();
-filterNodes();
 
 buildNodeContents();
 
@@ -268,7 +271,6 @@ function resizeNodes(id) {
 
     setNodeTypes(id);
     setLinkTypes(id);
-    filterNodes();
     filterLinks();
 
     rebuildLinks();
@@ -340,8 +342,8 @@ function createLinks() {
                   .enter()
                     .append("line")
                     .attr("stroke", function (d) {
-                        if (d.type === "grandchild") return "#DDD";
-                        else return "#999";
+                        if (d.type === "grandchild") return COLOR_GRANDCHILD;
+                        else return COLOR_LINK;
                     })
                     .attr("stroke-width", LINK_THICKNESS);
 }
@@ -358,9 +360,9 @@ function createNodes() {
                     });
 }
 
-/* Hide links that are drawn to nodes that won't be shown */
+// TODO: Get rid of this function (use buildNodeContents and rebuildNodeContents instead)
 function filterLinks() {
-    links.filter(function (d) {
+    var linksToHide = links.filter(function (d) {
         var sourceId, targetId;
         if (typeof d.source === 'number' && typeof d.target === 'number') {
             sourceId = d.source;
@@ -377,9 +379,9 @@ function filterLinks() {
             shouldRender = true;
         }
         return !shouldRender;
-    }).attr("style", "display:none;");
-
-    links.filter(function (d) {
+    });
+    
+    var linksToShow = links.filter(function (d) {
         var sourceId, targetId;
         if (typeof d.source === 'number' && typeof d.target === 'number') {
             sourceId = d.source;
@@ -397,17 +399,25 @@ function filterLinks() {
         }
 
         return shouldRender;
-    }).attr("style", "display:block;");
-}
+    });
 
-/* Hide nodes that have type "" (ie: not a "root", "child", or "grandchild" */
-function filterNodes() {
-    nodes.filter(function (d) {
-        return d.nodeType === ""
-    }).attr("style", "display:none;");
-    nodes.filter(function (d) {
-        return d.nodeType !== ""
-    }).attr("style", "display:block;");
+    linksToShow
+        .style("display", "block");
+
+    linksToHide
+        .transition()
+        .duration(TRANSITION_DURATION)
+        .style("opacity", "0");
+
+    linksToShow
+        .transition()
+        .duration(TRANSITION_DURATION)
+        .style("opacity", "1");
+    
+    setTimeout(function(){
+        linksToHide
+            .style("display", "block");
+    }, TRANSITION_DURATION);
 }
 
 /* Draws the components that make up node */
@@ -432,13 +442,18 @@ function buildNodeContents() {
             return PROGRESS_THICKNESS;
         })
         .attr("stroke", function (d) {
-            if (d.nodeType === "grandchild") return "#DDD";
-            else return "#072d42";
+            if (d.nodeType === "") 
+                return "transparent";
+            else if (d.nodeType === "grandchild") 
+                return COLOR_GRANDCHILD;
+            else return COLOR_STROKE;
         })
         .attr("width", function (d) {
+            if (d.nodeType === "") return 0;
             return getRadius(d) * 2;
         })
         .attr("height", function (d) {
+            if (d.nodeType === "") return 0;
             return getRadius(d) * 2;
         })
         .attr("x", function (d) {
@@ -448,8 +463,7 @@ function buildNodeContents() {
             return - getRadius(d);
         })
         .attr("fill", function (d) {
-            if (d.nodeType === "grandchild") return "#DDD";
-            else return "url('#node-thumb-" + d.id + "')";
+            return "url('#node-thumb-" + d.id + "')";
         });
 
     nodes.append("circle")
@@ -464,8 +478,11 @@ function buildNodeContents() {
             return getRadius(d);
         })
         .attr("fill", function (d) {
-            if (d.nodeType === "grandchild") return "#DDD";
-            else return "#072d42";
+            if (d.nodeType === "") 
+                return "transparent";
+            else if (d.nodeType === "grandchild") 
+                return COLOR_GRANDCHILD;
+            else return COLOR_STROKE;
         });
 
     /* Attach images to be used within each node */
@@ -494,22 +511,6 @@ function buildNodeContents() {
             return d.imageURL;
         });
 
-    /* Add text inside each node */
-    nodes.append("text")
-        .attr("text-anchor", "middle")
-        .attr("fill", "white")
-        .attr("class", "title")
-        .attr("text-anchor", "middle")
-        .attr("data-id", function (d) {
-            return d.id;
-        })
-        .text(function (d) {
-            return d.title;
-        })
-        .attr("style", function (d) {
-            return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
-        });
-
     /* Add path and button */
     buildPathAndButton();
 
@@ -524,13 +525,29 @@ function buildNodeContents() {
 }
 
 function rebuildNodeContents() {
-    
-    /* Draws the circle that defines how large the node is */
+
+    nodes.selectAll(".imageOverlay")
+            .transition()
+            .duration(TRANSITION_DURATION/3)
+            .attr("r", function (d) {
+                return getRadius(d);
+            })
+            .attr("fill", function (d) {
+                if (d.nodeType === "") 
+                    return "transparent";
+                else if (d.nodeType === "grandchild") 
+                    return COLOR_GRANDCHILD;
+                else return COLOR_STROKE;
+            });
+            
     nodes.selectAll(".imageContainer")
             .attr("class", function (d) {
-                if (d.nodeType === "grandchild") return "imageContainer expandGrandchildren";
-                return "imageContainer";
+                if (d.nodeType === "grandchild" || d.nodeType === "") 
+                    return "imageContainer expandGrandchildren";
+                else return "imageContainer";
             })
+            .transition()
+            .duration(TRANSITION_DURATION)
             .attr("rx", function (d) {
                 return getRadius(d);
             })
@@ -538,8 +555,11 @@ function rebuildNodeContents() {
                 return getRadius(d);
             })
             .attr("stroke", function (d) {
-                if (d.nodeType === "grandchild") return "#DDD";
-                else return "#072d42";
+                if (d.nodeType === "") 
+                    return "transparent";
+                else if (d.nodeType === "grandchild") 
+                    return COLOR_GRANDCHILD;
+                else return COLOR_STROKE;
             })
             .attr("width", function (d) {
                 return getRadius(d) * 2;
@@ -554,40 +574,28 @@ function rebuildNodeContents() {
                 return - getRadius(d);
             })
             .attr("fill", function (d) {
-                if (d.nodeType === "grandchild") return "#DDD";
-                else return "url('#node-thumb-" + d.id + "')";
-            });
-
-    nodes.selectAll(".imageOverlay")
-            .attr("r", function (d) {
-                return getRadius(d);
-            })
-            .attr("fill", function (d) {
-                if (d.nodeType === "grandchild") return "#DDD";
-                else return "#072d42";
+                return "url('#node-thumb-" + d.id + "')";
             });
     
     /* Attach images to be used within each node */
     nodes.selectAll("defs")
          .selectAll("pattern")
          .selectAll("image")
+            .transition()
+            .duration(TRANSITION_DURATION)
             .attr("height", function (d) {
                 if (d.nodeType === "root") {
                     return NODE_IMAGE_HEIGHT + ROOT_RADIUS_DIFF;
                 } else return NODE_IMAGE_HEIGHT;
             });
 
-    /* Add text inside each node */
-    nodes.selectAll("text")
-            .attr("style", function (d) {
-                return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
-            });
-
-    // Remove elements for rebuilding them
+    // Remove elements and add them back in
+    nodes.selectAll("text").remove();
     nodes.selectAll(".mediaButton").remove();
     nodes.selectAll("path").remove();
-
-    buildPathAndButton();
+    setTimeout(function(){
+        buildPathAndButton();
+    }, TRANSITION_DURATION);
     
 }
 
@@ -602,8 +610,30 @@ function buildPathAndButton() {
     /* Update the progress pies */
     updateViewedProgress();
 
-    /* Add media button for allowing playback */
-    nodes.append("svg:foreignObject")
+    nodes
+        .filter(function (d) {
+            return d.nodeType !== ""
+        })
+        .append("text")
+        .attr("text-anchor", "middle")
+        .attr("fill", "white")
+        .attr("class", "title")
+        .attr("text-anchor", "middle")
+        .attr("data-id", function (d) {
+            return d.id;
+        })
+        .text(function (d) {
+            return d.title;
+        })
+        .attr("style", function (d) {
+            return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
+        });
+
+    nodes
+        .filter(function (d) {
+            return d.nodeType !== ""
+        })
+        .append("svg:foreignObject")
         .html(function (d) {
             var mediaURL = d.typeData.mediaURL;
             return '<i id="mediaButtonIcon' + d.id + '" class="fas fa-play-circle" onclick="setupLightbox(\'' + d.id + '\',\'' + d.mediaFormat + '\',\'' + d.imageURL + '\',\'' + mediaURL + '\'); "><\/i>';
@@ -629,14 +659,18 @@ function buildPathAndButton() {
 function rebuildLinks() {
     links = d3.selectAll("line")
         .attr("stroke", function (d) {
-            if (d.type === "grandchild") return "#DDD";
-            else return "#999";
+            if (d.type === "grandchild") return COLOR_GRANDCHILD;
+            else return COLOR_LINK;
         })
         .attr("stroke-width", LINK_THICKNESS);
 }
 
 function updateViewedProgress() {
-    path = nodes.selectAll("path")
+    path = nodes
+        .filter(function (d) {
+            return d.nodeType !== ""
+        })
+        .selectAll("path")
         .data(function (d, i) {
             var data = d.typeData.progress;
             data.forEach(function (e) {
@@ -651,11 +685,13 @@ function updateViewedProgress() {
         .append("path")
         .attr("fill", function (d, i) {
             if (d.data.group !== "viewed") return "transparent";
-            if (d.data.extra.nodeType === "grandchild") return "#cad7dc";
+            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "") 
+                return "#cad7dc";
             else return "#11a6d8";
         })
         .attr("class", function (d) {
-            if (d.data.extra.nodeType === "grandchild") return "expandGrandchildren";
+            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "") 
+                return "expandGrandchildren";
         })
         .attr("d", function (d) {
             return arcGenerator(adjustProgressBarRadii(d));
@@ -902,7 +938,9 @@ function getGrandchildren(children) {
 
 function getRadius(d) {
     var nodeDiff;
-    if (d.nodeType === "root") {
+    if (d.nodeType === "") {
+        return 0;
+    } else if (d.nodeType === "root") {
         nodeDiff = ROOT_RADIUS_DIFF;
     } else if (d.nodeType === "grandchild") {
         nodeDiff = GRANDCHILD_RADIUS_DIFF;
