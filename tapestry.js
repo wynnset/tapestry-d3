@@ -1,8 +1,10 @@
-/**********************
- * GLOBAL CONSTANTS
- **********************/
+(function(){
 
-const 
+/****************************************************
+ * CONSTANTS AND GLOBAL VARIABLES
+ ****************************************************/
+
+const // declared
     BASE_URL = "https://beta.tapestry-tool.com/wp-content/uploads/2018/09/", //http://127.0.0.1:8887
     PROGRESS_THICKNESS = 20,
     LINK_THICKNESS = 10,
@@ -13,31 +15,30 @@ const
     NODE_IMAGE_WIDTH = 700,
     TRANSITION_DURATION = 800,
     COLOR_STROKE = "#072d42",
-    COLOR_GRANDCHILD = "#CCC",
-    COLOR_LINK = "#999";
+    COLOR_GRANDCHILD = "#999",
+    COLOR_LINK = "#666";
 
-const 
+const // calculated
+    BROWSER_WIDTH = Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
+    BROWSER_HEIGHT = Math.max(document.documentElement.clientHeight, window.innerHeight || 0),
+    ASPECT_RATIO = BROWSER_WIDTH / BROWSER_HEIGHT,
+    SVG_SCALE = (BROWSER_WIDTH < 800 || BROWSER_HEIGHT < 800) ? 6 : 4,
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
     INNER_RADIUS = NORMAL_RADIUS - (PROGRESS_THICKNESS / 2),
     OUTER_RADIUS = NORMAL_RADIUS + (PROGRESS_THICKNESS / 2);
 
-/**********************
- * GLOBAL VARIABLES
- **********************/
-
-var 
-    root,
+var root, svg, links, nodes,            // Basics
     path, pieGenerator, arcGenerator,   // Donut
     linkForce, collideForce, force,     // Force
-    browserWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
-    browserHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+    tapestryWidth, tapestryHeight;
 
-var aspectRatio = browserWidth / browserHeight,
-    svgScale = (browserWidth < 800 || browserHeight < 800) ? 6 : 4;
+/****************************************************
+ * INITIALIZATION
+ ****************************************************/
 
-/**********************
- * GET THE DATA READY
- **********************/
+//---------------------------------------------------
+// 1. GET THE DATA READY
+//---------------------------------------------------
 
 // TODO: Import data from an external json file instead
 var dataset = {
@@ -204,7 +205,7 @@ var dataset = {
         {"source": 1, "target": 5, "value": 1, "type": ""},
         {"source": 5, "target": 6, "value": 2, "type": ""},
         {"source": 5, "target": 7, "value": 2, "type": ""},
-        {"source": 7, "target": 8, "value": 2, "type": ""}
+        {"source": 5, "target": 8, "value": 2, "type": ""}
     ]
 }
 
@@ -213,31 +214,31 @@ root = dataset.rootId,
 setNodeTypes(dataset.rootId);
 setLinkTypes(dataset.rootId);
     
-/**********************
- * CREATE THE SVG OBJECTS
- **********************/
+//---------------------------------------------------
+// 2. CREATE THE SVG OBJECTS
+//---------------------------------------------------
 
 // this is needed to calculate the bounded coordinates
-browserWidth = Math.sqrt(dataset.nodes.length) * 100 * svgScale * aspectRatio;
-browserHeight = Math.sqrt(dataset.nodes.length) * 100 * svgScale;
+tapestryWidth = Math.sqrt(dataset.nodes.length) * 100 * SVG_SCALE * ASPECT_RATIO;
+tapestryHeight = Math.sqrt(dataset.nodes.length) * 100 * SVG_SCALE;
 
-var svg = createSvgContainer("tapestry");
-var links = createLinks();
-var nodes = createNodes();
+svg = createSvgContainer("tapestry");
+links = createLinks();
+nodes = createNodes();
 
 filterLinks();
 
 buildNodeContents();
 
-/**********************
- * START THE FORCED GRAPH
- **********************/
+//---------------------------------------------------
+// 3. START THE FORCED GRAPH
+//---------------------------------------------------
 
 startForce();
 
-/**********************
+/****************************************************
  * D3 RELATED FUNCTIONS
- **********************/
+ ****************************************************/
 
 /* Define forces that will determine the layout of the graph */
 function startForce() {
@@ -255,7 +256,7 @@ function startForce() {
     force = d3.forceSimulation()
         .force("link", linkForce)
         .force('collide', collideForce)
-        .force('center', d3.forceCenter(browserWidth / 2, browserHeight / 2));
+        .force('center', d3.forceCenter(tapestryWidth / 2, tapestryHeight / 2));
 
     force
         .nodes(dataset.nodes)
@@ -283,33 +284,33 @@ function resizeNodes(id) {
 function ticked() {
     links
         .attr("x1", function (d) {
-            return getBoundedCoord(d.source.x, browserWidth);
+            return getBoundedCoord(d.source.x, tapestryWidth);
         })
         .attr("y1", function (d) {
-            return getBoundedCoord(d.source.y, browserHeight);
+            return getBoundedCoord(d.source.y, tapestryHeight);
         })
         .attr("x2", function (d) {
-            return getBoundedCoord(d.target.x, browserWidth);
+            return getBoundedCoord(d.target.x, tapestryWidth);
         })
         .attr("y2", function (d) {
-            return getBoundedCoord(d.target.y, browserHeight);
+            return getBoundedCoord(d.target.y, tapestryHeight);
         });
     nodes
         .attr("cx", function (d) {
-            return getBoundedCoord(d.x, browserWidth);
+            return getBoundedCoord(d.x, tapestryWidth);
         })
         .attr("cy", function (d) {
-            return getBoundedCoord(d.y, browserHeight);
+            return getBoundedCoord(d.y, tapestryHeight);
         })
         .attr("transform", function (d) {
-            return "translate(" + getBoundedCoord(d.x, browserWidth) + "," + getBoundedCoord(d.y, browserHeight) + ")";
+            return "translate(" + getBoundedCoord(d.x, tapestryWidth) + "," + getBoundedCoord(d.y, tapestryHeight) + ")";
         });
 }
 
 function dragstarted(d) {
     if (!d3.event.active) force.alphaTarget(0.2).restart();
-    d.fx = getBoundedCoord(d.x, browserWidth);
-    d.fy = getBoundedCoord(d.y, browserHeight);
+    d.fx = getBoundedCoord(d.x, tapestryWidth);
+    d.fy = getBoundedCoord(d.y, tapestryHeight);
 }
 
 function dragged(d) {
@@ -327,7 +328,7 @@ function dragended(d) {
 function createSvgContainer(containerId) {
     return d3.select("#"+containerId)
                 .append("svg:svg")
-                .attr("viewBox", "0 0 " + browserWidth + " " + browserHeight)
+                .attr("viewBox", "0 0 " + tapestryWidth + " " + tapestryHeight)
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g")
                 .attr("transform", "translate(-20, 0)");
@@ -636,7 +637,7 @@ function buildPathAndButton() {
         .append("svg:foreignObject")
         .html(function (d) {
             var mediaURL = d.typeData.mediaURL;
-            return '<i id="mediaButtonIcon' + d.id + '" class="fas fa-play-circle" onclick="setupLightbox(\'' + d.id + '\',\'' + d.mediaFormat + '\',\'' + d.imageURL + '\',\'' + mediaURL + '\'); "><\/i>';
+            return '<i id="mediaButtonIcon' + d.id + '" class="fas fa-play-circle mediaButtonIcon" data-id="' + d.id + '" data-format="' + d.mediaFormat + '" data-thumb="' + d.imageURL + '" data-url="' + mediaURL + '"><\/i>';
         })
         .attr("id", function (d) {
             return "mediaButton" + d.id;
@@ -655,6 +656,12 @@ function buildPathAndButton() {
         })
         .attr("class", "mediaButton");
 }
+
+// TODO: Use vanilla JS instead of jQuery
+$('.mediaButtonIcon').click(function(){
+    var thisBtn = $(this)[0];
+    setupLightbox(thisBtn.dataset.id, thisBtn.dataset.mediaFormat, thisBtn.dataset.thumb, thisBtn.dataset.url);
+});
 
 function rebuildLinks() {
     links = d3.selectAll("line")
@@ -720,30 +727,29 @@ function adjustProgressBarRadii(d) {
     return d;
 }
 
-/**********************
+/****************************************************
  * MEDIA RELATED FUNCTIONS
- **********************/
+ ****************************************************/
 
 function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
-    var mediaId = "#" + mediaFormat;
-    //Add in function for the close button
-    // $('#close-button').attr("onclick", "hideVideo('video', '" + mediaFormat +"', '" + id + "')");
+
+    // TODO: Add in close button and add a listener for it here
     $('#video').attr("onclick", "closeLightbox(" + id + ")");
 
     var video = setupVideo(id, mediaFormat, videoLink);
 
     //For revealing the lightbox and video
-    // $(mediaId).css("opacity", 0);
     $('.lightbox').css('display', 'block');
     setTimeout(function () {
         //$('.lightbox').css('opacity', 1);
     }, 10);
 
     var spPos = $('.imageOverlay[data-id=' + id + ']').position();
-    var spBox = $('.imageOverlay[data-id=' + id + ']')[0].getBBox();
 
-    var topPos = (browserHeight - 540) / 2;
-    var leftPos = (browserWidth - 960) / 2;
+    // TODO: make the lightbox size responsive and do not hardcode the values
+
+    var topPos = (BROWSER_HEIGHT - 540) / 2;
+    var leftPos = (BROWSER_WIDTH - 960) / 2;
 
     // Get the width & height of the node
     var spotlightWidth = NORMAL_RADIUS;
@@ -758,8 +764,6 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
         // backgroundImage: "url('" + thumbUrl + "')",
         top: spPos.top,
         left: spPos.left,
-        //    width: spBox.width - PROGRESS_THICKNESS,
-        //    height: spBox.height - PROGRESS_THICKNESS
         width: spotlightWidth - PROGRESS_THICKNESS,
         height: spotlightHeight - PROGRESS_THICKNESS
     }).appendTo('body');
@@ -772,14 +776,12 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
         //Set the final position, size, and shape for the node transition
         var imageWidth = video.width();
         var imageHeight = video.height();
-        var lightboxTopOffset = video.offset().top;
-        var lightboxLeftOffset = video.offset().left;
         setTimeout(function () {
             $('#spotlight-content').css({
                 width: imageWidth,
                 height: imageHeight,
-                top: topPos, // lightboxTopOffset,
-                left: leftPos, //lightboxLeftOffset,
+                top: topPos,
+                left: leftPos,
                 "box-shadow": "0 0 800px #000",
                 "border-radius": "0%",
                 "background-position": "0px 0px"
@@ -790,8 +792,6 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
             }, 2000);
         }, 100);
     }, false);
-
-    //removeSpotlightContent();
 }
 
 function setupVideo(id, mediaFormat, videoLink) {
@@ -840,53 +840,9 @@ function setupVideo(id, mediaFormat, videoLink) {
     return videoEl;
 }
 
-// Removes the photo that overlays the video before playing
-function removeSpotlightContent() {
-    setTimeout(function () {
-        $('#spotlight-content').css('opacity', 0);
-    }, 2500);
-
-    //Remove the display after spotlight-content has faded completely to opacity = 0
-    setTimeout(function () {
-        $('#spotlight-content').css('display', 'none');
-    }, 4500);
-}
-
-function closeLightbox(id) {
-    // Return to play button
-    document.getElementById("mediaButtonIcon" + id).className = "fas fa-play-circle";
-    $('#spotlight-content').css('opacity', 0);
-    $('.lightbox').show().css('opacity', 0);
-    setTimeout(function () {
-        $('#spotlight-content').remove();
-        $('#video').hide();
-        //Remove the video player
-        //TODO: Make interchangeable with other forms of media
-        $("#mp4").remove();
-    }, 1000);
-}
-
-// Hiding the lightbox and removing video content from video-container
-function hideVideo(div, video_id, nodeId) {
-    var video = document.getElementById("mp4");
-    if (video.played.length > 0) {
-        var playedValue = video.played.end(0);
-        var videoDuration = video.duration;
-    }
-    $('.lightbox').show().css('opacity', 0);
-    setTimeout(function () {
-        $('#spotlight-content').remove();
-        document.getElementById(div).style.display = 'none';
-
-        //Remove the video player
-        //TODO: Make interchangeable with other forms of media
-        $("#mp4").remove();
-    }, 1000);
-}
-
-/**********************
+/****************************************************
  * HELPER FUNCTIONS
- **********************/
+ ****************************************************/
 
 // Finds the node index with node ID
 function findNodeIndex(id) {
@@ -1007,4 +963,20 @@ function setLinkTypes(rootId) {
             link.type = "";
         }
     }
+}
+
+})();
+
+function closeLightbox(id) {
+    // Return to play button
+    document.getElementById("mediaButtonIcon" + id).className = "fas fa-play-circle";
+    $('#spotlight-content').css('opacity', 0);
+    $('.lightbox').show().css('opacity', 0);
+    setTimeout(function () {
+        $('#spotlight-content').remove();
+        $('#video').hide();
+        //Remove the video player
+        //TODO: Make interchangeable with other forms of media
+        $("#mp4").remove();
+    }, 1000);
 }

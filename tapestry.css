@@ -30,7 +30,7 @@
 }
 
 .node .expandGrandchildren {
-    fill: #DDD;
+    fill: #999;
 }
 
 .node:hover .expandGrandchildren {
