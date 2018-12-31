@@ -195,7 +195,7 @@ var dataset = {
                     {"group": "viewed", "value": 0.5},
                     {"group": "unviewed", "value": 0.5}
                 ],
-                "mediaURL": "https://www.youtube.com/embed/ZipzqCphi8s"
+                "mediaURL": "https://www.youtube.com/embed/ZipzqCphi8s?autoplay=1"
             }
         }
     ],
@@ -752,11 +752,6 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
 
     var spPos = $('.imageOverlay[data-id=' + id + ']').position();
 
-    // TODO: make the lightbox size responsive and do not hardcode the values
-
-    var topPos = (BROWSER_HEIGHT - 540) / 2;
-    var leftPos = (BROWSER_WIDTH - 960) / 2;
-
     // Get the width & height of the node
     var spotlightWidth = NORMAL_RADIUS;
     var spotlightHeight = NORMAL_RADIUS
@@ -784,32 +779,36 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
     } else if (mediaFormat === "youtube") {
         loadEventName = "onloadeddata";
     }
-    video[0].addEventListener(loadEventName, function () {
-        console.log("Both video types should show this!");
-        //Video is loaded and can be played
-        //Set the final position, size, and shape for the node transition
-        var imageWidth = video.width();
-        var imageHeight = video.height();
-        setTimeout(function () {
-            $('#spotlight-content').css({
-                width: imageWidth,
-                height: imageHeight,
-                top: topPos,
-                left: leftPos,
-                "box-shadow": "0 0 800px #000",
-                "border-radius": "0%",
-                "background-position": "0px 0px"
-            });
-            // auto-play video
+    video[0].addEventListener(loadEventName, expandVideo(video, mediaFormat), false);
+}
+
+function expandVideo(video, mediaFormat) {
+    // TODO: make the lightbox size responsive and do not hardcode the values
+    var topPos = (BROWSER_HEIGHT - 540) / 2;
+    var leftPos = (BROWSER_WIDTH - 960) / 2;
+    
+    //Video is loaded and can be played
+    //Set the final position, size, and shape for the node transition
+    var imageWidth = video.width();
+    var imageHeight = video.height();
+    setTimeout(function () {
+        $('#spotlight-content').css({
+            width: imageWidth,
+            height: imageHeight,
+            top: topPos,
+            left: leftPos,
+            "box-shadow": "0 0 800px #000",
+            "border-radius": "0%",
+            "background-position": "0px 0px"
+        });
+
+        // auto-play video for mp4 only; Youtube uses a tag attached to the end of video link ("?autoplay=1")
+        if (mediaFormat === "mp4") {
             setTimeout(function () {
                 video[0].play();
             }, 2000);
-        }, 100);
-    }, false);
-}
-
-function expandVideo() {
-    console.log("HI");
+        }
+    }, 100);
 }
 
 function setupVideo(id, mediaFormat, videoLink) {
@@ -822,7 +821,7 @@ function setupVideo(id, mediaFormat, videoLink) {
     if (mediaFormat === "mp4") {
         videoEl = $('<video id="' + mediaFormat + '" class="video-player" controls><source id="video-source" src="' + videoLink + '" type="video/mp4"><\/video>');
     } else if (mediaFormat === "youtube") {
-        videoEl = $('<iframe id="' + mediaFormat + '" class="iframe-player" src="' + videoLink + '" frameborder="0" allow="autoplay; encrypted-media" onStateChange="expandVideo()" allowfullscreen><\/iframe>');
+        videoEl = $('<iframe id="' + mediaFormat + '" class="iframe-player" src="' + videoLink + '" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen><\/iframe>');
     }
 
     var index = findNodeIndex(id);
