@@ -60,9 +60,7 @@ var dataset = {
                     {"group": "unviewed", "value": 1}
                 ],
                 "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-MAIN.mp4"
-            },
-            // "x": 0,
-            // "y": 500
+            }
         },
         {
             "id": 2,
@@ -79,9 +77,7 @@ var dataset = {
                     {"group": "unviewed", "value": 0.8}
                 ],
                 "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-SEG-HOMPH-1.mp4"
-            },
-            // "x": -400,
-            // "y": 800
+            }
         },
         {
             "id": 3,
@@ -98,9 +94,7 @@ var dataset = {
                     {"group": "unviewed", "value": 1.00}
                 ],
                 "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-CT-andMinorities-1.mp4"
-            },
-            // "x": 900,
-            // "y": -500
+            }
         },
         {
             "id": 4,
@@ -117,9 +111,7 @@ var dataset = {
                     {"group": "unviewed", "value": 1.00}
                 ],
                 "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-CT-DefiningMinority-1.mp4"
-            },
-            // "x": 200,
-            // "y": 500
+            }
         },
         {
             "id": 5,
@@ -136,9 +128,7 @@ var dataset = {
                     {"group": "unviewed", "value": 1.00}
                 ],
                 "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-CT0-1.mp4"
-            },
-            // "x": 400,
-            // "y": 800
+            }
         },
         {
             "id": 6,
@@ -155,9 +145,7 @@ var dataset = {
                     {"group": "unviewed", "value": 1.00}
                 ],
                 "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-CT-HowItWorks.mp4"
-            },
-            // "x": 0,
-            // "y": 900
+            }
         },
         {
             "id": 7,
@@ -174,9 +162,7 @@ var dataset = {
                     {"group": "unviewed", "value": 1.00}
                 ],
                 "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-CT0-1.mp4"
-            },
-            // "x": 400,
-            // "y": 900
+            }
         },
         {
             "id": 8,
@@ -193,9 +179,24 @@ var dataset = {
                     {"group": "unviewed", "value": 0.5}
                 ],
                 "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-CT0-1.mp4"
-            },
-            // "x": 800,
-            // "y": 900
+            }
+        },
+        {
+            "id": 9,
+            "nodeType": "",
+            "title": "Youtube Test Node",
+            "imageURL": "https://beta.tapestry-tool.com/wp-content/uploads/2018/10/ct0-resized.png",
+            "mediaType": "video",
+            "mediaFormat": "youtube",
+            "typeId": 1,
+            "group": 2,
+            "typeData": {
+                "progress": [
+                    {"group": "viewed", "value": 0.5},
+                    {"group": "unviewed", "value": 0.5}
+                ],
+                "mediaURL": "https://www.youtube.com/embed/ZipzqCphi8s"
+            }
         }
     ],
     "links": [
@@ -205,7 +206,8 @@ var dataset = {
         {"source": 1, "target": 5, "value": 1, "type": ""},
         {"source": 5, "target": 6, "value": 2, "type": ""},
         {"source": 5, "target": 7, "value": 2, "type": ""},
-        {"source": 5, "target": 8, "value": 2, "type": ""}
+        {"source": 5, "target": 8, "value": 2, "type": ""},
+        {"source": 5, "target": 9, "value": 2, "type": ""}
     ]
 }
 
@@ -213,6 +215,10 @@ root = dataset.rootId,
 
 setNodeTypes(dataset.rootId);
 setLinkTypes(dataset.rootId);
+
+function onYouTubeIframeAPIReady() {
+    console.log("YT ready");
+}
     
 //---------------------------------------------------
 // 2. CREATE THE SVG OBJECTS
@@ -659,11 +665,9 @@ function buildPathAndButton() {
     // TODO: Use vanilla JS instead of jQuery
     $('.mediaButtonIcon').click(function(){
         var thisBtn = $(this)[0];
-        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.mediaFormat, thisBtn.dataset.thumb, thisBtn.dataset.url);
+        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.thumb, thisBtn.dataset.url);
     });
 }
-
-
 
 function rebuildLinks() {
     links = d3.selectAll("line")
@@ -772,9 +776,17 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
     $('#spotlight-content').css('opacity', 1);
 
     video.appendTo('#spotlight-content');
+    console.log(video);
 
-    video[0].addEventListener('loadeddata', function () {
-        // Video is loaded and can be played
+    var loadEventName;
+    if (mediaFormat === "mp4") {
+        loadEventName = "loadeddata";
+    } else if (mediaFormat === "youtube") {
+        loadEventName = "onloadeddata";
+    }
+    video[0].addEventListener(loadEventName, function () {
+        console.log("Both video types should show this!");
+        //Video is loaded and can be played
         //Set the final position, size, and shape for the node transition
         var imageWidth = video.width();
         var imageHeight = video.height();
@@ -796,13 +808,23 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
     }, false);
 }
 
+function expandVideo() {
+    console.log("HI");
+}
+
 function setupVideo(id, mediaFormat, videoLink) {
     var buttonElementId = "#mediaButtonIcon" + id;
     // Add the loading gif
     $(buttonElementId).addClass('mediaButtonLoading');
 
     //Add videoplayer TODO: Make tag flexible between iframe and video
-    var videoEl = $('<video id="' + mediaFormat + '" class="video-player" controls><source id="video-source" src="' + videoLink + '" type="video/mp4"><\/source><\/video>');
+    var videoEl;
+    if (mediaFormat === "mp4") {
+        videoEl = $('<video id="' + mediaFormat + '" class="video-player" controls><source id="video-source" src="' + videoLink + '" type="video/mp4"><\/video>');
+    } else if (mediaFormat === "youtube") {
+        videoEl = $('<iframe id="' + mediaFormat + '" class="iframe-player" src="' + videoLink + '" frameborder="0" allow="autoplay; encrypted-media" onStateChange="expandVideo()" allowfullscreen><\/iframe>');
+    }
+
     var index = findNodeIndex(id);
     var viewedAmount;
 
@@ -946,7 +968,6 @@ function setNodeTypes(rootId) {
 
 /* For setting the "type" field of links in dataset */
 function setLinkTypes(rootId) {
-
     root = rootId;
     var children = getChildren(root),
         grandchildren = getGrandchildren(children);

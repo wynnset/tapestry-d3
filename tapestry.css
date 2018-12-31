@@ -167,3 +167,10 @@ text {
     -webkit-backface-visibility: hidden;
 }
 
+.iframe-player {
+    width: 960px;
+    height: 540px;
+    frameborder: 0;
+    -webkit-backface-visibility: hidden;
+}
+
