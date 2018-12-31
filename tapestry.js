@@ -551,7 +551,7 @@ function buildPathAndButton() {
 
     $('.mediaButton > i').click(function(){
         var thisBtn = $(this)[0];
-        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.mediaFormat, thisBtn.dataset.thumb, thisBtn.dataset.url);
+        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.thumb, thisBtn.dataset.url);
     });
 }
 
@@ -665,9 +665,17 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
       });
 
     video.appendTo('#spotlight-content');
+    console.log(video);
 
-    video[0].addEventListener('loadeddata', function () {
-        // Video is loaded and can be played
+    var loadEventName;
+    if (mediaFormat === "mp4") {
+        loadEventName = "loadeddata";
+    } else if (mediaFormat === "youtube") {
+        loadEventName = "onloadeddata";
+    }
+    video[0].addEventListener(loadEventName, function () {
+        console.log("Both video types should show this!");
+        //Video is loaded and can be played
         //Set the final position, size, and shape for the node transition
         var imageWidth = video.width();
         var imageHeight = video.height();
@@ -689,13 +697,23 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
     }, false);
 }
 
+function expandVideo() {
+    console.log("HI");
+}
+
 function setupVideo(id, mediaFormat, videoLink) {
     var buttonElementId = "#mediaButtonIcon" + id;
     // Add the loading gif
     $(buttonElementId).addClass('mediaButtonLoading');
 
     //Add videoplayer TODO: Make tag flexible between iframe and video
-    var videoEl = $('<video id="' + mediaFormat + '" class="video-player" controls><source id="video-source" src="' + videoLink + '" type="video/mp4"><\/source><\/video>');
+    var videoEl;
+    if (mediaFormat === "mp4") {
+        videoEl = $('<video id="' + mediaFormat + '" class="video-player" controls><source id="video-source" src="' + videoLink + '" type="video/mp4"><\/video>');
+    } else if (mediaFormat === "youtube") {
+        videoEl = $('<iframe id="' + mediaFormat + '" class="iframe-player" src="' + videoLink + '" frameborder="0" allow="autoplay; encrypted-media" onStateChange="expandVideo()" allowfullscreen><\/iframe>');
+    }
+
     var index = findNodeIndex(id);
     var viewedAmount;
 
@@ -945,7 +963,6 @@ function setNodeTypes(rootId) {
 
 /* For setting the "type" field of links in dataset */
 function setLinkTypes(rootId) {
-
     root = rootId;
     var children = getChildren(root),
         grandchildren = getGrandchildren(children);
