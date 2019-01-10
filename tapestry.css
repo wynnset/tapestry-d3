@@ -85,11 +85,9 @@ text {
     box-shadow: 0 0 0 2px #666 inset;
 }
 
-@supports (-moz-appearance: inherit) {
-    i {
-        background-color: white;
-        padding-bottom: 1.5px;
-    }
+i {
+    background-color: white;
+    border-radius: 100%;
 }
 
 .lightbox {
