@@ -86,6 +86,11 @@ text {
     box-shadow: 0 0 0 2px #666 inset;
 }
 
+i {
+    background-color: white;
+    border-radius: 100%;
+}
+
 .lightbox {
     background-color: rgba(0, 0, 0, 0.8);
     overflow: scroll;
