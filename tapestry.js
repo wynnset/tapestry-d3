@@ -628,7 +628,8 @@ function buildPathAndButton() {
         })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
-        });
+        })
+        .call(wrapText, NORMAL_RADIUS * 2);
 
     nodes
         .filter(function (d) {
@@ -981,4 +982,35 @@ function closeLightbox(id) {
         //TODO: Make interchangeable with other forms of media
         $("#mp4").remove();
     }, 1000);
+}
+
+// Wrap function specifically for SVG text
+// Found on https://bl.ocks.org/mbostock/7555321
+function wrapText(text, width) {
+    text.each(function () {
+        var text = d3.select(this),
+            words = text.text().split(/\s+/).reverse(),
+            word,
+            line = [],
+            lineNumber = 0,
+            lineHeight = 1.1, // ems
+            dy = 0, //parseFloat(text.attr("dy")),
+            tspan = text.text(null)
+                .append("tspan")
+                .attr("dy", dy + "em");
+
+        while (word = words.pop()) {
+            line.push(word);
+            tspan.text(line.join(" "));
+            if (tspan.node().getComputedTextLength() > width) {
+                line.pop();
+                tspan.text(line.join(" "));
+                line = [word];
+                tspan = text.append("tspan")
+                    .attr("x", 0) //0 because it keeps it in the center
+                    .attr("dy", ++lineNumber * lineHeight + dy + "em")
+                    .text(word);
+            }
+        }
+    });
 }
