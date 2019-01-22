@@ -662,12 +662,13 @@ function buildPathAndButton() {
         })
         .attr("class", "mediaButton");
 
+
     // TODO: Use vanilla JS instead of jQuery
     $('.mediaButtonIcon').click(function(){
         var thisBtn = $(this)[0];
         setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.thumb, thisBtn.dataset.url);
-    });
-}
+        });
+    }
 
 function rebuildLinks() {
     links = d3.selectAll("line")
