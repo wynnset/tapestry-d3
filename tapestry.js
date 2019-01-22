@@ -716,6 +716,11 @@ function setupVideo(id, mediaFormat, videoLink) {
         videoEl = $('<video id="' + mediaFormat + '" class="video-player" controls><source id="video-source" src="' + videoLink + '" type="video/mp4"><\/video>');
     } else if (mediaFormat === "youtube") {
         videoEl = $('<iframe id="' + mediaFormat + '" class="iframe-player" src="' + videoLink + '" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen><\/iframe>');
+    } else if (mediaFormat === "h5p") {
+        videoEl = $('<iframe id="' + mediaFormat + '" src="' + videoLink + '" width="960" height="540" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
+
+        // Script provided by H5P for resizing the media player to fit the container
+        // '<script src="https://h5p.org/sites/all/modules/h5p/library/js/h5p-resizer.js" charset="UTF-8"></script>');
     }
 
     var index = findNodeIndex(id);
