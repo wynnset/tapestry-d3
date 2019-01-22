@@ -203,7 +203,7 @@ var dataset = {
             "nodeType": "",
             "title": "H5P Test Node",
             "imageURL": "https://beta.tapestry-tool.com/wp-content/uploads/2018/10/ct0-resized.png",
-            "mediaType": "video",
+            "mediaType": "interactable_content",
             "mediaFormat": "h5p",
             "typeId": 1,
             "group": 2,
@@ -661,7 +661,13 @@ function buildPathAndButton() {
         .append("svg:foreignObject")
         .html(function (d) {
             var mediaURL = d.typeData.mediaURL;
-            return '<i id="mediaButtonIcon' + d.id + '" class="fas fa-play-circle mediaButtonIcon" data-id="' + d.id + '" data-format="' + d.mediaFormat + '" data-thumb="' + d.imageURL + '" data-url="' + mediaURL + '"><\/i>';
+            var iconName;
+            if (d.mediaType === "video") {
+                iconName = "fa-play-circle";
+            } else {
+                iconName = "fa-exclamation-circle";
+            }
+            return '<i id="mediaButtonIcon' + d.id + '" class="fas ' + iconName + ' mediaButtonIcon" data-id="' + d.id + '" data-format="' + d.mediaFormat + '" data-thumb="' + d.imageURL + '" data-url="' + mediaURL + '"><\/i>';
         })
         .attr("id", function (d) {
             return "mediaButton" + d.id;
@@ -684,7 +690,7 @@ function buildPathAndButton() {
     // TODO: Use vanilla JS instead of jQuery
     $('.mediaButtonIcon').click(function(){
         var thisBtn = $(this)[0];
-        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.thumb, thisBtn.dataset.url);
+        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url);
         });
     }
 
@@ -756,12 +762,12 @@ function adjustProgressBarRadii(d) {
  * MEDIA RELATED FUNCTIONS
  ****************************************************/
 
-function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
+function setupLightbox(id, mediaFormat, mediaType, videoLink) {
 
     // TODO: Add in close button and add a listener for it here
-    $('#video').attr("onclick", "closeLightbox(" + id + ")");
+    $('#video').attr("onclick", "closeLightbox(" + id + "," + mediaType +")");
 
-    var video = setupVideo(id, mediaFormat, videoLink);
+    var video = setupVideo(id, mediaFormat, mediaType, videoLink);
 
     //For revealing the lightbox and video
     $('.lightbox').css('display', 'block');
@@ -781,7 +787,6 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
     //Set initial position for the node transition
     $('<div id="spotlight-content"><\/div>').css({
         position: "absolute",
-        // backgroundImage: "url('" + thumbUrl + "')",
         top: spPos.top,
         left: spPos.left,
         width: spotlightWidth - PROGRESS_THICKNESS,
@@ -830,7 +835,7 @@ function expandVideo(video, mediaFormat) {
     }, 100);
 }
 
-function setupVideo(id, mediaFormat, videoLink) {
+function setupVideo(id, mediaFormat, mediaType, videoLink) {
     var buttonElementId = "#mediaButtonIcon" + id;
     // Add the loading gif
     $(buttonElementId).addClass('mediaButtonLoading');
@@ -861,7 +866,13 @@ function setupVideo(id, mediaFormat, videoLink) {
             $(buttonElementId).attr('class', 'fas fa-pause-circle');
         });
         video.addEventListener('pause', function () {
-            $(buttonElementId).attr('class', 'fas fa-play-circle');
+            var iconName;
+            if (mediaType === "video") {
+                iconName = "fa-play-circle";
+            } else {
+                iconName = "fa-exclamation-circle";
+            }
+            $(buttonElementId).attr('class', 'fas ' + iconName);
         });
 
         // Determining where to start the video
@@ -1013,9 +1024,17 @@ function setLinkTypes(rootId) {
 
 })();
 
-function closeLightbox(id) {
+function closeLightbox(id, mediaType) {
     // Return to play button
-    document.getElementById("mediaButtonIcon" + id).className = "fas fa-play-circle";
+
+    //TODO: Extract this into a helper function instead; Used idn 3 places
+    var iconName;
+    if (mediaType === "video") {
+        iconName = "fa-play-circle";
+    } else {
+        iconName = "fa-exclamation-circle";
+    }
+    document.getElementById("mediaButtonIcon" + id).className = "fas " + iconName;
     $('#spotlight-content').css('opacity', 0);
     $('.lightbox').show().css('opacity', 0);
     setTimeout(function () {
