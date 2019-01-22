@@ -197,6 +197,23 @@ var dataset = {
                 ],
                 "mediaURL": "https://www.youtube.com/embed/ZipzqCphi8s?autoplay=1"
             }
+        },
+        {
+            "id": 10,
+            "nodeType": "",
+            "title": "H5P Test Node",
+            "imageURL": "https://beta.tapestry-tool.com/wp-content/uploads/2018/10/ct0-resized.png",
+            "mediaType": "video",
+            "mediaFormat": "h5p",
+            "typeId": 1,
+            "group": 2,
+            "typeData": {
+                "progress": [
+                    {"group": "viewed", "value": 0.5},
+                    {"group": "unviewed", "value": 0.5}
+                ],
+                "mediaURL": "https://h5p.org/h5p/embed/620"
+            }
         }
     ],
     "links": [
@@ -207,7 +224,8 @@ var dataset = {
         {"source": 5, "target": 6, "value": 2, "type": ""},
         {"source": 5, "target": 7, "value": 2, "type": ""},
         {"source": 5, "target": 8, "value": 2, "type": ""},
-        {"source": 5, "target": 9, "value": 2, "type": ""}
+        {"source": 5, "target": 9, "value": 2, "type": ""},
+        {"source": 5, "target": 10, "value": 2, "type": ""}
     ]
 }
 
@@ -823,6 +841,11 @@ function setupVideo(id, mediaFormat, videoLink) {
         videoEl = $('<video id="' + mediaFormat + '" class="video-player" controls><source id="video-source" src="' + videoLink + '" type="video/mp4"><\/video>');
     } else if (mediaFormat === "youtube") {
         videoEl = $('<iframe id="' + mediaFormat + '" class="iframe-player" src="' + videoLink + '" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen><\/iframe>');
+    } else if (mediaFormat === "h5p") {
+        videoEl = $('<iframe id="' + mediaFormat + '" src="' + videoLink + '" width="960" height="540" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
+
+        // Script provided by H5P for resizing the media player to fit the container
+        // '<script src="https://h5p.org/sites/all/modules/h5p/library/js/h5p-resizer.js" charset="UTF-8"></script>');
     }
 
     var index = findNodeIndex(id);
