@@ -1,9 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta content="text/html; charset=utf-8"
+        http-equiv="Content-Type">
+  <meta content="utf-8"
+        http-equiv="encoding">
   <title>Tapestry V2.0 Beta</title>
-  <script src="./jquery.min.js"></script>
-  <script src="./d3.v5.min.js"></script>
+  <script src="./jquery.min.js"
+        type="application/javascript"></script>
+  <script src="./jscookie.js"
+        type="application/javascript"></script>
+  <script src="./d3.v5.min.js"
+        type="application/javascript"></script>
   <link crossorigin="anonymous"
         href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"
         integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU"
@@ -12,6 +20,10 @@
         rel="stylesheet">
 </head>
 <body translate="no">
+  <header id="header">
+    <h1>Tapestry</h1>
+    <h2>Intercultural Understanding</h2>
+  </header>
   <div id="tapestry"></div>
   <div class="lightbox"
        id="video">
@@ -21,16 +33,17 @@
              id="close-button">Close | ✕</button>
         <div class="video-container"
              id="video-container">
-          <!-- LATER: Support YouTube functionality-->
-          <!--        <iframe id="youtube" width="960" height="540" frameborder="0"
-        allow="autoplay; encrypted-media" allowfullscreen></iframe> -->
-          <!--         <video id="mp4" width="960" height="540" frameborder="0" controls>
+          <!-- LATER: Support YouTube functionality--><!--        <iframe id="youtube" width="960" height="540" frameborder="0"
+        allow="autoplay; encrypted-media" allowfullscreen></iframe> --><!--         <video id="mp4" width="960" height="540" frameborder="0" controls>
                   <source type="video/mp4"></source>
                 </video> -->
         </div>
       </div>
     </div>
   </div>
+  <footer id="footer">
+    Copyright &copy; 2019 <a href="http://tapestry-tool.com/">Tapestry Tool</a>
+  </footer>
   <script src="./tapestry.js"></script>
 </body>
 </html>

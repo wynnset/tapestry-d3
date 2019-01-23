@@ -1,4 +1,55 @@
 
+body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+#header h1 {
+    background: url(./logo.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: top left;
+    min-height: 100px;
+    direction: rtl;
+    text-indent: -9999em;
+    min-width: 150px;
+    float: left;
+    margin: 0;
+}
+
+#header h2 {
+    float: left;
+    color: #6e8795;
+    vertical-align: middle;
+    display: inline-block;
+    padding-left: 33px;
+    padding-top: 33px;
+    margin: 0;
+}
+
+@media (max-width: 670px) {
+  #header h2 {
+      font-size: 1.1em;
+      padding-top: 38px;
+      padding-left: 1em;
+  }
+}
+
+@media (max-width: 400px) {
+  #header h1 {
+      min-width: 120px;
+  }
+  #header h2 {
+    font-size: 0.8em;
+  }
+}
+
+#footer {
+    width: 100%;
+    font-size: 0.5em;
+    color: #ccc;
+    text-align:center;
+}
+
 #spotlight-content {
     position: absolute;
     z-index: 2;
@@ -20,7 +71,6 @@
 }
 
 .title {
-    font-family: Helvetica Neue;
     font-size: 20px;
     text-shadow: 1.5px 1.5px #333333;
 }
@@ -84,6 +134,11 @@ text {
     height: 94%;
     background-size: 98%;
     box-shadow: 0 0 0 2px #666 inset;
+}
+
+i {
+    background-color: white;
+    border-radius: 100%;
 }
 
 .lightbox {
