@@ -997,6 +997,7 @@ function wrapText(text, width) {
             dy = 0, //parseFloat(text.attr("dy")),
             tspan = text.text(null)
                 .append("tspan")
+                .attr("x", 0)
                 .attr("dy", dy + "em");
 
         while (word = words.pop()) {
@@ -1008,7 +1009,9 @@ function wrapText(text, width) {
                 line = [word];
                 tspan = text.append("tspan")
                     .attr("x", 0) //0 because it keeps it in the center
-                    .attr("dy", ++lineNumber * lineHeight + dy + "em")
+                    .attr("y", function() {
+                        return ++lineNumber * lineHeight + dy + "em";
+                    })
                     .text(word);
             }
         }
