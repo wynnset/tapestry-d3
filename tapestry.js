@@ -987,33 +987,45 @@ function closeLightbox(id) {
 // Wrap function specifically for SVG text
 // Found on https://bl.ocks.org/mbostock/7555321
 function wrapText(text, width) {
-    text.each(function () {
+    text.each(function (d) {
         var text = d3.select(this),
             words = text.text().split(/\s+/).reverse(),
             word,
-            line = [],
+            lines = [],
+            currentLine = [],
             lineNumber = 0,
             lineHeight = 1.1, // ems
-            dy = 0, //parseFloat(text.attr("dy")),
             tspan = text.text(null)
                 .append("tspan")
+                .attr("class", "line" + d.id)
                 .attr("x", 0)
-                .attr("dy", dy + "em");
+                .attr("y", 0);
 
         while (word = words.pop()) {
-            line.push(word);
-            tspan.text(line.join(" "));
+            currentLine.push(word);
+            tspan.text(currentLine.join(" "));
             if (tspan.node().getComputedTextLength() > width) {
-                line.pop();
-                tspan.text(line.join(" "));
-                line = [word];
+                currentLine.pop(); // Pop the last word off of the previous line
+                lines.push(currentLine);
+                tspan.text(currentLine.join(" "));
+                currentLine = [word]; // line now becomes a new array
+                lineNumber++;
                 tspan = text.append("tspan")
+                    .attr("class", "line" + d.id)
                     .attr("x", 0) //0 because it keeps it in the center
                     .attr("y", function() {
-                        return ++lineNumber * lineHeight + dy + "em";
+                        return ++lineNumber * lineHeight + "em";
                     })
                     .text(word);
             }
+        }
+
+        var midLineIndex = Math.floor(lineNumber / 4);
+        var tspans = document.getElementsByClassName("line" + d.id);
+        var i = 0;
+        while (tspans[i] !== undefined) {
+            tspans[i].setAttribute("y", (i - midLineIndex) * lineHeight + "em");
+            i++;
         }
     });
 }
