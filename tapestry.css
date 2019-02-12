@@ -1,4 +1,64 @@
 
+body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+#header {
+    position: fixed;
+    top: 1em;
+    left: 1em;
+}
+
+#header h1 {
+    background: url(./logo.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: top left;
+    min-height: 100px;
+    direction: rtl;
+    text-indent: -9999em;
+    min-width: 150px;
+    float: left;
+    margin: 0;
+}
+
+#header h2 {
+    color: #6e8795;
+    vertical-align: middle;
+    display: inline-block;
+    padding-left: 33px;
+    padding-top: 33px;
+    margin: 0;
+}
+
+@media (max-width: 670px) {
+  #header h2 {
+      font-size: 1.1em;
+      padding-top: 38px;
+      padding-left: 1em;
+  }
+}
+
+@media (max-width: 400px) {
+  #header h1 {
+      min-width: 120px;
+  }
+  #header h2 {
+    font-size: 0.8em;
+  }
+}
+
+#tapestry {
+    margin-top: 100px;
+}
+
+#footer {
+    width: 100%;
+    font-size: 0.7em;
+    color: #666;
+    text-align:center;
+}
+
 #spotlight-content {
     position: absolute;
     z-index: 2;
@@ -6,7 +66,7 @@
     background-size: cover;
     border-radius: 100%;
     opacity: 1;
-    transition: all 2s;
+    transition: all 1s;
     transition-timing-function: ease-in;
     overflow: hidden;
 }
@@ -20,7 +80,6 @@
 }
 
 .title {
-    font-family: Helvetica Neue;
     font-size: 20px;
     text-shadow: 1.5px 1.5px #333333;
 }
@@ -56,22 +115,24 @@ text {
 }
 
 .mediaButton {
-    transform: scale(1);
     transition: all 0.25s ease;
     cursor: pointer;
-    background: #fff;
     color: #666666;
-    width: 60px;
-    height: 62px;
     overflow: hidden;
     border-radius: 100%;
-    font-size: 60px;
 }
 
 .mediaButton:hover,
 .mediaButton:active {
-    transform: scale(1.15) translate(0, 20px);
+    transform: scale(1.15) translate(0, 21px);
     color: #11a6d8;
+}
+
+.mediaButton > i:not(.mediaButtonLoading) {
+    font-size: 55px;
+    background: #fff;
+    border: solid 1px #fff;
+    padding: 2px;
 }
 
 .mediaButtonLoading {
@@ -102,7 +163,7 @@ i {
     right: 0;
     left: 0;
     top: 0;
-    transition: all 2s !important;
+    transition: all 1s !important;
 }
 
 .lightbox-container {
@@ -172,3 +233,31 @@ i {
     -webkit-backface-visibility: hidden;
 }
 
+#instructions-wrapper {
+    max-width: 430px;
+    border: solid 1px #CCC;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 8px;
+    text-align:center; 
+    color: #666; 
+    margin: 0 auto 1em; 
+    float: none;
+    font-size: 0.8em;
+}
+
+@media (min-width:800px) {
+    #instructions-wrapper {
+        max-width: 230px;
+        position: absolute;
+        top: 45px;
+        right: 10px;
+    }
+}
+
+@media (min-width:1000px) {
+    #instructions-wrapper {
+        max-width: 430px;
+        right: 45px;
+    }
+}

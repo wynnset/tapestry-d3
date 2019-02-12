@@ -5,14 +5,11 @@
  ****************************************************/
 
 const // declared
-    BASE_URL = "https://beta.tapestry-tool.com/wp-content/uploads/2018/09/", //http://127.0.0.1:8887
     PROGRESS_THICKNESS = 20,
     LINK_THICKNESS = 10,
     NORMAL_RADIUS = 140,
-    ROOT_RADIUS_DIFF = 50,
+    ROOT_RADIUS_DIFF = 70,
     GRANDCHILD_RADIUS_DIFF = -100,
-    NODE_IMAGE_HEIGHT = 330,
-    NODE_IMAGE_WIDTH = 700,
     TRANSITION_DURATION = 800,
     COLOR_STROKE = "#072d42",
     COLOR_GRANDCHILD = "#999",
@@ -20,17 +17,20 @@ const // declared
 
 const // calculated
     BROWSER_WIDTH = Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
-    BROWSER_HEIGHT = Math.max(document.documentElement.clientHeight, window.innerHeight || 0),
+    BROWSER_HEIGHT = Math.max(document.documentElement.clientHeight, window.innerHeight || 0) * 0.8,
     ASPECT_RATIO = BROWSER_WIDTH / BROWSER_HEIGHT,
-    SVG_SCALE = (BROWSER_WIDTH < 800 || BROWSER_HEIGHT < 800) ? 6 : 4,
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
     INNER_RADIUS = NORMAL_RADIUS - (PROGRESS_THICKNESS / 2),
     OUTER_RADIUS = NORMAL_RADIUS + (PROGRESS_THICKNESS / 2);
 
-var root, svg, links, nodes,            // Basics
-    path, pieGenerator, arcGenerator,   // Donut
-    linkForce, collideForce, force,     // Force
-    tapestryWidth, tapestryHeight;
+var dataset, root, svg, svgScale, links, nodes,   // Basics
+    path, pieGenerator, arcGenerator,             // Donut
+    linkForce, collideForce, force,               // Force
+    tapestryWidth, tapestryHeight,
+    saveProgressToCookie = false,
+    NODE_IMAGE_HEIGHT = 350,
+    NODE_IMAGE_WIDTH = 700,
+    ROOT_NODE_IMAGE_HEIGHT_DIFF = 70;
 
 /****************************************************
  * INITIALIZATION
@@ -40,201 +40,87 @@ var root, svg, links, nodes,            // Basics
 // 1. GET THE DATA READY
 //---------------------------------------------------
 
-// TODO: Import data from an external json file instead
-var dataset = {
-    "rootId": 1,
-    "nodes": [
-        {
-            "id": 1,
-            "nodeType": "",
-            "title": "Intercultural Understanding",
-            "imageURL": "https://beta.tapestry-tool.com/wp-content/uploads/2018/10/intercultural-understanding-resized.png",
-            "mediaType": "video",
-            "mediaFormat": "mp4",
-            "mediaDuration": 232,
-            "typeId": 1,
-            "group": 1,
-            "typeData": {
-                "progress": [
-                    {"group": "viewed", "value": 0},
-                    {"group": "unviewed", "value": 1}
-                ],
-                "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-MAIN.mp4"
-            },
-            // "x": 0,
-            // "y": 500
-        },
-        {
-            "id": 2,
-            "nodeType": "",
-            "title": "Segregation and Homophily",
-            "imageURL": "https://beta.tapestry-tool.com/wp-content/uploads/2018/10/segregation-homophily-resized.png",
-            "mediaType": "video",
-            "mediaFormat": "mp4",
-            "typeId": 2,
-            "group": 2,
-            "typeData": {
-                "progress": [
-                    {"group": "viewed", "value": 0.2},
-                    {"group": "unviewed", "value": 0.8}
-                ],
-                "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-SEG-HOMPH-1.mp4"
-            },
-            // "x": -400,
-            // "y": 800
-        },
-        {
-            "id": 3,
-            "nodeType": "",
-            "title": "Contact and Minorities",
-            "imageURL": "https://beta.tapestry-tool.com/wp-content/uploads/2018/10/contact-and-minorities-resized.png",
-            "mediaType": "video",
-            "mediaFormat": "mp4",
-            "typeId": 1,
-            "group": 2,
-            "typeData": {
-                "progress": [
-                    {"group": "viewed", "value": 0},
-                    {"group": "unviewed", "value": 1.00}
-                ],
-                "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-CT-andMinorities-1.mp4"
-            },
-            // "x": 900,
-            // "y": -500
-        },
-        {
-            "id": 4,
-            "nodeType": "",
-            "title": "What is a minority?",
-            "imageURL": "https://beta.tapestry-tool.com/wp-content/uploads/2018/10/minority-resized.png",
-            "mediaType": "video",
-            "mediaFormat": "mp4",
-            "typeId": 1,
-            "group": 2,
-            "typeData": {
-                "progress": [
-                    {"group": "viewed", "value": 0},
-                    {"group": "unviewed", "value": 1.00}
-                ],
-                "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-CT-DefiningMinority-1.mp4"
-            },
-            // "x": 200,
-            // "y": 500
-        },
-        {
-            "id": 5,
-            "nodeType": "",
-            "title": "Contact Theory",
-            "imageURL": "https://beta.tapestry-tool.com/wp-content/uploads/2018/10/ct0-resized.png",
-            "mediaType": "video",
-            "mediaFormat": "mp4",
-            "typeId": 1,
-            "group": 2,
-            "typeData": {
-                "progress": [
-                    {"group": "viewed", "value": 0},
-                    {"group": "unviewed", "value": 1.00}
-                ],
-                "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-CT0-1.mp4"
-            },
-            // "x": 400,
-            // "y": 800
-        },
-        {
-            "id": 6,
-            "nodeType": "",
-            "title": "How it Works",
-            "imageURL": "https://beta.tapestry-tool.com/wp-content/uploads/2018/10/ct0-resized.png",
-            "mediaType": "video",
-            "mediaFormat": "mp4",
-            "typeId": 1,
-            "group": 2,
-            "typeData": {
-                "progress": [
-                    {"group": "viewed", "value": 0},
-                    {"group": "unviewed", "value": 1.00}
-                ],
-                "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-CT-HowItWorks.mp4"
-            },
-            // "x": 0,
-            // "y": 900
-        },
-        {
-            "id": 7,
-            "nodeType": "",
-            "title": "Structured Conversations",
-            "imageURL": "https://beta.tapestry-tool.com/wp-content/uploads/2018/10/ct0-resized.png",
-            "mediaType": "video",
-            "mediaFormat": "mp4",
-            "typeId": 1,
-            "group": 2,
-            "typeData": {
-                "progress": [
-                    {"group": "viewed", "value": 0},
-                    {"group": "unviewed", "value": 1.00}
-                ],
-                "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-CT0-1.mp4"
-            },
-            // "x": 400,
-            // "y": 900
-        },
-        {
-            "id": 8,
-            "nodeType": "",
-            "title": "Colourblind/Race Acknowledgement",
-            "imageURL": "https://beta.tapestry-tool.com/wp-content/uploads/2018/10/ct0-resized.png",
-            "mediaType": "video",
-            "mediaFormat": "mp4",
-            "typeId": 1,
-            "group": 2,
-            "typeData": {
-                "progress": [
-                    {"group": "viewed", "value": 0.5},
-                    {"group": "unviewed", "value": 0.5}
-                ],
-                "mediaURL": BASE_URL + "ICUS-br0-d2-Sept10-CT0-1.mp4"
-            },
-            // "x": 800,
-            // "y": 900
-        }
-    ],
-    "links": [
-        {"source": 1, "target": 2, "value": 1, "type": ""},
-        {"source": 1, "target": 3, "value": 1, "type": ""},
-        {"source": 1, "target": 4, "value": 1, "type": ""},
-        {"source": 1, "target": 5, "value": 1, "type": ""},
-        {"source": 5, "target": 6, "value": 2, "type": ""},
-        {"source": 5, "target": 7, "value": 2, "type": ""},
-        {"source": 5, "target": 8, "value": 2, "type": ""}
-    ]
-}
-
-root = dataset.rootId,
-
-setNodeTypes(dataset.rootId);
-setLinkTypes(dataset.rootId);
+// Import data from json file, then start D3
+$.getJSON('tapestry.json', function(result){
     
-//---------------------------------------------------
-// 2. CREATE THE SVG OBJECTS
-//---------------------------------------------------
+    dataset = result;
+    
+    if (saveProgressToCookie) {
+        // Update dataset with data from cookie (if any)
+        var cookieProgress = Cookies.get("progress-data-"+TAPESTRY_SLUG);
+        if (cookieProgress !== undefined) {
+            cookieProgress = JSON.parse( cookieProgress );
+            setDatasetProgress(cookieProgress);
+        }
+    }
+    
+    var maxPointX = 0;
+    var maxPointY = 0;
+    for (var index in dataset.nodes) {
+        
+        // save max point so we can calculate our tapestry width and height
+        if (dataset.nodes[index].fx > maxPointX) {
+            maxPointX = dataset.nodes[index].fx;
+        }
+        if (dataset.nodes[index].fy > maxPointY) {
+            maxPointY = dataset.nodes[index].fy;
+        }
+        
+        // make the graph vertical if aspect ratio is portrait
+        if (ASPECT_RATIO < 1) {
+            var temp_fx = dataset.nodes[index].fy;
+            dataset.nodes[index].fy = dataset.nodes[index].fx;
+            dataset.nodes[index].fx = temp_fx;
+        }
+    }
+    if (ASPECT_RATIO < 1) {
+        var maxPointSwap = maxPointX;
+        maxPointX = maxPointY;
+        maxPointY = maxPointX;
+    }
+        
+    root = dataset.rootId,
+    
+    setNodeTypes(dataset.rootId);
+    setLinkTypes(dataset.rootId);
+        
+    //---------------------------------------------------
+    // 2. CREATE THE SVG OBJECTS
+    //---------------------------------------------------
+    
+    if (dataset.settings !== undefined && dataset.settings.thumbDiff !== undefined) {
+        NODE_IMAGE_HEIGHT += dataset.settings.thumbDiff;
+        ROOT_NODE_IMAGE_HEIGHT_DIFF += dataset.settings.thumbDiff;
+    }
+    if (dataset.settings !== undefined && dataset.settings.thumbRootDiff !== undefined) {
+        ROOT_NODE_IMAGE_HEIGHT_DIFF += dataset.settings.thumbRootDiff;
+    }
+    
+    svgScale = 1;
+    if (dataset.settings !== undefined && dataset.settings.zoom !== undefined) {
+        svgScale *= dataset.settings.zoom;
+    }
+    if (window.devicePixelRatio !== undefined && window.devicePixelRatio > 1.5) {
+        svgScale *= (window.devicePixelRatio/1.5);
+    }
+    tapestryWidth = (maxPointX + (NORMAL_RADIUS + ROOT_RADIUS_DIFF)*2) *  svgScale;
+    tapestryHeight = (maxPointY + (NORMAL_RADIUS + ROOT_RADIUS_DIFF)*2) * svgScale;
+    
+    svg = createSvgContainer("tapestry");
+    links = createLinks();
+    nodes = createNodes();
+    
+    filterLinks();
+    
+    buildNodeContents();
+    
+    //---------------------------------------------------
+    // 3. START THE FORCED GRAPH
+    //---------------------------------------------------
+    
+    startForce();
 
-// this is needed to calculate the bounded coordinates
-tapestryWidth = Math.sqrt(dataset.nodes.length) * 100 * SVG_SCALE * ASPECT_RATIO;
-tapestryHeight = Math.sqrt(dataset.nodes.length) * 100 * SVG_SCALE;
-
-svg = createSvgContainer("tapestry");
-links = createLinks();
-nodes = createNodes();
-
-filterLinks();
-
-buildNodeContents();
-
-//---------------------------------------------------
-// 3. START THE FORCED GRAPH
-//---------------------------------------------------
-
-startForce();
+});
 
 /****************************************************
  * D3 RELATED FUNCTIONS
@@ -245,17 +131,17 @@ function startForce() {
     linkForce = d3.forceLink()
         .id(function (d) {
             return d.id;
-        })
-        .distance(MAX_RADIUS / 3);
+        });
 
     collideForce = d3.forceCollide(
         function (d) {
-            return getRadius(d) * 1.5;
+            return getRadius(d) * 1.2;
         });
 
     force = d3.forceSimulation()
         .force("link", linkForce)
         .force('collide', collideForce)
+        .force("charge", d3.forceManyBody().strength(-5000))
         .force('center', d3.forceCenter(tapestryWidth / 2, tapestryHeight / 2));
 
     force
@@ -501,7 +387,7 @@ function buildNodeContents() {
         .append("image")
         .attr("height", function (d) {
             if (d.nodeType === "root") {
-                return NODE_IMAGE_HEIGHT + ROOT_RADIUS_DIFF;
+                return NODE_IMAGE_HEIGHT + ROOT_NODE_IMAGE_HEIGHT_DIFF;
             } else return NODE_IMAGE_HEIGHT;
         })
         .attr("width", NODE_IMAGE_WIDTH)
@@ -520,7 +406,7 @@ function buildNodeContents() {
         .on("start", dragstarted)
         .on("drag", dragged)
         .on("end", dragended))
-        .on("dblclick", function (d) {
+        .on("click", function (d) {
             resizeNodes(d.id);
         });
 }
@@ -586,7 +472,7 @@ function rebuildNodeContents() {
             .duration(TRANSITION_DURATION)
             .attr("height", function (d) {
                 if (d.nodeType === "root") {
-                    return NODE_IMAGE_HEIGHT + ROOT_RADIUS_DIFF;
+                    return NODE_IMAGE_HEIGHT + ROOT_NODE_IMAGE_HEIGHT_DIFF;
                 } else return NODE_IMAGE_HEIGHT;
             });
 
@@ -657,14 +543,11 @@ function buildPathAndButton() {
         })
         .attr("class", "mediaButton");
 
-    // TODO: Use vanilla JS instead of jQuery
-    $('.mediaButtonIcon').click(function(){
+    $('.mediaButton > i').click(function(){
         var thisBtn = $(this)[0];
         setupLightbox(thisBtn.dataset.id, thisBtn.dataset.mediaFormat, thisBtn.dataset.thumb, thisBtn.dataset.url);
     });
 }
-
-
 
 function rebuildLinks() {
     links = d3.selectAll("line")
@@ -770,7 +653,10 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
         width: spotlightWidth - PROGRESS_THICKNESS,
         height: spotlightHeight - PROGRESS_THICKNESS
     }).appendTo('body');
-    $('#spotlight-content').css('opacity', 1);
+    $('#spotlight-content').css('opacity', 1).draggable({
+        delay: 10,
+        distance: 8
+      });
 
     video.appendTo('#spotlight-content');
 
@@ -792,7 +678,7 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
             // auto-play video
             setTimeout(function () {
                 video[0].play();
-            }, 2000);
+            }, 1000);
         }, 100);
     }, false);
 }
@@ -825,10 +711,10 @@ function setupVideo(id, mediaFormat, videoLink) {
         if (viewedAmount > 0) {
             if (viewedAmount !== video.duration) {
                 video.currentTime = viewedAmount;
-            } else video.currentTime = 1; //start from beginning again if person had already viewed whole video through
+            } else video.currentTime = 0; //start from beginning again if person had already viewed whole video through
         }
         else {
-            video.currentTime = 1;
+            video.currentTime = 0;
         }
     }, false);
 
@@ -918,6 +804,47 @@ function updateViewedValue(id, amountViewedTime, duration) {
     //Update the dataset with new values
     dataset.nodes[index].typeData.progress[0].value = amountViewed;
     dataset.nodes[index].typeData.progress[1].value = amountUnviewed;
+
+    if (saveProgressToCookie) {
+        var progressObj = JSON.stringify(getDatasetProgress());
+        Cookies.set("progress-data"+TAPESTRY_SLUG, progressObj);
+    }
+}
+
+function getDatasetProgress() {
+    
+    var progressObj = {};
+    
+    for (var index in dataset.nodes) {
+        var node = dataset.nodes[index];
+        progressObj[node.id] = node.typeData.progress[0].value;
+    }
+    
+    return progressObj;
+}
+
+function setDatasetProgress(progressObj) {
+    
+    if (progressObj.length < 1) {
+        return false;
+    }
+    
+    for (var id in progressObj) {
+        
+        var amountViewed = progressObj[id];
+        var amountUnviewed = 1.00 - amountViewed;
+    
+        var index = findNodeIndex(id);
+        
+        if (index !== -1) {
+            //Update the dataset with new values
+            dataset.nodes[index].typeData.progress[0].value = amountViewed;
+            dataset.nodes[index].typeData.progress[1].value = amountUnviewed;
+        }
+    
+    }
+    
+    return true;
 }
 
 /* For setting the "type" field of nodes in dataset */
