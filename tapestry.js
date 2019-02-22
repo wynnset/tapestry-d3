@@ -42,9 +42,9 @@ var dataset, root, svg, svgScale, links, nodes,   // Basics
 
 // Import data from json file, then start D3
 $.getJSON('tapestry.json', function(result){
-    
+
     dataset = result;
-    
+
     if (saveProgressToCookie) {
         // Update dataset with data from cookie (if any)
         var cookieProgress = Cookies.get("progress-data-"+TAPESTRY_SLUG);
@@ -53,11 +53,11 @@ $.getJSON('tapestry.json', function(result){
             setDatasetProgress(cookieProgress);
         }
     }
-    
+
     var maxPointX = 0;
     var maxPointY = 0;
     for (var index in dataset.nodes) {
-        
+
         // save max point so we can calculate our tapestry width and height
         if (dataset.nodes[index].fx > maxPointX) {
             maxPointX = dataset.nodes[index].fx;
@@ -65,7 +65,7 @@ $.getJSON('tapestry.json', function(result){
         if (dataset.nodes[index].fy > maxPointY) {
             maxPointY = dataset.nodes[index].fy;
         }
-        
+
         // make the graph vertical if aspect ratio is portrait
         if (ASPECT_RATIO < 1) {
             var temp_fx = dataset.nodes[index].fy;
@@ -78,16 +78,16 @@ $.getJSON('tapestry.json', function(result){
         maxPointX = maxPointY;
         maxPointY = maxPointX;
     }
-        
+
     root = dataset.rootId,
-    
+
     setNodeTypes(dataset.rootId);
     setLinkTypes(dataset.rootId);
-        
+
     //---------------------------------------------------
     // 2. CREATE THE SVG OBJECTS
     //---------------------------------------------------
-    
+
     if (dataset.settings !== undefined && dataset.settings.thumbDiff !== undefined) {
         NODE_IMAGE_HEIGHT += dataset.settings.thumbDiff;
         ROOT_NODE_IMAGE_HEIGHT_DIFF += dataset.settings.thumbDiff;
@@ -95,7 +95,7 @@ $.getJSON('tapestry.json', function(result){
     if (dataset.settings !== undefined && dataset.settings.thumbRootDiff !== undefined) {
         ROOT_NODE_IMAGE_HEIGHT_DIFF += dataset.settings.thumbRootDiff;
     }
-    
+
     svgScale = 1;
     if (dataset.settings !== undefined && dataset.settings.zoom !== undefined) {
         svgScale *= dataset.settings.zoom;
@@ -105,19 +105,19 @@ $.getJSON('tapestry.json', function(result){
     }
     tapestryWidth = (maxPointX + (NORMAL_RADIUS + ROOT_RADIUS_DIFF)*2) *  svgScale;
     tapestryHeight = (maxPointY + (NORMAL_RADIUS + ROOT_RADIUS_DIFF)*2) * svgScale;
-    
+
     svg = createSvgContainer("tapestry");
     links = createLinks();
     nodes = createNodes();
-    
+
     filterLinks();
-    
+
     buildNodeContents();
-    
+
     //---------------------------------------------------
     // 3. START THE FORCED GRAPH
     //---------------------------------------------------
-    
+
     startForce();
 
 });
@@ -267,7 +267,7 @@ function filterLinks() {
         }
         return !shouldRender;
     });
-    
+
     var linksToShow = links.filter(function (d) {
         var sourceId, targetId;
         if (typeof d.source === 'number' && typeof d.target === 'number') {
@@ -300,7 +300,7 @@ function filterLinks() {
         .transition()
         .duration(TRANSITION_DURATION)
         .style("opacity", "1");
-    
+
     setTimeout(function(){
         linksToHide
             .style("display", "block");
@@ -329,9 +329,9 @@ function buildNodeContents() {
             return PROGRESS_THICKNESS;
         })
         .attr("stroke", function (d) {
-            if (d.nodeType === "") 
+            if (d.nodeType === "")
                 return "transparent";
-            else if (d.nodeType === "grandchild") 
+            else if (d.nodeType === "grandchild")
                 return COLOR_GRANDCHILD;
             else return COLOR_STROKE;
         })
@@ -365,9 +365,9 @@ function buildNodeContents() {
             return getRadius(d);
         })
         .attr("fill", function (d) {
-            if (d.nodeType === "") 
+            if (d.nodeType === "")
                 return "transparent";
-            else if (d.nodeType === "grandchild") 
+            else if (d.nodeType === "grandchild")
                 return COLOR_GRANDCHILD;
             else return COLOR_STROKE;
         });
@@ -420,16 +420,16 @@ function rebuildNodeContents() {
                 return getRadius(d);
             })
             .attr("fill", function (d) {
-                if (d.nodeType === "") 
+                if (d.nodeType === "")
                     return "transparent";
-                else if (d.nodeType === "grandchild") 
+                else if (d.nodeType === "grandchild")
                     return COLOR_GRANDCHILD;
                 else return COLOR_STROKE;
             });
-            
+
     nodes.selectAll(".imageContainer")
             .attr("class", function (d) {
-                if (d.nodeType === "grandchild" || d.nodeType === "") 
+                if (d.nodeType === "grandchild" || d.nodeType === "")
                     return "imageContainer expandGrandchildren";
                 else return "imageContainer";
             })
@@ -442,9 +442,9 @@ function rebuildNodeContents() {
                 return getRadius(d);
             })
             .attr("stroke", function (d) {
-                if (d.nodeType === "") 
+                if (d.nodeType === "")
                     return "transparent";
-                else if (d.nodeType === "grandchild") 
+                else if (d.nodeType === "grandchild")
                     return COLOR_GRANDCHILD;
                 else return COLOR_STROKE;
             })
@@ -463,7 +463,7 @@ function rebuildNodeContents() {
             .attr("fill", function (d) {
                 return "url('#node-thumb-" + d.id + "')";
             });
-    
+
     /* Attach images to be used within each node */
     nodes.selectAll("defs")
          .selectAll("pattern")
@@ -483,7 +483,7 @@ function rebuildNodeContents() {
     setTimeout(function(){
         buildPathAndButton();
     }, TRANSITION_DURATION);
-    
+
 }
 
 function buildPathAndButton() {
@@ -545,7 +545,7 @@ function buildPathAndButton() {
 
     $('.mediaButton > i').click(function(){
         var thisBtn = $(this)[0];
-        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.mediaFormat, thisBtn.dataset.thumb, thisBtn.dataset.url);
+        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.thumb, thisBtn.dataset.url);
     });
 }
 
@@ -578,12 +578,12 @@ function updateViewedProgress() {
         .append("path")
         .attr("fill", function (d, i) {
             if (d.data.group !== "viewed") return "transparent";
-            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "") 
+            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "")
                 return "#cad7dc";
             else return "#11a6d8";
         })
         .attr("class", function (d) {
-            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "") 
+            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "")
                 return "expandGrandchildren";
         })
         .attr("d", function (d) {
@@ -660,9 +660,10 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
 
     video.appendTo('#spotlight-content');
 
-    video[0].addEventListener('loadeddata', function () {
+    video[0].addEventListener('loadedmetadata', function () {
         // Video is loaded and can be played
         //Set the final position, size, and shape for the node transition
+        console.log("LOADED META DATA: RESIZE");
         var imageWidth = video.width();
         var imageHeight = video.height();
         setTimeout(function () {
@@ -689,42 +690,86 @@ function setupVideo(id, mediaFormat, videoLink) {
     $(buttonElementId).addClass('mediaButtonLoading');
 
     //Add videoplayer TODO: Make tag flexible between iframe and video
-    var videoEl = $('<video id="' + mediaFormat + '" class="video-player" controls><source id="video-source" src="' + videoLink + '" type="video/mp4"><\/source><\/video>');
-    var index = findNodeIndex(id);
-    var viewedAmount;
+    var videoEl;
+    if (mediaFormat === "mp4") {
+        videoEl = $('<video id="' + mediaFormat + '" class="video-player" controls><source id="video-source" src="' + videoLink + '" type="video/mp4"><\/video>');
+    } else if (mediaFormat === "youtube") {
+        videoEl = $('<iframe id="' + mediaFormat + '" class="iframe-player" src="' + videoLink + '" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen><\/iframe>');
+    } else if (mediaFormat === "h5p") {
+        videoEl = $('<iframe id="' + mediaFormat + '" src="' + videoLink + '" width="960" height="540" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
 
-    var video = videoEl[0];
-
-    // Play video starting from the amount already viewed
-    video.addEventListener('loadedmetadata', function () {
-        //Update the mediaButton according to play/pause state
-        video.addEventListener('play', function () {
-            $(buttonElementId).removeAttr('style');
-            $(buttonElementId).attr('class', 'fas fa-pause-circle');
+        var iframeVideo = videoEl[0];
+        console.log(iframeVideo);
+        iframeVideo.addEventListener('load', function () {
+            iframeVideo.addEventListener('play', function() {
+                console.log('playing');
+            });
+            // switch (event.data) {
+            //     case iframeVideo.Video.ENDED:
+            //         console.log('Video ended after ' + iframeVideo.getCurrentTime() + ' seconds!');
+            //
+            //         // Start over again?
+            //         iframeVideo.play();
+            //
+            //         if (iframeVideo.getDuration() > 15) {
+            //             iframeVideo.seek(10);
+            //         }
+            //
+            //         break;
+            //
+            //     case iframeH5P.Video.PLAYING:
+            //         console.log('Playing');
+            //         break;
+            //
+            //     case iframeH5P.Video.PAUSED:
+            //         console.log('Why you stop?');
+            //
+            //         iframeVideo.setPlaybackRate(1.5); // Go fast
+            //         break;
+            //
+            //     case iframeH5P.Video.BUFFERING:
+            //         console.log('Wait on your slow internet connection...');
+            //         break;
+            // }
         });
-        video.addEventListener('pause', function () {
-            $(buttonElementId).attr('class', 'fas fa-play-circle');
-        });
+    }
 
-        // Determining where to start the video
-        viewedAmount = dataset.nodes[index].typeData.progress[0].value * video.duration;
-        if (viewedAmount > 0) {
-            if (viewedAmount !== video.duration) {
-                video.currentTime = viewedAmount;
-            } else video.currentTime = 0; //start from beginning again if person had already viewed whole video through
-        }
-        else {
-            video.currentTime = 0;
-        }
-    }, false);
-
-    // Update the viewedAmount of that video
-    video.addEventListener('timeupdate', function () {
-        if (video.played.length > 0 && viewedAmount < video.currentTime) {
-            updateViewedValue(id, video.currentTime, video.duration);
-            updateViewedProgress();
-        }
-    });
+    // var index = findNodeIndex(id);
+    // var viewedAmount;
+    //
+    // var video = videoEl[0];
+    //
+    // // Play video starting from the amount already viewed
+    // video.addEventListener('loadedmetadata', function () {
+    //     console.log("LOADED META DATA: SETUP");
+    //     //Update the mediaButton according to play/pause state
+    //     video.addEventListener('play', function () {
+    //         $(buttonElementId).removeAttr('style');
+    //         $(buttonElementId).attr('class', 'fas fa-pause-circle');
+    //     });
+    //     video.addEventListener('pause', function () {
+    //         $(buttonElementId).attr('class', 'fas fa-play-circle');
+    //     });
+    //
+    //     // Determining where to start the video
+    //     viewedAmount = dataset.nodes[index].typeData.progress[0].value * video.duration;
+    //     if (viewedAmount > 0) {
+    //         if (viewedAmount !== video.duration) {
+    //             video.currentTime = viewedAmount;
+    //         } else video.currentTime = 0; //start from beginning again if person had already viewed whole video through
+    //     }
+    //     else {
+    //         video.currentTime = 0;
+    //     }
+    // }, false);
+    //
+    // // Update the viewedAmount of that video
+    // video.addEventListener('timeupdate', function () {
+    //     if (video.played.length > 0 && viewedAmount < video.currentTime) {
+    //         updateViewedValue(id, video.currentTime, video.duration);
+    //         updateViewedProgress();
+    //     }
+    // });
 
     return videoEl;
 }
@@ -812,38 +857,38 @@ function updateViewedValue(id, amountViewedTime, duration) {
 }
 
 function getDatasetProgress() {
-    
+
     var progressObj = {};
-    
+
     for (var index in dataset.nodes) {
         var node = dataset.nodes[index];
         progressObj[node.id] = node.typeData.progress[0].value;
     }
-    
+
     return progressObj;
 }
 
 function setDatasetProgress(progressObj) {
-    
+
     if (progressObj.length < 1) {
         return false;
     }
-    
+
     for (var id in progressObj) {
-        
+
         var amountViewed = progressObj[id];
         var amountUnviewed = 1.00 - amountViewed;
-    
+
         var index = findNodeIndex(id);
-        
+
         if (index !== -1) {
             //Update the dataset with new values
             dataset.nodes[index].typeData.progress[0].value = amountViewed;
             dataset.nodes[index].typeData.progress[1].value = amountUnviewed;
         }
-    
+
     }
-    
+
     return true;
 }
 
