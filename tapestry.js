@@ -711,7 +711,7 @@ function setupVideo(id, mediaFormat, mediaType, videoLink) {
     //Add videoplayer TODO: Make tag flexible between iframe and video
     var videoEl;
     // <script src="http://beta.tapestry-tool.com/wp-content/plugins/h5p/h5p-php-library/js/h5p-resizer.js" charset="UTF-8"></script>
-    videoEl = $('<iframe id="' + mediaFormat + '" src="http://localhost:8888/tapestry/wordpress/wp-admin/admin-ajax.php?action=h5p_embed&id=1" width="960" height="549" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
+    videoEl = $('<iframe id="' + mediaFormat + '" src="' + videoLink + '" width="960" height="549" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
     // <iframe src="http://localhost:8888/tapestry/wordpress/wp-admin/admin-ajax.php?action=h5p_embed&id=1" width="868" height="549" frameborder="0" allowfullscreen="allowfullscreen"></iframe><script src="http://localhost:8888/tapestry/wordpress/wp-content/plugins/h5p/h5p-php-library/js/h5p-resizer.js" charset="UTF-8"></script>
 
     var index = findNodeIndex(id);
