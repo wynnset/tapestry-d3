@@ -536,7 +536,7 @@ function buildPathAndButton() {
             } else {
                 iconName = "fa-exclamation-circle";
             }
-            return '<i id="mediaButtonIcon' + d.id + '" class="fas ' + iconName + ' mediaButtonIcon" data-id="' + d.id + '" data-format="' + d.mediaFormat + '" data-thumb="' + d.imageURL + '" data-url="' + mediaURL + '"><\/i>';
+            return '<i id="mediaButtonIcon' + d.id + '" class="fas ' + iconName + ' mediaButtonIcon" data-id="' + d.id + '" data-format="' + d.mediaFormat + '" data-thumb="' + d.imageURL + '" data-url="' + mediaURL + '" data-media-width="' + d.typeData.mediaWidth + '" data-media-height="' + d.typeData.mediaHeight + '"><\/i>';
         })
         .attr("id", function (d) {
             return "mediaButton" + d.id;
@@ -555,9 +555,10 @@ function buildPathAndButton() {
         })
         .attr("class", "mediaButton");
 
+
     $('.mediaButton > i').click(function(){
         var thisBtn = $(this)[0];
-        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url);
+        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
         });
     }
 
@@ -629,12 +630,24 @@ function adjustProgressBarRadii(d) {
  * MEDIA RELATED FUNCTIONS
  ****************************************************/
 
-function setupLightbox(id, mediaFormat, mediaType, videoLink) {
+function setupLightbox(id, mediaFormat, mediaType, videoLink, width, height) {
 
     // TODO: Add in close button and add a listener for it here
     $('#video').attr("onclick", "closeLightbox(" + id + "," + mediaType +")");
 
-    var video = setupVideo(id, mediaFormat, mediaType, videoLink);
+    var resizeRatio = 1;
+    if (width > BROWSER_WIDTH) {
+        resizeRatio = BROWSER_WIDTH / width * 0.8;
+        width *= resizeRatio;
+        height *= resizeRatio;
+    }
+    if (height > BROWSER_HEIGHT * resizeRatio) {
+        resizeRatio *= BROWSER_HEIGHT / height;
+        width *= resizeRatio;
+        height *= resizeRatio;
+    }
+
+    var video = setupVideo(id, mediaFormat, mediaType, videoLink, width, height);
 
     //For revealing the lightbox and video
     $('.lightbox').css('display', 'block');
@@ -670,7 +683,32 @@ function setupLightbox(id, mediaFormat, mediaType, videoLink) {
       });
 
     video.appendTo('#spotlight-content');
-    console.log(video);
+
+    $('#spotlight-content').css({
+        position: 'absolute',
+        top: ((BROWSER_HEIGHT - height) / 2) + $(this).scrollTop(),
+        left: (BROWSER_WIDTH - width) / 2,
+        width: width,
+        height: height
+    });
+
+    video.on('load', function() {
+        window.setTimeout(function(){
+            height = $('#spotlight-content > iframe').outerHeight();
+            width = $('#spotlight-content > iframe').outerWidth();
+        
+            $('#spotlight-content').css({
+                width: width,
+                height: height,
+                transitionDuration: "0.2s"
+            });
+        }, 1000);
+        window.setTimeout(function(){
+            $('#spotlight-content').css({
+                transitionDuration: "1s"
+            });
+        }, 200);
+    });
 
     var loadEventName;
     if (mediaFormat === "mp4") {
@@ -710,7 +748,8 @@ function expandVideo(video, mediaFormat) {
     }, 100);
 }
 
-function setupVideo(id, mediaFormat, mediaType, videoLink) {
+function setupVideo(id, mediaFormat, mediaType, videoLink, width, height) {
+
     var buttonElementId = "#mediaButtonIcon" + id;
     // Add the loading gif
     $(buttonElementId).addClass('mediaButtonLoading');
@@ -760,7 +799,7 @@ function setupVideo(id, mediaFormat, mediaType, videoLink) {
         });
 
     } else if (mediaFormat === "h5p") {
-        videoEl = $('<iframe id="' + mediaFormat + '" src="' + videoLink + '" width="960" height="540" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
+        videoEl = $('<iframe id="' + mediaFormat + '" src="' + videoLink + '" width="' + width + '" height="' + height + '" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
         var video = videoEl[0];
         video.addEventListener('load', function() {
             var iframeH5P = document.getElementById('h5p').contentWindow.H5P;
