@@ -60,7 +60,11 @@ body {
 }
 
 #spotlight-content {
-    position: absolute;
+    position: fixed;
+    top: 5vh;
+    left: 5vw;
+    height: 90vh;
+    width: 90vw;
     z-index: 2;
     background-position: 0 0;
     background-size: cover;

@@ -41,7 +41,7 @@ var dataset, root, svg, svgScale, links, nodes,   // Basics
 //---------------------------------------------------
 
 // Import data from json file, then start D3
-$.getJSON('tapestry.json', function(result){
+$.getJSON(siteUrl + 'tapestry.json', function(result){
 
     dataset = result;
 
@@ -114,11 +114,11 @@ $.getJSON('tapestry.json', function(result){
 
     buildNodeContents();
 
-    //---------------------------------------------------
-    // 3. START THE FORCED GRAPH
-    //---------------------------------------------------
+//---------------------------------------------------
+// 3. START THE FORCED GRAPH
+//---------------------------------------------------
 
-    startForce();
+startForce();
 
 });
 
@@ -514,8 +514,7 @@ function buildPathAndButton() {
         })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
-        })
-        .call(wrapText, NORMAL_RADIUS * 2);
+        });
 
     nodes
         .filter(function (d) {
@@ -524,7 +523,13 @@ function buildPathAndButton() {
         .append("svg:foreignObject")
         .html(function (d) {
             var mediaURL = d.typeData.mediaURL;
-            return '<i id="mediaButtonIcon' + d.id + '" class="fas fa-play-circle mediaButtonIcon" data-id="' + d.id + '" data-format="' + d.mediaFormat + '" data-thumb="' + d.imageURL + '" data-url="' + mediaURL + '"><\/i>';
+            var iconName;
+            if (d.mediaType === "video") {
+                iconName = "fa-play-circle";
+            } else {
+                iconName = "fa-exclamation-circle";
+            }
+            return '<i id="mediaButtonIcon' + d.id + '" class="fas ' + iconName + ' mediaButtonIcon" data-id="' + d.id + '" data-format="' + d.mediaFormat + '" data-thumb="' + d.imageURL + '" data-url="' + mediaURL + '"><\/i>';
         })
         .attr("id", function (d) {
             return "mediaButton" + d.id;
@@ -545,9 +550,9 @@ function buildPathAndButton() {
 
     $('.mediaButton > i').click(function(){
         var thisBtn = $(this)[0];
-        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.thumb, thisBtn.dataset.url);
-    });
-}
+        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url);
+        });
+    }
 
 function rebuildLinks() {
     links = d3.selectAll("line")
@@ -617,12 +622,12 @@ function adjustProgressBarRadii(d) {
  * MEDIA RELATED FUNCTIONS
  ****************************************************/
 
-function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
+function setupLightbox(id, mediaFormat, mediaType, videoLink) {
 
     // TODO: Add in close button and add a listener for it here
-    $('#video').attr("onclick", "closeLightbox(" + id + ")");
+    $('#video').attr("onclick", "closeLightbox(" + id + "," + mediaType +")");
 
-    var video = setupVideo(id, mediaFormat, videoLink);
+    var video = setupVideo(id, mediaFormat, mediaType, videoLink);
 
     //For revealing the lightbox and video
     $('.lightbox').css('display', 'block');
@@ -631,11 +636,6 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
     }, 10);
 
     var spPos = $('.imageOverlay[data-id=' + id + ']').position();
-
-    // TODO: make the lightbox size responsive and do not hardcode the values
-
-    var topPos = (BROWSER_HEIGHT - 540) / 2;
-    var leftPos = (BROWSER_WIDTH - 960) / 2;
 
     // Get the width & height of the node
     var spotlightWidth = NORMAL_RADIUS;
@@ -646,12 +646,11 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
     }
     //Set initial position for the node transition
     $('<div id="spotlight-content"><\/div>').css({
-        position: "absolute",
-        // backgroundImage: "url('" + thumbUrl + "')",
-        top: spPos.top,
-        left: spPos.left,
-        width: spotlightWidth - PROGRESS_THICKNESS,
-        height: spotlightHeight - PROGRESS_THICKNESS
+        // position: "absolute",
+        // top: spPos.top,
+        // left: spPos.left,
+        // width: spotlightWidth - PROGRESS_THICKNESS,
+        // height: spotlightHeight - PROGRESS_THICKNESS
     }).appendTo('body');
     $('#spotlight-content').css('opacity', 1).draggable({
         delay: 10,
@@ -660,116 +659,125 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
 
     video.appendTo('#spotlight-content');
 
-    video[0].addEventListener('loadedmetadata', function () {
-        // Video is loaded and can be played
-        //Set the final position, size, and shape for the node transition
-        console.log("LOADED META DATA: RESIZE");
-        var imageWidth = video.width();
-        var imageHeight = video.height();
-        setTimeout(function () {
-            $('#spotlight-content').css({
-                width: imageWidth,
-                height: imageHeight,
-                top: topPos,
-                left: leftPos,
-                "box-shadow": "0 0 800px #000",
-                "border-radius": "0%",
-                "background-position": "0px 0px"
-            });
-            // auto-play video
-            setTimeout(function () {
-                video[0].play();
-            }, 1000);
-        }, 100);
-    }, false);
+    video[0].addEventListener('load', function() {
+        $('#spotlight-content').css( 'height', $(this).outerHeight() + 'px' );
+    });
+
+    var loadEventName;
+    if (mediaFormat === "mp4") {
+        loadEventName = "loadeddata";
+    } else if (mediaFormat === "youtube") {
+        loadEventName = "onloadeddata";
+    }
+
+    video[0].addEventListener(loadEventName, expandVideo(video, mediaFormat), false);
 }
 
-function setupVideo(id, mediaFormat, videoLink) {
+function expandVideo(video, mediaFormat) {
+    // TODO: make the lightbox size responsive and do not hardcode the values
+    var topPos = (BROWSER_HEIGHT - 540) / 2;
+    var leftPos = (BROWSER_WIDTH - 960) / 2;
+
+    //Video is loaded and can be played
+    //Set the final position, size, and shape for the node transition
+    var imageWidth = video.width();
+    var imageHeight = video.height();
+    setTimeout(function () {
+        $('#spotlight-content').css({
+            // width: imageWidth,
+            // height: imageHeight,
+            // top: topPos,
+            // left: leftPos,
+            "box-shadow": "0 0 800px #000",
+            "border-radius": "0%",
+            "background-position": "0px 0px"
+        });
+
+        // auto-play video for mp4 only; Youtube uses a tag attached to the end of video link ("?autoplay=1")
+        if (mediaFormat === "mp4") {
+            setTimeout(function () {
+                video[0].play();
+            }, 2000);
+        }
+    }, 100);
+}
+
+function setupVideo(id, mediaFormat, mediaType, videoLink) {
+    console.log("HI");
     var buttonElementId = "#mediaButtonIcon" + id;
     // Add the loading gif
     $(buttonElementId).addClass('mediaButtonLoading');
 
     //Add videoplayer TODO: Make tag flexible between iframe and video
     var videoEl;
-    if (mediaFormat === "mp4") {
-        videoEl = $('<video id="' + mediaFormat + '" class="video-player" controls><source id="video-source" src="' + videoLink + '" type="video/mp4"><\/video>');
-    } else if (mediaFormat === "youtube") {
-        videoEl = $('<iframe id="' + mediaFormat + '" class="iframe-player" src="' + videoLink + '" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen><\/iframe>');
-    } else if (mediaFormat === "h5p") {
-        videoEl = $('<iframe id="' + mediaFormat + '" src="' + videoLink + '" width="960" height="540" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
+    // <script src="http://beta.tapestry-tool.com/wp-content/plugins/h5p/h5p-php-library/js/h5p-resizer.js" charset="UTF-8"></script>
+    videoEl = $('<iframe id="' + mediaFormat + '" src="http://localhost:8888/tapestry/wordpress/wp-admin/admin-ajax.php?action=h5p_embed&id=1" width="960" height="549" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
+    // <iframe src="http://localhost:8888/tapestry/wordpress/wp-admin/admin-ajax.php?action=h5p_embed&id=1" width="868" height="549" frameborder="0" allowfullscreen="allowfullscreen"></iframe><script src="http://localhost:8888/tapestry/wordpress/wp-content/plugins/h5p/h5p-php-library/js/h5p-resizer.js" charset="UTF-8"></script>
 
-        var iframeVideo = videoEl[0];
-        console.log(iframeVideo);
-        iframeVideo.addEventListener('load', function () {
-            iframeVideo.addEventListener('play', function() {
-                console.log('playing');
-            });
-            // switch (event.data) {
-            //     case iframeVideo.Video.ENDED:
-            //         console.log('Video ended after ' + iframeVideo.getCurrentTime() + ' seconds!');
-            //
-            //         // Start over again?
-            //         iframeVideo.play();
-            //
-            //         if (iframeVideo.getDuration() > 15) {
-            //             iframeVideo.seek(10);
-            //         }
-            //
-            //         break;
-            //
-            //     case iframeH5P.Video.PLAYING:
-            //         console.log('Playing');
-            //         break;
-            //
-            //     case iframeH5P.Video.PAUSED:
-            //         console.log('Why you stop?');
-            //
-            //         iframeVideo.setPlaybackRate(1.5); // Go fast
-            //         break;
-            //
-            //     case iframeH5P.Video.BUFFERING:
-            //         console.log('Wait on your slow internet connection...');
-            //         break;
-            // }
-        });
-    }
+    var index = findNodeIndex(id);
+    var viewedAmount;
 
-    // var index = findNodeIndex(id);
-    // var viewedAmount;
-    //
-    // var video = videoEl[0];
-    //
-    // // Play video starting from the amount already viewed
-    // video.addEventListener('loadedmetadata', function () {
-    //     console.log("LOADED META DATA: SETUP");
-    //     //Update the mediaButton according to play/pause state
-    //     video.addEventListener('play', function () {
-    //         $(buttonElementId).removeAttr('style');
-    //         $(buttonElementId).attr('class', 'fas fa-pause-circle');
-    //     });
-    //     video.addEventListener('pause', function () {
-    //         $(buttonElementId).attr('class', 'fas fa-play-circle');
-    //     });
-    //
-    //     // Determining where to start the video
-    //     viewedAmount = dataset.nodes[index].typeData.progress[0].value * video.duration;
-    //     if (viewedAmount > 0) {
-    //         if (viewedAmount !== video.duration) {
-    //             video.currentTime = viewedAmount;
-    //         } else video.currentTime = 0; //start from beginning again if person had already viewed whole video through
-    //     }
-    //     else {
-    //         video.currentTime = 0;
-    //     }
-    // }, false);
-    //
-    // // Update the viewedAmount of that video
-    // video.addEventListener('timeupdate', function () {
-    //     if (video.played.length > 0 && viewedAmount < video.currentTime) {
-    //         updateViewedValue(id, video.currentTime, video.duration);
-    //         updateViewedProgress();
-    //     }
-    // });
+    var video = videoEl[0];
+
+    // Play video starting from the amount already viewed
+    video.addEventListener('load', function() {
+        var iframeH5P = document.getElementById('h5p').contentWindow.H5P;
+        console.log(iframeH5P);
+        var iframeVideo = iframeH5P.instances[0].video;
+
+        // // Determining where to start the video
+        // viewedAmount = dataset.nodes[index].typeData.progress[0].value * video.duration;
+        // if (viewedAmount > 0) {
+        //     if (viewedAmount !== video.duration) {
+        //         video.currentTime = viewedAmount;
+        //     } else video.currentTime = 1; //start from beginning again if person had already viewed whole video through
+        // }
+        // else {
+        //     video.currentTime = 1;
+        // }
+
+        // Determining where to start the video FOR H5P ONLY
+        viewedAmount = dataset.nodes[index].typeData.progress[0].value * video.duration;
+        if (viewedAmount > 0) {
+            if (viewedAmount !== iframeVideo.getDuration()) {
+                iframeVideo.updateCurrentTime(viewedAmount);
+            } else iframeVideo.updateCurrentTime(viewedAmount); //start from beginning again if person had already viewed whole video through
+        }
+        else {
+            video.currentTime = 1;
+        }
+
+        iframeVideo.on('stateChanged', function (event) {
+            switch (event.data) {
+                case iframeH5P.Video.PLAYING:
+                    $(buttonElementId).removeAttr('style');
+                    $(buttonElementId).attr('class', 'fas fa-pause-circle');
+                    break;
+
+                case iframeH5P.Video.PAUSED:
+                    var iconName;
+                    if (mediaType === "video") {
+                        iconName = "fa-play-circle";
+                    } else {
+                        iconName = "fa-exclamation-circle";
+                    }
+                    $(buttonElementId).attr('class', 'fas ' + iconName);
+                    break;
+
+                case iframeH5P.Video.BUFFERING:
+                    $(buttonElementId).addClass('mediaButtonLoading');
+                    break;
+            }
+        }, false);
+    });
+
+    // Update the viewedAmount of that video
+    video.addEventListener('timeupdate', function () {
+        if (video.played.length > 0 && viewedAmount < video.currentTime) {
+            updateViewedValue(id, video.currentTime, video.duration);
+            updateViewedProgress();
+        }
+    });
 
     return videoEl;
 }
@@ -919,7 +927,6 @@ function setNodeTypes(rootId) {
 
 /* For setting the "type" field of links in dataset */
 function setLinkTypes(rootId) {
-
     root = rootId;
     var children = getChildren(root),
         grandchildren = getGrandchildren(children);
@@ -942,9 +949,17 @@ function setLinkTypes(rootId) {
 
 })();
 
-function closeLightbox(id) {
+function closeLightbox(id, mediaType) {
     // Return to play button
-    document.getElementById("mediaButtonIcon" + id).className = "fas fa-play-circle";
+
+    //TODO: Extract this into a helper function instead; Used idn 3 places
+    var iconName;
+    if (mediaType === "video") {
+        iconName = "fa-play-circle";
+    } else {
+        iconName = "fa-exclamation-circle";
+    }
+    document.getElementById("mediaButtonIcon" + id).className = "fas " + iconName;
     $('#spotlight-content').css('opacity', 0);
     $('.lightbox').show().css('opacity', 0);
     setTimeout(function () {
