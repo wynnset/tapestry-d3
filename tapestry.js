@@ -529,7 +529,7 @@ function buildPathAndButton() {
             } else {
                 iconName = "fa-exclamation-circle";
             }
-            return '<i id="mediaButtonIcon' + d.id + '" class="fas ' + iconName + ' mediaButtonIcon" data-id="' + d.id + '" data-format="' + d.mediaFormat + '" data-thumb="' + d.imageURL + '" data-url="' + mediaURL + '"><\/i>';
+            return '<i id="mediaButtonIcon' + d.id + '" class="fas ' + iconName + ' mediaButtonIcon" data-id="' + d.id + '" data-format="' + d.mediaFormat + '" data-thumb="' + d.imageURL + '" data-url="' + mediaURL + '" data-media-width="' + d.typeData.mediaWidth + '" data-media-height="' + d.typeData.mediaHeight + '"><\/i>';
         })
         .attr("id", function (d) {
             return "mediaButton" + d.id;
@@ -548,9 +548,10 @@ function buildPathAndButton() {
         })
         .attr("class", "mediaButton");
 
+
     $('.mediaButton > i').click(function(){
         var thisBtn = $(this)[0];
-        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url);
+        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
         });
     }
 
@@ -622,12 +623,24 @@ function adjustProgressBarRadii(d) {
  * MEDIA RELATED FUNCTIONS
  ****************************************************/
 
-function setupLightbox(id, mediaFormat, mediaType, videoLink) {
+function setupLightbox(id, mediaFormat, mediaType, videoLink, width, height) {
 
     // TODO: Add in close button and add a listener for it here
     $('#video').attr("onclick", "closeLightbox(" + id + "," + mediaType +")");
 
-    var video = setupVideo(id, mediaFormat, mediaType, videoLink);
+    var resizeRatio = 1;
+    if (width > BROWSER_WIDTH) {
+        resizeRatio = BROWSER_WIDTH / width * 0.8;
+        width *= resizeRatio;
+        height *= resizeRatio;
+    }
+    if (height > BROWSER_HEIGHT * resizeRatio) {
+        resizeRatio *= BROWSER_HEIGHT / height;
+        width *= resizeRatio;
+        height *= resizeRatio;
+    }
+
+    var video = setupVideo(id, mediaFormat, mediaType, videoLink, width, height);
 
     //For revealing the lightbox and video
     $('.lightbox').css('display', 'block');
@@ -646,11 +659,11 @@ function setupLightbox(id, mediaFormat, mediaType, videoLink) {
     }
     //Set initial position for the node transition
     $('<div id="spotlight-content"><\/div>').css({
-        // position: "absolute",
-        // top: spPos.top,
-        // left: spPos.left,
-        // width: spotlightWidth - PROGRESS_THICKNESS,
-        // height: spotlightHeight - PROGRESS_THICKNESS
+        position: "absolute",
+        top: spPos.top,
+        left: spPos.left,
+        width: spotlightWidth - PROGRESS_THICKNESS,
+        height: spotlightHeight - PROGRESS_THICKNESS
     }).appendTo('body');
     $('#spotlight-content').css('opacity', 1).draggable({
         delay: 10,
@@ -659,8 +672,30 @@ function setupLightbox(id, mediaFormat, mediaType, videoLink) {
 
     video.appendTo('#spotlight-content');
 
-    video[0].addEventListener('load', function() {
-        $('#spotlight-content').css( 'height', $(this).outerHeight() + 'px' );
+    $('#spotlight-content').css({
+        position: 'absolute',
+        top: ((BROWSER_HEIGHT - height) / 2) + $(this).scrollTop(),
+        left: (BROWSER_WIDTH - width) / 2,
+        width: width,
+        height: height
+    });
+
+    video.on('load', function() {
+        window.setTimeout(function(){
+            height = $('#spotlight-content > iframe').outerHeight();
+            width = $('#spotlight-content > iframe').outerWidth();
+        
+            $('#spotlight-content').css({
+                width: width,
+                height: height,
+                transitionDuration: "0.2s"
+            });
+        }, 1000);
+        window.setTimeout(function(){
+            $('#spotlight-content').css({
+                transitionDuration: "1s"
+            });
+        }, 200);
     });
 
     var loadEventName;
@@ -702,17 +737,15 @@ function expandVideo(video, mediaFormat) {
     }, 100);
 }
 
-function setupVideo(id, mediaFormat, mediaType, videoLink) {
-    console.log("HI");
+function setupVideo(id, mediaFormat, mediaType, videoLink, width, height) {
+
     var buttonElementId = "#mediaButtonIcon" + id;
     // Add the loading gif
     $(buttonElementId).addClass('mediaButtonLoading');
 
     //Add videoplayer TODO: Make tag flexible between iframe and video
     var videoEl;
-    // <script src="http://beta.tapestry-tool.com/wp-content/plugins/h5p/h5p-php-library/js/h5p-resizer.js" charset="UTF-8"></script>
-    videoEl = $('<iframe id="' + mediaFormat + '" src="' + videoLink + '" width="960" height="549" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
-    // <iframe src="http://localhost:8888/tapestry/wordpress/wp-admin/admin-ajax.php?action=h5p_embed&id=1" width="868" height="549" frameborder="0" allowfullscreen="allowfullscreen"></iframe><script src="http://localhost:8888/tapestry/wordpress/wp-content/plugins/h5p/h5p-php-library/js/h5p-resizer.js" charset="UTF-8"></script>
+    videoEl = $('<iframe id="' + mediaFormat + '" src="' + videoLink + '" width="' + width + '" height="' + height + '" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
 
     var index = findNodeIndex(id);
     var viewedAmount;
