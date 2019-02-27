@@ -715,60 +715,92 @@ function setupVideo(id, mediaFormat, mediaType, videoLink) {
     // Add the loading gif
     $(buttonElementId).addClass('mediaButtonLoading');
 
+    var index = findNodeIndex(id);
+    var viewedAmount;
+
     //Add videoplayer TODO: Make tag flexible between iframe and video
     var videoEl;
     if (mediaFormat === "mp4") {
         videoEl = $('<video id="' + mediaFormat + '" class="video-player" controls><source id="video-source" src="' + videoLink + '" type="video/mp4"><\/video>');
-    } else if (mediaFormat === "youtube") {
-        videoEl = $('<iframe id="' + mediaFormat + '" class="iframe-player" src="' + videoLink + '" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen><\/iframe>');
+        var video = videoEl[0];
+        video.addEventListener('loadedmetadata', function () {
+            //Update the mediaButton according to play/pause state
+            video.addEventListener('play', function () {
+                $(buttonElementId).removeAttr('style');
+                $(buttonElementId).attr('class', 'fas fa-pause-circle');
+            });
+            video.addEventListener('pause', function () {
+                var iconName;
+                if (mediaType === "video") {
+                    iconName = "fa-play-circle";
+                } else {
+                    iconName = "fa-exclamation-circle";
+                }
+                $(buttonElementId).attr('class', 'fas ' + iconName);
+            });
+    
+            // Determining where to start the video
+            viewedAmount = dataset.nodes[index].typeData.progress[0].value * video.duration;
+            if (viewedAmount > 0) {
+                if (viewedAmount !== video.duration) {
+                    video.currentTime = viewedAmount;
+                } else video.currentTime = 0; //start from beginning again if person had already viewed whole video through
+            }
+            else {
+                video.currentTime = 0;
+            }
+        }, false);
+
+        // Update the viewedAmount of that video
+        video.addEventListener('timeupdate', function () {
+            if (video.played.length > 0 && viewedAmount < video.currentTime) {
+                updateViewedValue(id, video.currentTime, video.duration);
+                updateViewedProgress();
+            }
+        });
+
     } else if (mediaFormat === "h5p") {
         videoEl = $('<iframe id="' + mediaFormat + '" src="' + videoLink + '" width="960" height="540" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
-
-        // Script provided by H5P for resizing the media player to fit the container
-        // '<script src="https://h5p.org/sites/all/modules/h5p/library/js/h5p-resizer.js" charset="UTF-8"></script>');
-    }
-
-    var index = findNodeIndex(id);
-    var viewedAmount;
-
-    var video = videoEl[0];
-
-    // Play video starting from the amount already viewed
-    video.addEventListener('loadedmetadata', function () {
-        //Update the mediaButton according to play/pause state
-        video.addEventListener('play', function () {
-            $(buttonElementId).removeAttr('style');
-            $(buttonElementId).attr('class', 'fas fa-pause-circle');
-        });
-        video.addEventListener('pause', function () {
-            var iconName;
-            if (mediaType === "video") {
-                iconName = "fa-play-circle";
-            } else {
-                iconName = "fa-exclamation-circle";
+        var video = videoEl[0];
+        video.addEventListener('load', function() {
+            var iframeH5P = document.getElementById('h5p').contentWindow.H5P;
+            var iframeVideo = iframeH5P.instances[0].video;
+    
+            // Determining where to start the video FOR H5P ONLY
+            viewedAmount = dataset.nodes[index].typeData.progress[0].value * video.duration;
+            if (viewedAmount > 0) {
+                if (viewedAmount !== iframeVideo.getDuration()) {
+                    iframeVideo.updateCurrentTime(viewedAmount);
+                } else iframeVideo.updateCurrentTime(viewedAmount); //start from beginning again if person had already viewed whole video through
             }
-            $(buttonElementId).attr('class', 'fas ' + iconName);
+            else {
+                video.currentTime = 1;
+            }
+    
+            iframeVideo.on('stateChanged', function (event) {
+                switch (event.data) {
+                    case iframeH5P.Video.PLAYING:
+                        $(buttonElementId).removeAttr('style');
+                        $(buttonElementId).attr('class', 'fas fa-pause-circle');
+                        break;
+    
+                    case iframeH5P.Video.PAUSED:
+                        var iconName;
+                        if (mediaType === "video") {
+                            iconName = "fa-play-circle";
+                        } else {
+                            iconName = "fa-exclamation-circle";
+                        }
+                        $(buttonElementId).attr('class', 'fas ' + iconName);
+                        break;
+    
+                    case iframeH5P.Video.BUFFERING:
+                        $(buttonElementId).addClass('mediaButtonLoading');
+                        break;
+                }
+            }, false);
         });
-
-        // Determining where to start the video
-        viewedAmount = dataset.nodes[index].typeData.progress[0].value * video.duration;
-        if (viewedAmount > 0) {
-            if (viewedAmount !== video.duration) {
-                video.currentTime = viewedAmount;
-            } else video.currentTime = 0; //start from beginning again if person had already viewed whole video through
-        }
-        else {
-            video.currentTime = 0;
-        }
-    }, false);
-
-    // Update the viewedAmount of that video
-    video.addEventListener('timeupdate', function () {
-        if (video.played.length > 0 && viewedAmount < video.currentTime) {
-            updateViewedValue(id, video.currentTime, video.duration);
-            updateViewedProgress();
-        }
-    });
+    }
 
     return videoEl;
 }
