@@ -555,12 +555,11 @@ function buildPathAndButton() {
         })
         .attr("class", "mediaButton");
 
-
     $('.mediaButton > i').click(function(){
         var thisBtn = $(this)[0];
         setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
-        });
-    }
+    });
+}
 
 function rebuildLinks() {
     links = d3.selectAll("line")
@@ -633,7 +632,7 @@ function adjustProgressBarRadii(d) {
 function setupLightbox(id, mediaFormat, mediaType, videoLink, width, height) {
 
     // TODO: Add in close button and add a listener for it here
-    $('#video').attr("onclick", "closeLightbox(" + id + "," + mediaType +")");
+    $('#iframe').attr("onclick", "closeLightbox(" + id + ")");
 
     var resizeRatio = 1;
     if (width > BROWSER_WIDTH) {
@@ -641,6 +640,8 @@ function setupLightbox(id, mediaFormat, mediaType, videoLink, width, height) {
         width *= resizeRatio;
         height *= resizeRatio;
     }
+
+    // Possibly interfering with the resizer
     if (height > BROWSER_HEIGHT * resizeRatio) {
         resizeRatio *= BROWSER_HEIGHT / height;
         width *= resizeRatio;
@@ -696,13 +697,13 @@ function setupLightbox(id, mediaFormat, mediaType, videoLink, width, height) {
         window.setTimeout(function(){
             height = $('#spotlight-content > iframe').outerHeight();
             width = $('#spotlight-content > iframe').outerWidth();
-        
+
             $('#spotlight-content').css({
                 width: width,
                 height: height,
                 transitionDuration: "0.2s"
             });
-        }, 1000);
+        }, 2000);
         window.setTimeout(function(){
             $('#spotlight-content').css({
                 transitionDuration: "1s"
@@ -757,11 +758,12 @@ function setupVideo(id, mediaFormat, mediaType, videoLink, width, height) {
     var index = findNodeIndex(id);
     var viewedAmount;
 
-    //Add videoplayer TODO: Make tag flexible between iframe and video
     var videoEl;
+
     if (mediaFormat === "mp4") {
         videoEl = $('<video id="' + mediaFormat + '" class="video-player" controls><source id="video-source" src="' + videoLink + '" type="video/mp4"><\/video>');
         var video = videoEl[0];
+
         video.addEventListener('loadedmetadata', function () {
             //Update the mediaButton according to play/pause state
             video.addEventListener('play', function () {
@@ -789,7 +791,7 @@ function setupVideo(id, mediaFormat, mediaType, videoLink, width, height) {
                 video.currentTime = 0;
             }
         }, false);
-
+        
         // Update the viewedAmount of that video
         video.addEventListener('timeupdate', function () {
             if (video.played.length > 0 && viewedAmount < video.currentTime) {
@@ -797,32 +799,55 @@ function setupVideo(id, mediaFormat, mediaType, videoLink, width, height) {
                 updateViewedProgress();
             }
         });
-
+        
     } else if (mediaFormat === "h5p") {
         videoEl = $('<iframe id="' + mediaFormat + '" src="' + videoLink + '" width="' + width + '" height="' + height + '" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
         var video = videoEl[0];
+
+        // Play video starting from the amount already viewed
         video.addEventListener('load', function() {
             var iframeH5P = document.getElementById('h5p').contentWindow.H5P;
             var iframeVideo = iframeH5P.instances[0].video;
-    
+
             // Determining where to start the video FOR H5P ONLY
-            viewedAmount = dataset.nodes[index].typeData.progress[0].value * video.duration;
-            if (viewedAmount > 0) {
-                if (viewedAmount !== iframeVideo.getDuration()) {
-                    iframeVideo.updateCurrentTime(viewedAmount);
-                } else iframeVideo.updateCurrentTime(viewedAmount); //start from beginning again if person had already viewed whole video through
-            }
-            else {
-                video.currentTime = 1;
-            }
-    
-            iframeVideo.on('stateChanged', function (event) {
+            var videoDuration = dataset.nodes[index].mediaDuration;                 // Duration of the entire video, in seconds
+            var videoProgress = dataset.nodes[index].typeData.progress[0].value;    // Percentage of the video already watched
+            var seeked = false;
+            var currentPlayedTime;
+
+            iframeVideo.play();
+
+            iframeVideo.on('stateChange', function (event) {
+                // For intermittently updating and storing the currently viewed value
+                // Done with an interval because H5P does not have a way to continuously check the updated time
+                var updateVideoDuration = setInterval( function () {
+                    if (currentPlayedTime != iframeVideo.getCurrentTime() && iframeVideo.getCurrentTime() > 1) {
+                        currentPlayedTime = iframeVideo.getCurrentTime();
+                        updateViewedValue(id, currentPlayedTime, videoDuration);
+                        updateViewedProgress();
+                    }
+                    else {
+                        clearInterval(updateVideoDuration);
+                    }
+                }, 300);
+
                 switch (event.data) {
                     case iframeH5P.Video.PLAYING:
-                        $(buttonElementId).removeAttr('style');
-                        $(buttonElementId).attr('class', 'fas fa-pause-circle');
+                        // Seek to currently played amount after opening the video
+                        if (!seeked) {
+                            var viewedAmount = videoProgress * videoDuration;
+                            if (viewedAmount > 0) {
+                                if (viewedAmount !== videoDuration) {
+                                    iframeVideo.seek(viewedAmount);
+                                }
+                                else iframeVideo.seek(0); //start from beginning again if person had already viewed whole video through
+                            }
+                            else {
+                                iframeVideo.seek(0);
+                            }
+                            seeked = true;
+                        }
                         break;
-    
                     case iframeH5P.Video.PAUSED:
                         var iconName;
                         if (mediaType === "video") {
@@ -832,13 +857,12 @@ function setupVideo(id, mediaFormat, mediaType, videoLink, width, height) {
                         }
                         $(buttonElementId).attr('class', 'fas ' + iconName);
                         break;
-    
                     case iframeH5P.Video.BUFFERING:
                         $(buttonElementId).addClass('mediaButtonLoading');
                         break;
                 }
-            }, false);
-        });
+            });
+        }, false);
     }
 
     return videoEl;
@@ -1076,25 +1100,18 @@ function setLinkTypes(rootId) {
 
 })();
 
-function closeLightbox(id, mediaType) {
-    // Return to play button
-
+function closeLightbox(id) {
     //TODO: Extract this into a helper function instead; Used idn 3 places
-    var iconName;
-    if (mediaType === "video") {
-        iconName = "fa-play-circle";
-    } else {
-        iconName = "fa-exclamation-circle";
-    }
+    var iconName = "fa-play-circle";
     document.getElementById("mediaButtonIcon" + id).className = "fas " + iconName;
     $('#spotlight-content').css('opacity', 0);
     $('.lightbox').show().css('opacity', 0);
     setTimeout(function () {
         $('#spotlight-content').remove();
-        $('#video').hide();
+        $('#iframe').hide();
         //Remove the video player
         //TODO: Make interchangeable with other forms of media
-        $("#mp4").remove();
+        $('#h5p').remove();
     }, 1000);
 }
 
