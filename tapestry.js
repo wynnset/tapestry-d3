@@ -5,6 +5,7 @@
  ****************************************************/
 
 const // declared
+    TAPESTRY_CONTAINER_ID = "tapestry",
     PROGRESS_THICKNESS = 20,
     LINK_THICKNESS = 10,
     NORMAL_RADIUS = 140,
@@ -16,97 +17,88 @@ const // declared
     COLOR_LINK = "#666";
 
 const // calculated
-    BROWSER_WIDTH = Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
-    BROWSER_HEIGHT = Math.max(document.documentElement.clientHeight, window.innerHeight || 0) * 0.8,
-    ASPECT_RATIO = BROWSER_WIDTH / BROWSER_HEIGHT,
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
     INNER_RADIUS = NORMAL_RADIUS - (PROGRESS_THICKNESS / 2),
     OUTER_RADIUS = NORMAL_RADIUS + (PROGRESS_THICKNESS / 2);
 
-var dataset, root, svg, svgScale, links, nodes,   // Basics
+var dataset, root, svg, links, nodes,             // Basics
     path, pieGenerator, arcGenerator,             // Donut
     linkForce, collideForce, force,               // Force
-    tapestryWidth, tapestryHeight,
-    saveProgressToCookie = false,
-    NODE_IMAGE_HEIGHT = 350,
-    NODE_IMAGE_WIDTH = 700,
-    ROOT_NODE_IMAGE_HEIGHT_DIFF = 70;
+    tapestrySlug, saveProgressToCookie = false,   // Cookie
+    nodeImageHeight = 350,
+    nodeImageWidth = 700,
+    rootNodeImageHeightDiff = 70;
 
 /****************************************************
  * INITIALIZATION
  ****************************************************/
 
-//---------------------------------------------------
-// 1. GET THE DATA READY
-//---------------------------------------------------
-
-// Import data from json file, then start D3
+/* Import data from json file, then start D3 */
 $.getJSON('tapestry.json', function(result){
-    
+
     dataset = result;
+
+    //---------------------------------------------------
+    // 1. GET PROGRESS FROM COOKIE (IF ENABLED)
+    //---------------------------------------------------
+
+    tapestrySlug = dataset.settings.tapestrySlug;
     
     if (saveProgressToCookie) {
         // Update dataset with data from cookie (if any)
-        var cookieProgress = Cookies.get("progress-data-"+TAPESTRY_SLUG);
+        var cookieProgress = Cookies.get("progress-data-"+tapestrySlug);
         if (cookieProgress !== undefined) {
             cookieProgress = JSON.parse( cookieProgress );
             setDatasetProgress(cookieProgress);
         }
     }
+
+    //---------------------------------------------------
+    // 2. SIZE AND SCALE THE TAPESTRY AND SVG TO FIT WELL
+    //---------------------------------------------------
+
+    function updateTapestrySize() {
+
+        var nodeDimensions = getNodesDimensions(dataset);
     
-    var maxPointX = 0;
-    var maxPointY = 0;
-    for (var index in dataset.nodes) {
-        
-        // save max point so we can calculate our tapestry width and height
-        if (dataset.nodes[index].fx > maxPointX) {
-            maxPointX = dataset.nodes[index].fx;
-        }
-        if (dataset.nodes[index].fy > maxPointY) {
-            maxPointY = dataset.nodes[index].fy;
+        // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
+        // For example, vertically long tapestries should be transposed so they are horizontally long on desktop,
+        // but kept the same way on mobile phones where the browser is vertically longer
+        var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
+        var windowAspectRatio = getAspectRatio();
+        if (tapestryAspectRatio > 1 && windowAspectRatio < 1 || tapestryAspectRatio < 1 && windowAspectRatio > 1) {
+            transposeNodes();
         }
         
-        // make the graph vertical if aspect ratio is portrait
-        if (ASPECT_RATIO < 1) {
-            var temp_fx = dataset.nodes[index].fy;
-            dataset.nodes[index].fy = dataset.nodes[index].fx;
-            dataset.nodes[index].fx = temp_fx;
-        }
+        // Update svg dimensions to the new dimensions of the browser
+        updateSvgDimensions(TAPESTRY_CONTAINER_ID);
     }
-    if (ASPECT_RATIO < 1) {
-        var maxPointSwap = maxPointX;
-        maxPointX = maxPointY;
-        maxPointY = maxPointX;
-    }
+
+    // do it now
+    updateTapestrySize();
+    // also do it whenever window is resized
+    $(window).resize(function(){
+        updateTapestrySize();
+    });
         
+    //---------------------------------------------------
+    // 3. SET NODES/LINKS AND CREATE THE SVG OBJECTS
+    //---------------------------------------------------
+    
     root = dataset.rootId,
     
     setNodeTypes(dataset.rootId);
     setLinkTypes(dataset.rootId);
-        
-    //---------------------------------------------------
-    // 2. CREATE THE SVG OBJECTS
-    //---------------------------------------------------
-    
+
     if (dataset.settings !== undefined && dataset.settings.thumbDiff !== undefined) {
-        NODE_IMAGE_HEIGHT += dataset.settings.thumbDiff;
-        ROOT_NODE_IMAGE_HEIGHT_DIFF += dataset.settings.thumbDiff;
+        nodeImageHeight += dataset.settings.thumbDiff;
+        rootNodeImageHeightDiff += dataset.settings.thumbDiff;
     }
     if (dataset.settings !== undefined && dataset.settings.thumbRootDiff !== undefined) {
-        ROOT_NODE_IMAGE_HEIGHT_DIFF += dataset.settings.thumbRootDiff;
+        rootNodeImageHeightDiff += dataset.settings.thumbRootDiff;
     }
     
-    svgScale = 1;
-    if (dataset.settings !== undefined && dataset.settings.zoom !== undefined) {
-        svgScale *= dataset.settings.zoom;
-    }
-    if (window.devicePixelRatio !== undefined && window.devicePixelRatio > 1.5) {
-        svgScale *= (window.devicePixelRatio/1.5);
-    }
-    tapestryWidth = (maxPointX + (NORMAL_RADIUS + ROOT_RADIUS_DIFF)*2) *  svgScale;
-    tapestryHeight = (maxPointY + (NORMAL_RADIUS + ROOT_RADIUS_DIFF)*2) * svgScale;
-    
-    svg = createSvgContainer("tapestry");
+    svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
     links = createLinks();
     nodes = createNodes();
     
@@ -115,7 +107,7 @@ $.getJSON('tapestry.json', function(result){
     buildNodeContents();
     
     //---------------------------------------------------
-    // 3. START THE FORCED GRAPH
+    // 4. START THE FORCED GRAPH
     //---------------------------------------------------
     
     startForce();
@@ -128,6 +120,9 @@ $.getJSON('tapestry.json', function(result){
 
 /* Define forces that will determine the layout of the graph */
 function startForce() {
+
+    var tapestryDimensions = getTapestryDimensions();
+
     linkForce = d3.forceLink()
         .id(function (d) {
             return d.id;
@@ -142,7 +137,7 @@ function startForce() {
         .force("link", linkForce)
         .force('collide', collideForce)
         .force("charge", d3.forceManyBody().strength(-5000))
-        .force('center', d3.forceCenter(tapestryWidth / 2, tapestryHeight / 2));
+        .force('center', d3.forceCenter(tapestryDimensions['width'] / 2, tapestryDimensions['height'] / 2));
 
     force
         .nodes(dataset.nodes)
@@ -168,35 +163,37 @@ function resizeNodes(id) {
 }
 
 function ticked() {
+    var tapestryDimensions = getTapestryDimensions();
     links
         .attr("x1", function (d) {
-            return getBoundedCoord(d.source.x, tapestryWidth);
+            return getBoundedCoord(d.source.x, tapestryDimensions['width']);
         })
         .attr("y1", function (d) {
-            return getBoundedCoord(d.source.y, tapestryHeight);
+            return getBoundedCoord(d.source.y, tapestryDimensions['height']);
         })
         .attr("x2", function (d) {
-            return getBoundedCoord(d.target.x, tapestryWidth);
+            return getBoundedCoord(d.target.x, tapestryDimensions['width']);
         })
         .attr("y2", function (d) {
-            return getBoundedCoord(d.target.y, tapestryHeight);
+            return getBoundedCoord(d.target.y, tapestryDimensions['height']);
         });
     nodes
         .attr("cx", function (d) {
-            return getBoundedCoord(d.x, tapestryWidth);
+            return getBoundedCoord(d.x, tapestryDimensions['width']);
         })
         .attr("cy", function (d) {
-            return getBoundedCoord(d.y, tapestryHeight);
+            return getBoundedCoord(d.y, tapestryDimensions['height']);
         })
         .attr("transform", function (d) {
-            return "translate(" + getBoundedCoord(d.x, tapestryWidth) + "," + getBoundedCoord(d.y, tapestryHeight) + ")";
+            return "translate(" + getBoundedCoord(d.x, tapestryDimensions['width']) + "," + getBoundedCoord(d.y, tapestryDimensions['height']) + ")";
         });
 }
 
 function dragstarted(d) {
+    var tapestryDimensions = getTapestryDimensions();
     if (!d3.event.active) force.alphaTarget(0.2).restart();
-    d.fx = getBoundedCoord(d.x, tapestryWidth);
-    d.fy = getBoundedCoord(d.y, tapestryHeight);
+    d.fx = getBoundedCoord(d.x, tapestryDimensions['width']);
+    d.fy = getBoundedCoord(d.y, tapestryDimensions['height']);
 }
 
 function dragged(d) {
@@ -212,12 +209,21 @@ function dragended(d) {
 }
 
 function createSvgContainer(containerId) {
+    var tapestryDimensions = getTapestryDimensions();
     return d3.select("#"+containerId)
                 .append("svg:svg")
-                .attr("viewBox", "0 0 " + tapestryWidth + " " + tapestryHeight)
+                .attr("id", containerId+"-svg")
+                .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g")
                 .attr("transform", "translate(-20, 0)");
+}
+
+function updateSvgDimensions(containerId) {
+    var tapestryDimensions = getTapestryDimensions();
+    d3.select("#"+containerId+"-svg")
+        .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height']);
+    startForce();
 }
 
 function createLinks() {
@@ -387,10 +393,10 @@ function buildNodeContents() {
         .append("image")
         .attr("height", function (d) {
             if (d.nodeType === "root") {
-                return NODE_IMAGE_HEIGHT + ROOT_NODE_IMAGE_HEIGHT_DIFF;
-            } else return NODE_IMAGE_HEIGHT;
+                return nodeImageHeight + rootNodeImageHeightDiff;
+            } else return nodeImageHeight;
         })
-        .attr("width", NODE_IMAGE_WIDTH)
+        .attr("width", nodeImageWidth)
         .attr("x", 0)
         .attr("y", 0)
         .attr("preserveAspectRatio", "xMinYMin")
@@ -472,8 +478,8 @@ function rebuildNodeContents() {
             .duration(TRANSITION_DURATION)
             .attr("height", function (d) {
                 if (d.nodeType === "root") {
-                    return NODE_IMAGE_HEIGHT + ROOT_NODE_IMAGE_HEIGHT_DIFF;
-                } else return NODE_IMAGE_HEIGHT;
+                    return nodeImageHeight + rootNodeImageHeightDiff;
+                } else return nodeImageHeight;
             });
 
     // Remove elements and add them back in
@@ -634,8 +640,8 @@ function setupLightbox(id, mediaFormat, thumbUrl, videoLink) {
 
     // TODO: make the lightbox size responsive and do not hardcode the values
 
-    var topPos = (BROWSER_HEIGHT - 540) / 2;
-    var leftPos = (BROWSER_WIDTH - 960) / 2;
+    var topPos = (getBrowserHeight() - 540) / 2;
+    var leftPos = (getBrowserWidth() - 960) / 2;
 
     // Get the width & height of the node
     var spotlightWidth = NORMAL_RADIUS;
@@ -733,6 +739,71 @@ function setupVideo(id, mediaFormat, videoLink) {
  * HELPER FUNCTIONS
  ****************************************************/
 
+// Get width, height, and aspect ratio of viewable region
+function getBrowserWidth() {
+    return Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+}
+function getBrowserHeight() {
+    return Math.max(document.documentElement.clientHeight, window.innerHeight || 0) * 0.8;
+}
+function getAspectRatio() {
+    var browserHeight = getBrowserHeight();
+    var browserWidth = getBrowserWidth();
+    if (browserHeight < 10 ) {
+        return 0;
+    }
+    else {
+        return browserWidth / browserHeight;
+    }
+}
+
+function getNodesDimensions(dataset) {
+    var maxPointX = 0;
+    var maxPointY = 0;
+    for (var index in dataset.nodes) {
+        
+        // save max point so we can calculate our tapestry width and height
+        if (dataset.nodes[index].fx > maxPointX) {
+            maxPointX = dataset.nodes[index].fx;
+        }
+        if (dataset.nodes[index].fy > maxPointY) {
+            maxPointY = dataset.nodes[index].fy;
+        }
+    }
+
+    return {
+        'x': maxPointX + MAX_RADIUS,
+        'y': maxPointY + MAX_RADIUS
+    };
+}
+
+function getTapestryDimensions() {
+
+    var nodeDimensions = getNodesDimensions(dataset);
+    var tapestryWidth = nodeDimensions['x'];
+    var tapestryHeight = nodeDimensions['y'];
+
+    var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
+    var tapestryBrowserRatio = tapestryWidth / getBrowserWidth();
+
+    if (tapestryHeight > getBrowserHeight() && tapestryAspectRatio < 1) {
+        tapestryWidth *= tapestryHeight/getBrowserHeight() / tapestryBrowserRatio;
+    }
+
+    return {
+        'width': tapestryWidth,
+        'height': tapestryHeight
+    };
+}
+
+function transposeNodes() {
+    for (var index in dataset.nodes) {
+        var temp_fx = dataset.nodes[index].fy;
+        dataset.nodes[index].fy = dataset.nodes[index].fx;
+        dataset.nodes[index].fx = temp_fx;
+    }
+}
+
 // Finds the node index with node ID
 function findNodeIndex(id) {
     function helper(obj) {
@@ -807,7 +878,7 @@ function updateViewedValue(id, amountViewedTime, duration) {
 
     if (saveProgressToCookie) {
         var progressObj = JSON.stringify(getDatasetProgress());
-        Cookies.set("progress-data"+TAPESTRY_SLUG, progressObj);
+        Cookies.set("progress-data"+tapestrySlug, progressObj);
     }
 }
 
