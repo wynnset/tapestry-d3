@@ -21,7 +21,9 @@
                     {"group": "viewed", "value": 0},
                     {"group": "unviewed", "value": 1}
                 ],
-                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/MAIN.mp4"
+                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/MAIN.mp4",
+                "mediaWidth": 960,
+                "mediaHeight": 600
             },
             "fx": 800,
             "fy": 470
@@ -40,7 +42,9 @@
                     {"group": "viewed", "value": 0},
                     {"group": "unviewed", "value": 1}
                 ],
-                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/SEG-HOMPH.mp4"
+                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/SEG-HOMPH.mp4",
+                "mediaWidth": 960,
+                "mediaHeight": 600
             },
             "fx": 450,
             "fy": 150
@@ -59,7 +63,9 @@
                     {"group": "viewed", "value": 0},
                     {"group": "unviewed", "value": 1}
                 ],
-                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/CT-AND-MINORITIES.mp4"
+                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/CT-AND-MINORITIES.mp4",
+                "mediaWidth": 960,
+                "mediaHeight": 600
             },
             "fx": 450,
             "fy": 700
@@ -78,7 +84,9 @@
                     {"group": "viewed", "value": 0},
                     {"group": "unviewed", "value": 1}
                 ],
-                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/CT-DEFINING-MINORITIES.mp4"
+                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/CT-DEFINING-MINORITIES.mp4",
+                "mediaWidth": 960,
+                "mediaHeight": 600
             },
             "fx": 100,
             "fy": 470
@@ -97,7 +105,9 @@
                     {"group": "viewed", "value": 0},
                     {"group": "unviewed", "value": 1}
                 ],
-                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/CT.mp4"
+                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/CT.mp4",
+                "mediaWidth": 960,
+                "mediaHeight": 600
             },
             "fx": 1200,
             "fy": 470
@@ -116,7 +126,9 @@
                     {"group": "viewed", "value": 0},
                     {"group": "unviewed", "value": 1}
                 ],
-                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/COLORBLIND-VS-RACE-ACK.mp4"
+                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/COLORBLIND-VS-RACE-ACK.mp4",
+                "mediaWidth": 960,
+                "mediaHeight": 600
             },
             "fx": 1550,
             "fy": 150
@@ -135,7 +147,9 @@
                     {"group": "viewed", "value": 0},
                     {"group": "unviewed", "value": 1}
                 ],
-                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/STRUCTURED-CONVERSATIONS.mp4"
+                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/STRUCTURED-CONVERSATIONS.mp4",
+                "mediaWidth": 960,
+                "mediaHeight": 600
             },
             "fx": 1880,
             "fy": 470
@@ -154,7 +168,9 @@
                     {"group": "viewed", "value": 0},
                     {"group": "unviewed", "value": 1}
                 ],
-                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/HOW-IT-WORKS.mp4"
+                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/HOW-IT-WORKS.mp4",
+                "mediaWidth": 960,
+                "mediaHeight": 600
             },
             "fx": 1550,
             "fy": 700
@@ -173,7 +189,9 @@
                     {"group": "viewed", "value": 0},
                     {"group": "unviewed", "value": 1}
                 ],
-                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/PERSPECTIVE-EMPATHY.mp4"
+                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/PERSPECTIVE-EMPATHY.mp4",
+                "mediaWidth": 960,
+                "mediaHeight": 600
             },
             "fx": 2100,
             "fy": 700
@@ -192,7 +210,9 @@
                     {"group": "viewed", "value": 0},
                     {"group": "unviewed", "value": 1}
                 ],
-                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/PT-AND-CT.mp4"
+                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/PT-AND-CT.mp4",
+                "mediaWidth": 960,
+                "mediaHeight": 600
             },
             "fx": 2100,
             "fy": 150
