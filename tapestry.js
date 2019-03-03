@@ -25,8 +25,8 @@ var dataset, root, svg, links, nodes,             // Basics
     path, pieGenerator, arcGenerator,             // Donut
     linkForce, collideForce, force,               // Force
     tapestrySlug, saveProgressToCookie = false,   // Cookie
-    nodeImageHeight = 350,
-    nodeImageWidth = 700,
+    nodeImageHeight = 400,
+    nodeImageWidth = 800,
     rootNodeImageHeightDiff = 70;
 
 /****************************************************
@@ -34,7 +34,7 @@ var dataset, root, svg, links, nodes,             // Basics
  ****************************************************/
 
 /* Import data from json file, then start D3 */
-$.getJSON('tapestry.json', function(result){
+$.getJSON( siteUrl + 'tapestry.json', function(result){
 
     dataset = result;
 
@@ -529,14 +529,15 @@ function buildPathAndButton() {
         })
         .append("svg:foreignObject")
         .html(function (d) {
-            var mediaURL = d.typeData.mediaURL;
-            var iconName;
-            if (d.mediaType === "video") {
-                iconName = "fa-play-circle";
-            } else {
-                iconName = "fa-exclamation-circle";
-            }
-            return '<i id="mediaButtonIcon' + d.id + '" class="fas ' + iconName + ' mediaButtonIcon" data-id="' + d.id + '" data-format="' + d.mediaFormat + '" data-thumb="' + d.imageURL + '" data-url="' + mediaURL + '" data-media-width="' + d.typeData.mediaWidth + '" data-media-height="' + d.typeData.mediaHeight + '"><\/i>';
+            return '<i id="mediaButtonIcon' + d.id + '"' + 
+                ' class="' + getMediaIconClass(d.mediaType, 'play') + ' mediaButtonIcon"' + 
+                ' data-id="' + d.id + '"' + 
+                ' data-format="' + d.mediaFormat + '"' + 
+                ' data-media-type="' + d.mediaType + '"' + 
+                ' data-thumb="' + d.imageURL + '"' + 
+                ' data-url="' + d.typeData.mediaURL + '"' + 
+                ' data-media-width="' + d.typeData.mediaWidth + '"' + 
+                ' data-media-height="' + d.typeData.mediaHeight + '"><\/i>';
         })
         .attr("id", function (d) {
             return "mediaButton" + d.id;
@@ -629,39 +630,23 @@ function adjustProgressBarRadii(d) {
  * MEDIA RELATED FUNCTIONS
  ****************************************************/
 
-function setupLightbox(id, mediaFormat, mediaType, videoLink, width, height) {
-
-    // TODO: Add in close button and add a listener for it here
-    $('#iframe').attr("onclick", "closeLightbox(" + id + ")");
+function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
 
     var resizeRatio = 1;
-    if (width > BROWSER_WIDTH) {
-        resizeRatio = BROWSER_WIDTH / width * 0.8;
+    if (width > getBrowserWidth()) {
+        resizeRatio = getBrowserWidth() / width * 0.8;
         width *= resizeRatio;
         height *= resizeRatio;
     }
 
     // Possibly interfering with the resizer
-    if (height > BROWSER_HEIGHT * resizeRatio) {
-        resizeRatio *= BROWSER_HEIGHT / height;
+    if (height > getBrowserHeight() * resizeRatio) {
+        resizeRatio *= getBrowserHeight() / height;
         width *= resizeRatio;
         height *= resizeRatio;
     }
 
-    var video = setupVideo(id, mediaFormat, mediaType, videoLink, width, height);
-
-    //For revealing the lightbox and video
-    $('.lightbox').css('display', 'block');
-    setTimeout(function () {
-        //$('.lightbox').css('opacity', 1);
-    }, 10);
-
-    var spPos = $('.imageOverlay[data-id=' + id + ']').position();
-
-    // TODO: make the lightbox size responsive and do not hardcode the values
-
-    var topPos = (getBrowserHeight() - 540) / 2;
-    var leftPos = (getBrowserWidth() - 960) / 2;
+    var media = setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height);
 
     // Get the width & height of the node
     var spotlightWidth = NORMAL_RADIUS;
@@ -670,9 +655,13 @@ function setupLightbox(id, mediaFormat, mediaType, videoLink, width, height) {
         spotlightWidth += ROOT_RADIUS_DIFF;
         spotlightHeight += ROOT_RADIUS_DIFF;
     }
-    //Set initial position for the node transition
-    $('<div id="spotlight-content"><\/div>').css({
-        position: "absolute",
+
+    // Set initial position for the node transition
+    var spPos = $('.imageOverlay[data-id=' + id + ']').position();
+    $('<div id="spotlight-overlay"><\/div>').on("click", function(){
+        closeLightbox(id, mediaType);
+    }).appendTo('body');
+    $('<div id="spotlight-content" data-media-format="' + mediaFormat + '"><\/div>').css({
         top: spPos.top,
         left: spPos.left,
         width: spotlightWidth - PROGRESS_THICKNESS,
@@ -683,20 +672,24 @@ function setupLightbox(id, mediaFormat, mediaType, videoLink, width, height) {
         distance: 8
       });
 
-    video.appendTo('#spotlight-content');
+    media.appendTo('#spotlight-content');
 
     $('#spotlight-content').css({
-        position: 'absolute',
-        top: ((BROWSER_HEIGHT - height) / 2) + $(this).scrollTop(),
-        left: (BROWSER_WIDTH - width) / 2,
+        top: ((getBrowserHeight() - height) / 2) + $(this).scrollTop(),
+        left: (getBrowserWidth() - width) / 2,
         width: width,
         height: height
     });
 
-    video.on('load', function() {
+    var loadEvent = 'load';
+    if (mediaFormat == "mp4") {
+        loadEvent = "loadstart";
+    }
+
+    media.on(loadEvent, function() {
         window.setTimeout(function(){
-            height = $('#spotlight-content > iframe').outerHeight();
-            width = $('#spotlight-content > iframe').outerWidth();
+            height = $('#spotlight-content > *').outerHeight();
+            width = $('#spotlight-content > *').outerWidth();
 
             $('#spotlight-content').css({
                 width: width,
@@ -710,162 +703,138 @@ function setupLightbox(id, mediaFormat, mediaType, videoLink, width, height) {
             });
         }, 200);
     });
-
-    var loadEventName;
-    if (mediaFormat === "mp4") {
-        loadEventName = "loadeddata";
-    } else if (mediaFormat === "youtube") {
-        loadEventName = "onloadeddata";
-    }
-    video[0].addEventListener(loadEventName, expandVideo(video, mediaFormat), false);
 }
 
-function expandVideo(video, mediaFormat) {
-    // TODO: make the lightbox size responsive and do not hardcode the values
-    var topPos = (BROWSER_HEIGHT - 540) / 2;
-    var leftPos = (BROWSER_WIDTH - 960) / 2;
-    
-    //Video is loaded and can be played
-    //Set the final position, size, and shape for the node transition
-    var imageWidth = video.width();
-    var imageHeight = video.height();
-    setTimeout(function () {
-        $('#spotlight-content').css({
-            width: imageWidth,
-            height: imageHeight,
-            top: topPos,
-            left: leftPos,
-            "box-shadow": "0 0 800px #000",
-            "border-radius": "0%",
-            "background-position": "0px 0px"
-        });
-
-        // auto-play video for mp4 only; Youtube uses a tag attached to the end of video link ("?autoplay=1")
-        if (mediaFormat === "mp4") {
-            setTimeout(function () {
-                video[0].play();
-            }, 1000);
-        }
-    }, 100);
-}
-
-function setupVideo(id, mediaFormat, mediaType, videoLink, width, height) {
+function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
 
     var buttonElementId = "#mediaButtonIcon" + id;
+
     // Add the loading gif
     $(buttonElementId).addClass('mediaButtonLoading');
 
     var index = findNodeIndex(id);
     var viewedAmount;
-
-    var videoEl;
+    var mediaEl;
 
     if (mediaFormat === "mp4") {
-        videoEl = $('<video id="' + mediaFormat + '" class="video-player" controls><source id="video-source" src="' + videoLink + '" type="video/mp4"><\/video>');
-        var video = videoEl[0];
+
+        mediaEl = $('<video id="' + mediaFormat + '" controls><source id="video-source" src="' + mediaUrl + '" type="video/mp4"><\/video>');
+        var video = mediaEl[0];
 
         video.addEventListener('loadedmetadata', function () {
-            //Update the mediaButton according to play/pause state
-            video.addEventListener('play', function () {
-                $(buttonElementId).removeAttr('style');
-                $(buttonElementId).attr('class', 'fas fa-pause-circle');
-            });
-            video.addEventListener('pause', function () {
-                var iconName;
-                if (mediaType === "video") {
-                    iconName = "fa-play-circle";
-                } else {
-                    iconName = "fa-exclamation-circle";
-                }
-                $(buttonElementId).attr('class', 'fas ' + iconName);
-            });
     
-            // Determining where to start the video
+            // Update the mediaButton icon to pause icon when video is playing
+            video.addEventListener('play', function () {
+                updateMediaIcon(id, mediaType, 'pause');
+            });
+            // Update the mediaButton icon to play icon when video is paused
+            video.addEventListener('pause', function () {
+                updateMediaIcon(id, mediaType, 'play');
+            });
+            
+            // Update the progress circle for this video
+            video.addEventListener('timeupdate', function () {
+                if (video.played.length > 0 && viewedAmount < video.currentTime) {
+                    updateViewedValue(id, video.currentTime, video.duration);
+                    updateViewedProgress();
+                }
+            });
+
+            // Play the video at the last watched time (or at the beginning if not watched yet)
+            // (start from beginning again if person had already viewed whole video)
             viewedAmount = dataset.nodes[index].typeData.progress[0].value * video.duration;
-            if (viewedAmount > 0) {
-                if (viewedAmount !== video.duration) {
-                    video.currentTime = viewedAmount;
-                } else video.currentTime = 0; //start from beginning again if person had already viewed whole video through
+            if (viewedAmount > 0 && viewedAmount !== video.duration) {
+                video.currentTime = viewedAmount;
             }
             else {
                 video.currentTime = 0;
             }
+
+            // Auto-play
+            setTimeout(function(){
+                video.play();
+            }, 1000);
+
         }, false);
         
-        // Update the viewedAmount of that video
-        video.addEventListener('timeupdate', function () {
-            if (video.played.length > 0 && viewedAmount < video.currentTime) {
-                updateViewedValue(id, video.currentTime, video.duration);
-                updateViewedProgress();
-            }
-        });
-        
     } else if (mediaFormat === "h5p") {
-        videoEl = $('<iframe id="' + mediaFormat + '" src="' + videoLink + '" width="' + width + '" height="' + height + '" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
-        var video = videoEl[0];
 
-        // Play video starting from the amount already viewed
-        video.addEventListener('load', function() {
-            var iframeH5P = document.getElementById('h5p').contentWindow.H5P;
-            var iframeVideo = iframeH5P.instances[0].video;
+        mediaEl = $('<iframe id="h5p" src="' + mediaUrl + '" width="' + width + '" height="' + height + '" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
+        var iframe = mediaEl[0];
 
-            // Determining where to start the video FOR H5P ONLY
-            var videoDuration = dataset.nodes[index].mediaDuration;                 // Duration of the entire video, in seconds
-            var videoProgress = dataset.nodes[index].typeData.progress[0].value;    // Percentage of the video already watched
-            var seeked = false;
-            var currentPlayedTime;
+        iframe.addEventListener('load', function() {
 
-            iframeVideo.play();
+            var h5pObj = document.getElementById('h5p').contentWindow.H5P;
+            var mediaProgress = dataset.nodes[index].typeData.progress[0].value;    // Percentage of the video already watched
 
-            iframeVideo.on('stateChange', function (event) {
-                // For intermittently updating and storing the currently viewed value
-                // Done with an interval because H5P does not have a way to continuously check the updated time
-                var updateVideoDuration = setInterval( function () {
-                    if (currentPlayedTime != iframeVideo.getCurrentTime() && iframeVideo.getCurrentTime() > 1) {
-                        currentPlayedTime = iframeVideo.getCurrentTime();
-                        updateViewedValue(id, currentPlayedTime, videoDuration);
-                        updateViewedProgress();
-                    }
-                    else {
-                        clearInterval(updateVideoDuration);
-                    }
-                }, 300);
+            // TODO: support other types of H5P content
+            if (mediaType == "video") {
 
-                switch (event.data) {
-                    case iframeH5P.Video.PLAYING:
-                        // Seek to currently played amount after opening the video
-                        if (!seeked) {
-                            var viewedAmount = videoProgress * videoDuration;
-                            if (viewedAmount > 0) {
-                                if (viewedAmount !== videoDuration) {
-                                    iframeVideo.seek(viewedAmount);
+                var h5pVideo = h5pObj.instances[0].video;
+                
+                var seeked = false;
+                var currentPlayedTime;
+
+                h5pVideo.on('stateChange', function (event) {
+
+                    switch (event.data) {
+                        case h5pObj.Video.PLAYING:
+
+                            var videoDuration = h5pVideo.getDuration();
+
+                            // Update the progress circle for this video
+                            // Done with an interval because H5P does not have a way to continuously check the updated time
+                            var updateVideoDuration = setInterval( function () {
+                                if (currentPlayedTime != h5pVideo.getCurrentTime() && h5pVideo.getCurrentTime() > 0) {
+                                    currentPlayedTime = h5pVideo.getCurrentTime();
+                                    updateViewedValue(id, currentPlayedTime, videoDuration);
+                                    updateViewedProgress();
                                 }
-                                else iframeVideo.seek(0); //start from beginning again if person had already viewed whole video through
+                                else {
+                                    clearInterval(updateVideoDuration);
+                                }
+                            }, 300);
+
+                            // Play the video at the last watched time (or at the beginning if not watched yet)
+                            // (start from beginning again if person had already viewed whole video)
+                            if (!seeked) {
+                                var viewedAmount = mediaProgress * videoDuration;
+                                if (viewedAmount > 0 && viewedAmount !== videoDuration) {
+                                    h5pVideo.seek(viewedAmount);
+                                }
+                                else {
+                                    h5pVideo.seek(0);
+                                }
+                                seeked = true;
                             }
-                            else {
-                                iframeVideo.seek(0);
-                            }
+
+                            // Update the mediaButton icon to pause icon
+                            updateMediaIcon(id, mediaType, 'pause');
+                            break;
+
+                        case h5pObj.Video.PAUSED:
+
+                            // Update the mediaButton icon to play icon
+                            updateMediaIcon(id, mediaType, 'play');
                             seeked = true;
-                        }
-                        break;
-                    case iframeH5P.Video.PAUSED:
-                        var iconName;
-                        if (mediaType === "video") {
-                            iconName = "fa-play-circle";
-                        } else {
-                            iconName = "fa-exclamation-circle";
-                        }
-                        $(buttonElementId).attr('class', 'fas ' + iconName);
-                        break;
-                    case iframeH5P.Video.BUFFERING:
-                        $(buttonElementId).addClass('mediaButtonLoading');
-                        break;
-                }
-            });
+                            break;
+
+                        case h5pObj.Video.BUFFERING:
+
+                            // Update the mediaButton icon to loading icon
+                            updateMediaIcon(id, mediaType, 'loading');
+                            break;
+                    }
+                });
+
+                // Auto-play
+                h5pVideo.play();
+            }
+
         }, false);
     }
 
-    return videoEl;
+    return mediaEl;
 }
 
 /****************************************************
@@ -877,7 +846,7 @@ function getBrowserWidth() {
     return Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
 }
 function getBrowserHeight() {
-    return Math.max(document.documentElement.clientHeight, window.innerHeight || 0) * 0.8;
+    return Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 }
 function getAspectRatio() {
     var browserHeight = getBrowserHeight();
@@ -1100,19 +1069,52 @@ function setLinkTypes(rootId) {
 
 })();
 
-function closeLightbox(id) {
-    //TODO: Extract this into a helper function instead; Used idn 3 places
-    var iconName = "fa-play-circle";
-    document.getElementById("mediaButtonIcon" + id).className = "fas " + iconName;
+function closeLightbox(id, mediaType) {
+    
+    updateMediaIcon(id, mediaType, 'play');
+
+    $('#spotlight-overlay').remove();
     $('#spotlight-content').css('opacity', 0);
-    $('.lightbox').show().css('opacity', 0);
+
+    // wait for css animation before removing it
     setTimeout(function () {
         $('#spotlight-content').remove();
-        $('#iframe').hide();
-        //Remove the video player
-        //TODO: Make interchangeable with other forms of media
-        $('#h5p').remove();
     }, 1000);
+}
+
+// Updates the icon for the given media button
+function updateMediaIcon(id, mediaType, action) {
+
+    var buttonElementId = "#mediaButtonIcon" + id;
+    var classStr = getMediaIconClass(mediaType, action);
+
+    $(buttonElementId).removeAttr('style');
+    $(buttonElementId).attr('class', classStr);
+}
+
+function getMediaIconClass(mediaType, action) {
+
+    var classStrStart = 'fas fa-';
+    var classStrEnd = '-circle';
+    var classStr = '';
+
+    switch (mediaType) {
+
+        case "video":
+            if (action == 'pause')
+                classStr = classStrStart + 'pause' + classStrEnd;
+            else if (action == 'loading')
+                classStr = 'mediaButtonLoading';
+            else
+                classStr = classStrStart + 'play' + classStrEnd;
+            break;
+            
+        default:
+            classStr = classStrStart + 'exclamation' + classStrEnd;
+            break;
+    }
+
+    return classStr;
 }
 
 // Wrap function specifically for SVG text
