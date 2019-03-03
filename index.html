@@ -21,24 +21,6 @@
     <h2>Intercultural Understanding</h2>
   </header>
   <div id="tapestry"></div>
-  <div class="lightbox"
-       id="video">
-    <div class="lightbox-container">
-      <div class="lightbox-content">
-        <button class="lightbox-close"
-             id="close-button">Close | ✕</button>
-        <div class="video-container"
-             id="video-container">
-          <!-- LATER: Support YouTube functionality-->
-          <!--        <iframe id="youtube" width="960" height="540" frameborder="0"
-        allow="autoplay; encrypted-media" allowfullscreen></iframe> -->
-          <!--         <video id="mp4" width="960" height="540" frameborder="0" controls>
-                  <source type="video/mp4"></source>
-                </video> -->
-        </div>
-      </div>
-    </div>
-  </div>
   <div id="instructions-wrapper">
     Instructions: Click nodes to explore. Click play icon to play a video.
   </div>
@@ -51,8 +33,13 @@
         type="application/javascript"></script> 
   <script src="./libs/d3.v5.min.js"
         type="application/javascript"></script> 
+  <script src="./libs/h5p-resizer.min.js"
+        type="application/javascript"></script> 
   <script src="./libs/jscookie.js"
         type="application/javascript"></script> 
+  <script type="application/javascript">
+  var siteUrl = "./";
+  </script> 
   <script src="./tapestry.js"
         type="application/javascript"></script>
 </body>
