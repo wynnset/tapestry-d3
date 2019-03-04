@@ -7,14 +7,16 @@
 const // declared
     TAPESTRY_CONTAINER_ID = "tapestry",
     PROGRESS_THICKNESS = 20,
-    LINK_THICKNESS = 10,
+    LINK_THICKNESS = 6,
     NORMAL_RADIUS = 140,
     ROOT_RADIUS_DIFF = 70,
     GRANDCHILD_RADIUS_DIFF = -100,
     TRANSITION_DURATION = 800,
     COLOR_STROKE = "#072d42",
     COLOR_GRANDCHILD = "#999",
-    COLOR_LINK = "#666";
+    COLOR_LINK = "#666",
+    COLOR_SECONDARY_LINK = "transparent",
+    CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;";
 
 const // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
@@ -25,8 +27,8 @@ var dataset, root, svg, links, nodes,             // Basics
     path, pieGenerator, arcGenerator,             // Donut
     linkForce, collideForce, force,               // Force
     tapestrySlug, saveProgressToCookie = false,   // Cookie
-    nodeImageHeight = 400,
-    nodeImageWidth = 800,
+    nodeImageHeight = 420,
+    nodeImageWidth = 420,
     rootNodeImageHeightDiff = 70;
 
 /****************************************************
@@ -111,7 +113,6 @@ $.getJSON( siteUrl + 'tapestry.json', function(result){
     //---------------------------------------------------
     
     startForce();
-
 });
 
 /****************************************************
@@ -155,7 +156,6 @@ function resizeNodes(id) {
     setLinkTypes(id);
     filterLinks();
 
-    rebuildLinks();
     rebuildNodeContents();
 
     /* Restart force */
@@ -202,10 +202,13 @@ function dragged(d) {
 }
 
 function dragended(d) {
-//    if (!d3.event.active) simulation.alphaTarget(0);
     if (!d3.event.active) force.alphaTarget(0);
     d.fx = d.x;
     d.fy = d.y;
+    
+    // Uncomment the line below to get the node positions saved into the container
+    // and then copy over to json file to have updated coordinates
+    // $('#h5p-log').text(JSON.stringify(dataset.nodes));
 }
 
 function createSvgContainer(containerId) {
@@ -216,7 +219,7 @@ function createSvgContainer(containerId) {
                 .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g")
-                .attr("transform", "translate(-20, 0)");
+                .attr("transform", "translate(-20, -20)");
 }
 
 function updateSvgDimensions(containerId) {
@@ -229,14 +232,24 @@ function updateSvgDimensions(containerId) {
 function createLinks() {
     /* Need to remove old links when redrawing graph */
     return svg.append("svg:g")
-               .attr("class", "links")
-               .selectAll("line")
-               .data(dataset.links)
-                  .enter()
+                .attr("class", "links")
+                .selectAll("line")
+                .data(dataset.links)
+                    .enter()
                     .append("line")
                     .attr("stroke", function (d) {
-                        if (d.type === "grandchild") return COLOR_GRANDCHILD;
+                        if (d.type === "grandchild") 
+                            return COLOR_GRANDCHILD;
+                        else if (d.secondary)
+                            return COLOR_SECONDARY_LINK;
                         else return COLOR_LINK;
+                    })
+                    .attr("style", function(d){
+                        if (d.type === "") 
+                            return "display: none"
+                        else if (d.optional)
+                            return CSS_OPTIONAL_LINK;
+                        else return "";
                     })
                     .attr("stroke-width", LINK_THICKNESS);
 }
@@ -244,8 +257,8 @@ function createLinks() {
 function createNodes() {
     /* Need to remove old nodes when redrawing graph */
     return svg.selectAll("g.node")
-              .data(dataset.nodes)
-              .enter()
+                .data(dataset.nodes)
+                .enter()
                 .append("svg:g")
                     .attr("class", "node")
                     .attr("id", function (d) {
@@ -368,7 +381,11 @@ function buildNodeContents() {
             return PROGRESS_THICKNESS;
         })
         .attr("r", function (d) {
-            return getRadius(d);
+            var rad = getRadius(d);
+            if (rad > PROGRESS_THICKNESS/2)
+                return rad - PROGRESS_THICKNESS/2;
+            else
+                return 0;
         })
         .attr("fill", function (d) {
             if (d.nodeType === "") 
@@ -413,7 +430,11 @@ function buildNodeContents() {
         .on("drag", dragged)
         .on("end", dragended))
         .on("click", function (d) {
-            resizeNodes(d.id);
+            // prevent multiple clicks
+            if (root != d.id) {
+                root = d.id;
+                resizeNodes(d.id);
+            }
         });
 }
 
@@ -421,9 +442,13 @@ function rebuildNodeContents() {
 
     nodes.selectAll(".imageOverlay")
             .transition()
-            .duration(TRANSITION_DURATION/3)
+            .duration(TRANSITION_DURATION/2)
             .attr("r", function (d) {
-                return getRadius(d);
+                var rad = getRadius(d);
+                if (rad > PROGRESS_THICKNESS/2)
+                    return rad - PROGRESS_THICKNESS/2;
+                else
+                    return 0;
             })
             .attr("fill", function (d) {
                 if (d.nodeType === "") 
@@ -472,8 +497,8 @@ function rebuildNodeContents() {
     
     /* Attach images to be used within each node */
     nodes.selectAll("defs")
-         .selectAll("pattern")
-         .selectAll("image")
+            .selectAll("pattern")
+            .selectAll("image")
             .transition()
             .duration(TRANSITION_DURATION)
             .attr("height", function (d) {
@@ -562,15 +587,6 @@ function buildPathAndButton() {
     });
 }
 
-function rebuildLinks() {
-    links = d3.selectAll("line")
-        .attr("stroke", function (d) {
-            if (d.type === "grandchild") return COLOR_GRANDCHILD;
-            else return COLOR_LINK;
-        })
-        .attr("stroke-width", LINK_THICKNESS);
-}
-
 function updateViewedProgress() {
     path = nodes
         .filter(function (d) {
@@ -648,38 +664,28 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
 
     var media = setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height);
 
-    // Get the width & height of the node
-    var spotlightWidth = NORMAL_RADIUS;
-    var spotlightHeight = NORMAL_RADIUS
-    if (id == root) {
-        spotlightWidth += ROOT_RADIUS_DIFF;
-        spotlightHeight += ROOT_RADIUS_DIFF;
-    }
-
-    // Set initial position for the node transition
-    var spPos = $('.imageOverlay[data-id=' + id + ']').position();
     $('<div id="spotlight-overlay"><\/div>').on("click", function(){
         closeLightbox(id, mediaType);
     }).appendTo('body');
     $('<div id="spotlight-content" data-media-format="' + mediaFormat + '"><\/div>').css({
-        top: spPos.top,
-        left: spPos.left,
-        width: spotlightWidth - PROGRESS_THICKNESS,
-        height: spotlightHeight - PROGRESS_THICKNESS
-    }).appendTo('body');
-    $('#spotlight-content').css('opacity', 1).draggable({
-        delay: 10,
-        distance: 8
-      });
-
-    media.appendTo('#spotlight-content');
-
-    $('#spotlight-content').css({
         top: ((getBrowserHeight() - height) / 2) + $(this).scrollTop(),
         left: (getBrowserWidth() - width) / 2,
         width: width,
-        height: height
+        height: height,
+        opacity: 0
+    }).appendTo('body');
+    $('#spotlight-content').draggable({
+        delay: 10,
+        distance: 8
     });
+
+    media.appendTo('#spotlight-content');
+
+    setTimeout(function(){
+        $('#spotlight-content').css({
+            opacity: 1
+        });
+    }, 1000);
 
     var loadEvent = 'load';
     if (mediaFormat == "mp4") {
@@ -828,7 +834,9 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
                 });
 
                 // Auto-play
-                h5pVideo.play();
+                setTimeout(function(){
+                    h5pVideo.play();
+                }, 1000);
             }
 
         }, false);
@@ -890,6 +898,12 @@ function getTapestryDimensions() {
 
     if (tapestryHeight > getBrowserHeight() && tapestryAspectRatio < 1) {
         tapestryWidth *= tapestryHeight/getBrowserHeight() / tapestryBrowserRatio;
+    }
+    
+    // Work-around for an issue on iPhone that zooms in the tapestry too much
+    if (getBrowserWidth() < 600) {
+        tapestryHeight *= 1.2;
+        tapestryWidth *= 1.2;
     }
 
     return {
@@ -980,7 +994,7 @@ function updateViewedValue(id, amountViewedTime, duration) {
 
     if (saveProgressToCookie) {
         var progressObj = JSON.stringify(getDatasetProgress());
-        Cookies.set("progress-data"+tapestrySlug, progressObj);
+        Cookies.set("progress-data-"+tapestrySlug, progressObj);
     }
 }
 
@@ -1117,9 +1131,12 @@ function getMediaIconClass(mediaType, action) {
     return classStr;
 }
 
+const FONT_ADJ = 1.25;
+
 // Wrap function specifically for SVG text
 // Found on https://bl.ocks.org/mbostock/7555321
 function wrapText(text, width) {
+    width /= FONT_ADJ;
     text.each(function (d) {
         var text = d3.select(this),
             words = text.text().split(/\s+/).reverse(),
@@ -1127,7 +1144,7 @@ function wrapText(text, width) {
             lines = [],
             currentLine = [],
             lineNumber = 0,
-            lineHeight = 1.1, // ems
+            lineHeight = 1.1 * FONT_ADJ, // ems
             tspan = text.text(null)
                 .append("tspan")
                 .attr("class", "line" + d.id)

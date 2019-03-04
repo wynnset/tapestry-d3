@@ -65,7 +65,7 @@ body {
     left: 5vw;
     height: 90vh;
     width: 90vw;
-    z-index: 2;
+    z-index: 100;
     background-position: 0 0;
     background-size: cover;
     opacity: 1;
