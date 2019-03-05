@@ -13,22 +13,23 @@ const // declared
     GRANDCHILD_RADIUS_DIFF = -100,
     TRANSITION_DURATION = 800,
     COLOR_STROKE = "#072d42",
-    COLOR_GRANDCHILD = "#999",
-    COLOR_LINK = "#666",
+    COLOR_GRANDCHILD = "#CCC",
+    COLOR_LINK = "#999",
     COLOR_SECONDARY_LINK = "transparent",
-    CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;";
+    CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
+    FONT_ADJUST = 1.25;
 
 const // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
     INNER_RADIUS = NORMAL_RADIUS - (PROGRESS_THICKNESS / 2),
     OUTER_RADIUS = NORMAL_RADIUS + (PROGRESS_THICKNESS / 2);
 
-var dataset, root, svg, links, nodes,             // Basics
-    path, pieGenerator, arcGenerator,             // Donut
-    linkForce, collideForce, force,               // Force
-    tapestrySlug, saveProgressToCookie = false,   // Cookie
+var dataset, root, svg, links, nodes,               // Basics
+    path, pieGenerator, arcGenerator,               // Donut
+    linkForce, collideForce, force,                 // Force
+    tapestrySlug, saveProgressToCookie = true,      // Cookie
     nodeImageHeight = 420,
-    nodeImageWidth = 420,
+    nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70;
 
 /****************************************************
@@ -36,7 +37,7 @@ var dataset, root, svg, links, nodes,             // Basics
  ****************************************************/
 
 /* Import data from json file, then start D3 */
-$.getJSON( siteUrl + 'tapestry.json', function(result){
+$.getJSON( jsonUrl, function(result){
 
     dataset = result;
 
@@ -113,6 +114,8 @@ $.getJSON( siteUrl + 'tapestry.json', function(result){
     //---------------------------------------------------
     
     startForce();
+
+    recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
 });
 
 /****************************************************
@@ -194,6 +197,8 @@ function dragstarted(d) {
     if (!d3.event.active) force.alphaTarget(0.2).restart();
     d.fx = getBoundedCoord(d.x, tapestryDimensions['width']);
     d.fy = getBoundedCoord(d.y, tapestryDimensions['height']);
+
+    recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
 function dragged(d) {
@@ -209,6 +214,8 @@ function dragended(d) {
     // Uncomment the line below to get the node positions saved into the container
     // and then copy over to json file to have updated coordinates
     // $('#h5p-log').text(JSON.stringify(dataset.nodes));
+
+    recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
 function createSvgContainer(containerId) {
@@ -435,6 +442,7 @@ function buildNodeContents() {
                 root = d.id;
                 resizeNodes(d.id);
             }
+            recordAnalyticsEvent('user', 'click', 'node', d.id);
         });
 }
 
@@ -584,6 +592,7 @@ function buildPathAndButton() {
     $('.mediaButton > i').click(function(){
         var thisBtn = $(this)[0];
         setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
+        recordAnalyticsEvent('user', 'open', 'lightbox', thisBtn.dataset.id);
     });
 }
 
@@ -732,10 +741,12 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
             // Update the mediaButton icon to pause icon when video is playing
             video.addEventListener('play', function () {
                 updateMediaIcon(id, mediaType, 'pause');
+                recordAnalyticsEvent('user', 'play', 'html5-video', id, {'time': video.currentTime});
             });
             // Update the mediaButton icon to play icon when video is paused
             video.addEventListener('pause', function () {
                 updateMediaIcon(id, mediaType, 'play');
+                recordAnalyticsEvent('user', 'pause', 'html5-video', id, {'time': video.currentTime});
             });
             
             // Update the progress circle for this video
@@ -759,6 +770,7 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
             // Auto-play
             setTimeout(function(){
                 video.play();
+                recordAnalyticsEvent('app', 'auto-play', 'html5-video', id);
             }, 1000);
 
         }, false);
@@ -816,6 +828,8 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
 
                             // Update the mediaButton icon to pause icon
                             updateMediaIcon(id, mediaType, 'pause');
+
+                            recordAnalyticsEvent('user', 'play', 'h5p-video', id, {'time': h5pVideo.getCurrentTime()});
                             break;
 
                         case h5pObj.Video.PAUSED:
@@ -823,6 +837,8 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
                             // Update the mediaButton icon to play icon
                             updateMediaIcon(id, mediaType, 'play');
                             seeked = true;
+
+                            recordAnalyticsEvent('user', 'pause', 'h5p-video', id, {'time': h5pVideo.getCurrentTime()});
                             break;
 
                         case h5pObj.Video.BUFFERING:
@@ -836,6 +852,7 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
                 // Auto-play
                 setTimeout(function(){
                     h5pVideo.play();
+                    recordAnalyticsEvent('app', 'auto-play', 'h5p-video', id);
                 }, 1000);
             }
 
@@ -1081,6 +1098,53 @@ function setLinkTypes(rootId) {
     }
 }
 
+// Wrap function specifically for SVG text
+// Found on https://bl.ocks.org/mbostock/7555321
+function wrapText(text, width) {
+    width /= FONT_ADJUST;
+    text.each(function (d) {
+        var text = d3.select(this),
+            words = text.text().split(/\s+/).reverse(),
+            word,
+            lines = [],
+            currentLine = [],
+            lineNumber = 0,
+            lineHeight = 1.1 * FONT_ADJUST, // ems
+            tspan = text.text(null)
+                .append("tspan")
+                .attr("class", "line" + d.id)
+                .attr("x", 0)
+                .attr("y", 0);
+
+        while (word = words.pop()) {
+            currentLine.push(word);
+            tspan.text(currentLine.join(" "));
+            if (tspan.node().getComputedTextLength() > width) {
+                currentLine.pop(); // Pop the last word off of the previous line
+                lines.push(currentLine);
+                tspan.text(currentLine.join(" "));
+                currentLine = [word]; // line now becomes a new array
+                lineNumber++;
+                tspan = text.append("tspan")
+                    .attr("class", "line" + d.id)
+                    .attr("x", 0) //0 because it keeps it in the center
+                    .attr("y", function() {
+                        return ++lineNumber * lineHeight + "em";
+                    })
+                    .text(word);
+            }
+        }
+
+        var midLineIndex = Math.floor(lineNumber / 4);
+        var tspans = document.getElementsByClassName("line" + d.id);
+        var i = 0;
+        while (tspans[i] !== undefined) {
+            tspans[i].setAttribute("y", (i - midLineIndex) * lineHeight + "em");
+            i++;
+        }
+    });
+}
+
 })();
 
 function closeLightbox(id, mediaType) {
@@ -1094,6 +1158,8 @@ function closeLightbox(id, mediaType) {
     setTimeout(function () {
         $('#spotlight-content').remove();
     }, 1000);
+
+    recordAnalyticsEvent('user', 'close', 'lightbox', id);
 }
 
 // Updates the icon for the given media button
@@ -1131,51 +1197,62 @@ function getMediaIconClass(mediaType, action) {
     return classStr;
 }
 
-const FONT_ADJ = 1.25;
+var analyticsAJAXUrl = '/wp-admin/admin-ajax.php',  // Analytics (set to empty string to disable analytics)
+    analyticsAJAXAction = 'tapestry_tool_log_event';// Analytics
 
-// Wrap function specifically for SVG text
-// Found on https://bl.ocks.org/mbostock/7555321
-function wrapText(text, width) {
-    width /= FONT_ADJ;
-    text.each(function (d) {
-        var text = d3.select(this),
-            words = text.text().split(/\s+/).reverse(),
-            word,
-            lines = [],
-            currentLine = [],
-            lineNumber = 0,
-            lineHeight = 1.1 * FONT_ADJ, // ems
-            tspan = text.text(null)
-                .append("tspan")
-                .attr("class", "line" + d.id)
-                .attr("x", 0)
-                .attr("y", 0);
+function recordAnalyticsEvent(actor, action, object, objectID, details){
 
-        while (word = words.pop()) {
-            currentLine.push(word);
-            tspan.text(currentLine.join(" "));
-            if (tspan.node().getComputedTextLength() > width) {
-                currentLine.pop(); // Pop the last word off of the previous line
-                lines.push(currentLine);
-                tspan.text(currentLine.join(" "));
-                currentLine = [word]; // line now becomes a new array
-                lineNumber++;
-                tspan = text.append("tspan")
-                    .attr("class", "line" + d.id)
-                    .attr("x", 0) //0 because it keeps it in the center
-                    .attr("y", function() {
-                        return ++lineNumber * lineHeight + "em";
-                    })
-                    .text(word);
-            }
-        }
+    if (!analyticsAJAXUrl.length || !analyticsAJAXAction.length)
+        return false;
 
-        var midLineIndex = Math.floor(lineNumber / 4);
-        var tspans = document.getElementsByClassName("line" + d.id);
-        var i = 0;
-        while (tspans[i] !== undefined) {
-            tspans[i].setAttribute("y", (i - midLineIndex) * lineHeight + "em");
-            i++;
-        }
+    // TODO: Also need to save the tapestry slug or ID in the events
+
+    var userUUID = Cookies.get("user-uuid");
+    if (userUUID === undefined) {
+        userUUID = createUUID();
+        Cookies.set("user-uuid", userUUID);
+    }
+
+    if (details === undefined) {
+        details = {};
+    }
+
+    details['user-ip'] = $('#user-ip').text();
+
+    var data = {
+        'action': analyticsAJAXAction,
+        'actor': actor,
+        'action2': action,
+        'object': object,
+        'user_guid': userUUID,
+        'object_id': objectID,
+        'details': JSON.stringify(details)
+    };
+
+    // Send the event to an AJAX URL to be saved
+    jQuery.post(analyticsAJAXUrl, data, function(response) {
+        // Event posted
     });
 }
+
+function createUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+// Capture click events anywhere inside or outside tapestry
+$(document).ready(function(){
+    document.body.addEventListener('click', function(event) {
+        var x = event.clientX + $(window).scrollLeft();
+        var y = event.clientY + $(window).scrollTop();
+        recordAnalyticsEvent('user', 'click', 'screen', null, {'x': x, 'y': y});
+    }, true);
+    
+    document.getElementById('tapestry').addEventListener('click', function(event) {
+        var x = event.clientX + $(window).scrollLeft();
+        var y = event.clientY + $(window).scrollTop();
+        recordAnalyticsEvent('user', 'click', 'tapestry', null, {'x': x, 'y': y});
+    }, true); 
+});
