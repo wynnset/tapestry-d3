@@ -30,7 +30,8 @@ var dataset, root, svg, links, nodes,               // Basics
     tapestrySlug, saveProgressToCookie = true,      // Cookie
     nodeImageHeight = 420,
     nodeImageWidth = 780,
-    rootNodeImageHeightDiff = 70;
+    rootNodeImageHeightDiff = 70,
+	h5pVideoSettings = {};
 
 /****************************************************
  * INITIALIZATION
@@ -53,6 +54,12 @@ $.getJSON( jsonUrl, function(result){
         if (cookieProgress !== undefined) {
             cookieProgress = JSON.parse( cookieProgress );
             setDatasetProgress(cookieProgress);
+        }
+        // Update H5P Video Settings from cookie (if any)
+        var cookieH5PVideoSettings = Cookies.get("h5p-video-settings");
+        if (cookieH5PVideoSettings !== undefined) {
+            cookieH5PVideoSettings = JSON.parse( cookieH5PVideoSettings );
+            h5pVideoSettings = cookieH5PVideoSettings;
         }
     }
 
@@ -812,10 +819,18 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
                                     clearInterval(updateVideoDuration);
                                 }
                             }, 300);
-
-                            // Play the video at the last watched time (or at the beginning if not watched yet)
-                            // (start from beginning again if person had already viewed whole video)
+                            
                             if (!seeked) {
+                                // Change the video settings to whatever the user had set before
+                                if (h5pVideoSettings.volume !== undefined) {
+                                    h5pVideo.setVolume(h5pVideoSettings.volume);
+                                    if (h5pVideoSettings.muted) h5pVideo.mute(); else h5pVideo.unMute();
+                                    h5pVideo.setCaptionsTrack(h5pVideoSettings.caption);
+                                    h5pVideo.setQuality(h5pVideoSettings.quality);
+                                    h5pVideo.setPlaybackRate(h5pVideoSettings.playbackRate);
+                                }
+                                // Play the video at the last watched time (or at the beginning if the user has
+                                // not watched yet or if the user had already viewed whole video)
                                 var viewedAmount = mediaProgress * videoDuration;
                                 if (viewedAmount > 0 && viewedAmount !== videoDuration) {
                                     h5pVideo.seek(viewedAmount);
@@ -833,6 +848,16 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
                             break;
 
                         case h5pObj.Video.PAUSED:
+							
+                            // Save the video settings
+                            h5pVideoSettings = {
+                                'volume': h5pVideo.getVolume(),
+                                'muted': h5pVideo.isMuted(),
+                                'caption': h5pVideo.getCaptionsTrack(),
+                                'quality': h5pVideo.getQuality(),
+                                'playbackRate': h5pVideo.getPlaybackRate(),
+                                'time': h5pVideo.getCurrentTime()
+                            };
 
                             // Update the mediaButton icon to play icon
                             updateMediaIcon(id, mediaType, 'play');
@@ -1012,6 +1037,7 @@ function updateViewedValue(id, amountViewedTime, duration) {
     if (saveProgressToCookie) {
         var progressObj = JSON.stringify(getDatasetProgress());
         Cookies.set("progress-data-"+tapestrySlug, progressObj);
+        Cookies.set("h5p-video-settings", h5pVideoSettings);
     }
 }
 
@@ -1148,6 +1174,14 @@ function wrapText(text, width) {
 })();
 
 function closeLightbox(id, mediaType) {
+    	
+    // Pause the H5P video before closing it. This will also trigger saving of the settings
+    // TODO: Do this for HTML5 video as well
+    var h5pObj = document.getElementById('h5p').contentWindow.H5P;
+    if (h5pObj !== undefined && mediaType == "video") {
+		var h5pVideo = h5pObj.instances[0].video;
+		h5pVideo.pause();
+    }
     
     updateMediaIcon(id, mediaType, 'play');
 
