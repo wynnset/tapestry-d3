@@ -19,19 +19,24 @@ const // declared
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
     FONT_ADJUST = 1.25;
 
-const // calculated
-    MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
-    INNER_RADIUS = NORMAL_RADIUS - (PROGRESS_THICKNESS / 2),
-    OUTER_RADIUS = NORMAL_RADIUS + (PROGRESS_THICKNESS / 2);
-
 var dataset, root, svg, links, nodes,               // Basics
+    originalDataset,                                // For saving the value of the original dataset pre-changes
     path, pieGenerator, arcGenerator,               // Donut
     linkForce, collideForce, force,                 // Force
+    nodeCoordinates = [],                           // For saving the coordinates of the Tapestry pre transition to play mode
+    inViewMode = false,                             // Flag for when we're in view mode
+    adjustedRadiusRatio = 1,                        // Radius adjusted for view mode
     tapestrySlug, saveProgressToCookie = true,      // Cookie
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
 	h5pVideoSettings = {};
+
+const // calculated
+    MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30;     // 30 is to count for the icon
+var
+    innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
+    outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2);
 
 /****************************************************
  * INITIALIZATION
@@ -41,6 +46,8 @@ var dataset, root, svg, links, nodes,               // Basics
 $.getJSON( jsonUrl, function(result){
 
     dataset = result;
+    originalDataset = result;
+    saveCoordinates();
 
     //---------------------------------------------------
     // 1. GET PROGRESS FROM COOKIE (IF ENABLED)
@@ -67,23 +74,6 @@ $.getJSON( jsonUrl, function(result){
     // 2. SIZE AND SCALE THE TAPESTRY AND SVG TO FIT WELL
     //---------------------------------------------------
 
-    function updateTapestrySize() {
-
-        var nodeDimensions = getNodesDimensions(dataset);
-    
-        // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
-        // For example, vertically long tapestries should be transposed so they are horizontally long on desktop,
-        // but kept the same way on mobile phones where the browser is vertically longer
-        var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
-        var windowAspectRatio = getAspectRatio();
-        if (tapestryAspectRatio > 1 && windowAspectRatio < 1 || tapestryAspectRatio < 1 && windowAspectRatio > 1) {
-            transposeNodes();
-        }
-        
-        // Update svg dimensions to the new dimensions of the browser
-        updateSvgDimensions(TAPESTRY_CONTAINER_ID);
-    }
-
     // do it now
     updateTapestrySize();
     // also do it whenever window is resized
@@ -107,7 +97,7 @@ $.getJSON( jsonUrl, function(result){
     if (dataset.settings !== undefined && dataset.settings.thumbRootDiff !== undefined) {
         rootNodeImageHeightDiff += dataset.settings.thumbRootDiff;
     }
-    
+
     svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
     links = createLinks();
     nodes = createNodes();
@@ -120,7 +110,10 @@ $.getJSON( jsonUrl, function(result){
     // 4. START THE FORCED GRAPH
     //---------------------------------------------------
     
-    startForce();
+    // startForce();
+    // No longer need the above call because updateSvgDimensions(containerId) already calls startForce();
+    // Calling the update here is necessary because we want the tapestry size to be at least the size of the browser
+    updateSvgDimensions(TAPESTRY_CONTAINER_ID);
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
 });
@@ -146,9 +139,9 @@ function startForce() {
 
     force = d3.forceSimulation()
         .force("link", linkForce)
-        .force('collide', collideForce)
+        .force("collide", collideForce)
         .force("charge", d3.forceManyBody().strength(-5000))
-        .force('center', d3.forceCenter(tapestryDimensions['width'] / 2, tapestryDimensions['height'] / 2));
+        .force("center", d3.forceCenter(tapestryDimensions['width'] / 2, tapestryDimensions['height'] / 2));
 
     force
         .nodes(dataset.nodes)
@@ -157,6 +150,9 @@ function startForce() {
     force
         .force("link")
         .links(dataset.links);
+
+    d3.select({}).transition().duration(TRANSITION_DURATION);
+
 }
 
 //Resize all nodes, where id is now the root
@@ -165,6 +161,7 @@ function resizeNodes(id) {
     setNodeTypes(id);
     setLinkTypes(id);
     filterLinks();
+    filterGrandchildNodes();
 
     rebuildNodeContents();
 
@@ -295,7 +292,7 @@ function filterLinks() {
         var shouldRender = false;
         if (sourceId === root || targetId === root) {
             shouldRender = true;
-        } else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
+        } else if ((getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) && !inViewMode) {
             shouldRender = true;
         }
         return !shouldRender;
@@ -314,7 +311,7 @@ function filterLinks() {
         var shouldRender = false;
         if (sourceId === root || targetId === root) {
             shouldRender = true;
-        } else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
+        } else if ((getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) && !inViewMode) {
             shouldRender = true;
         }
 
@@ -359,12 +356,12 @@ function buildNodeContents() {
             return d.id;
         })
         .attr("stroke-width", function (d) {
-            return PROGRESS_THICKNESS;
+            return PROGRESS_THICKNESS * adjustedRadiusRatio;
         })
         .attr("stroke", function (d) {
-            if (d.nodeType === "") 
+            if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode))
                 return "transparent";
-            else if (d.nodeType === "grandchild") 
+            else if (d.nodeType === "grandchild")
                 return COLOR_GRANDCHILD;
             else return COLOR_STROKE;
         })
@@ -402,9 +399,9 @@ function buildNodeContents() {
                 return 0;
         })
         .attr("fill", function (d) {
-            if (d.nodeType === "") 
+            if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode))
                 return "transparent";
-            else if (d.nodeType === "grandchild") 
+            else if (d.nodeType === "grandchild")
                 return COLOR_GRANDCHILD;
             else return COLOR_STROKE;
         });
@@ -454,21 +451,20 @@ function buildNodeContents() {
 }
 
 function rebuildNodeContents() {
-
     nodes.selectAll(".imageOverlay")
             .transition()
             .duration(TRANSITION_DURATION/2)
             .attr("r", function (d) {
                 var rad = getRadius(d);
-                if (rad > PROGRESS_THICKNESS/2)
-                    return rad - PROGRESS_THICKNESS/2;
+                if (rad > (PROGRESS_THICKNESS * adjustedRadiusRatio)/2)
+                    return rad - (PROGRESS_THICKNESS * adjustedRadiusRatio)/2;
                 else
                     return 0;
             })
             .attr("fill", function (d) {
-                if (d.nodeType === "") 
+                if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode)) {
                     return "transparent";
-                else if (d.nodeType === "grandchild") 
+                } else if (d.nodeType === "grandchild")
                     return COLOR_GRANDCHILD;
                 else return COLOR_STROKE;
             });
@@ -488,7 +484,7 @@ function rebuildNodeContents() {
                 return getRadius(d);
             })
             .attr("stroke", function (d) {
-                if (d.nodeType === "") 
+                if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode))
                     return "transparent";
                 else if (d.nodeType === "grandchild") 
                     return COLOR_GRANDCHILD;
@@ -508,6 +504,9 @@ function rebuildNodeContents() {
             })
             .attr("fill", function (d) {
                 return "url('#node-thumb-" + d.id + "')";
+            })
+            .attr("stroke-width", function (d) {
+                return PROGRESS_THICKNESS * adjustedRadiusRatio;
             });
     
     /* Attach images to be used within each node */
@@ -589,7 +588,7 @@ function buildPathAndButton() {
         .attr("height", "62px")
         .attr("x", -27)
         .attr("y", function (d) {
-            return -NORMAL_RADIUS - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);
+            return -NORMAL_RADIUS * adjustedRadiusRatio - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);
         })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
@@ -628,7 +627,7 @@ function updateViewedProgress() {
             else return "#11a6d8";
         })
         .attr("class", function (d) {
-            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "") 
+            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "")
                 return "expandGrandchildren";
         })
         .attr("d", function (d) {
@@ -651,10 +650,10 @@ function adjustProgressBarRadii(d) {
         addedRadius = ROOT_RADIUS_DIFF;
     if (d.data.extra.nodeType === "grandchild") {
         addedRadius = GRANDCHILD_RADIUS_DIFF;
-        addedRadiusInner = -1 * (INNER_RADIUS + addedRadius); // set inner radius to 0
+        addedRadiusInner = -1 * (innerRadius + addedRadius); // set inner radius to 0
     }
-    arcGenerator.innerRadius(INNER_RADIUS + addedRadius + addedRadiusInner)(d);
-    arcGenerator.outerRadius(OUTER_RADIUS + addedRadius)(d);
+    arcGenerator.innerRadius(innerRadius * adjustedRadiusRatio + addedRadius + addedRadiusInner)(d);
+    arcGenerator.outerRadius(outerRadius * adjustedRadiusRatio + addedRadius)(d);
     return d;
 }
 
@@ -663,28 +662,21 @@ function adjustProgressBarRadii(d) {
  ****************************************************/
 
 function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
+    // Adjust the width and height here before passing it into setup media
+    var lightboxDimensions = getLightboxDimensions(height, width);
 
-    var resizeRatio = 1;
-    if (width > getBrowserWidth()) {
-        resizeRatio = getBrowserWidth() / width * 0.8;
-        width *= resizeRatio;
-        height *= resizeRatio;
-    }
-
-    // Possibly interfering with the resizer
-    if (height > getBrowserHeight() * resizeRatio) {
-        resizeRatio *= getBrowserHeight() / height;
-        width *= resizeRatio;
-        height *= resizeRatio;
-    }
-
+    width = lightboxDimensions.width;
+    height = lightboxDimensions.height;
     var media = setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height);
 
     $('<div id="spotlight-overlay"><\/div>').on("click", function(){
         closeLightbox(id, mediaType);
+        exitViewMode();
     }).appendTo('body');
+
+    var top = lightboxDimensions.adjustedOn === "width" ? ((getBrowserHeight() - height) / 2) + $(this).scrollTop() : (NORMAL_RADIUS * 1.5) + (NORMAL_RADIUS * 0.1);
     $('<div id="spotlight-content" data-media-format="' + mediaFormat + '"><\/div>').css({
-        top: ((getBrowserHeight() - height) / 2) + $(this).scrollTop(),
+        top: top,
         left: (getBrowserWidth() - width) / 2,
         width: width,
         height: height,
@@ -709,6 +701,7 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     }
 
     media.on(loadEvent, function() {
+        changeToViewMode(lightboxDimensions);
         window.setTimeout(function(){
             height = $('#spotlight-content > *').outerHeight();
             width = $('#spotlight-content > *').outerWidth();
@@ -725,6 +718,50 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
             });
         }, 200);
     });
+}
+
+//
+function getLightboxDimensions(videoHeight, videoWidth) {
+    var resizeRatio = 1;
+    if (videoWidth > getBrowserWidth()) {
+        resizeRatio = getBrowserWidth() / videoWidth;
+        videoWidth *= resizeRatio;
+        videoHeight *= resizeRatio;
+    }
+
+    // Possibly interfering with the resizer
+    if (videoHeight > getBrowserHeight() * resizeRatio) {
+        resizeRatio *= getBrowserHeight() / videoHeight;
+        videoWidth *= resizeRatio;
+        videoHeight *= resizeRatio;
+    }
+
+    var nodeSpace = (NORMAL_RADIUS * 2) * 1.3;     // Calculate the amount of space we need to reserve for nodes
+    var adjustedVideoHeight = getBrowserHeight() - nodeSpace;               // Max height for the video
+    var adjustedVideoWidth = getBrowserWidth() - nodeSpace;                 // Max width for the video
+
+    if (adjustedVideoHeight > videoHeight) {
+        adjustedVideoHeight = videoHeight;
+    }
+    if (adjustedVideoWidth > videoWidth) {
+        adjustedVideoWidth = videoWidth;
+    }
+
+    var heightAdjustmentRatio = adjustedVideoHeight / videoHeight;
+    var widthAdjustmentRatio = adjustedVideoWidth / videoWidth;
+
+    var adjustmentRatio = widthAdjustmentRatio;                       // Object indicating everything you need to know to make the adjustment
+    var adjustedOn = "width";
+    if (getAspectRatio() < 1) {
+        adjustedOn = "height";
+        adjustmentRatio = heightAdjustmentRatio;
+    }
+
+    return {
+        "adjustedOn": adjustedOn,
+        "width": videoWidth * adjustmentRatio,
+        "height": videoHeight * adjustmentRatio
+    };
 }
 
 function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
@@ -887,6 +924,178 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
     return mediaEl;
 }
 
+// Builds the view mode, including functionality to
+function changeToViewMode(lightboxDimensions) {
+    inViewMode = true;
+    originalDataset = dataset;
+    var children = getChildren(root);
+    setAdjustedRadiusRatio(lightboxDimensions.adjustedOn, children.length);
+    var coordinates = getViewModeCoordinates(lightboxDimensions, children);
+
+    // Add the coordinates to the nodes
+    d3.selectAll('g.node').each(function(d) {
+        if (d.nodeType === "root") {
+            d.fx = getTapestryDimensions().width / 2;
+            if (lightboxDimensions.adjustedOn === "width") {
+                d.fy = getTapestryDimensions().height / 2;
+            } else {
+                d.fy = screenToSVG(0, $("#header").height() + NORMAL_RADIUS + ($("#spotlight-content").height() / 2)).y
+            }
+        } else if (d.nodeType === "child") {
+            d.fx = coordinates[d.id]["fx"];
+            d.fy = coordinates[d.id]["fy"];
+        }
+    });
+
+    filterLinks();
+    filterGrandchildNodes();
+    if (adjustedRadiusRatio < 1) {
+        rebuildNodeContents();
+    }
+    startForce();
+}
+
+function getViewModeCoordinates(lightboxDimensions, children) {
+    // For determining how much space the node to be placed
+    var nodeRadius = NORMAL_RADIUS * adjustedRadiusRatio * 0.8;
+    var nodeSpace = (nodeRadius * 2);
+
+    var coordinates = [];
+
+    for (var i = 0; i < children.length; i++) {
+        if (children.length <= 2) {
+            if (lightboxDimensions.adjustedOn === "width") {
+                if (i % 2 === 0) {
+                    coordinates[children[i]] = {
+                        "fx": 0,
+                        "fy": getTapestryDimensions().height / 2
+                    };
+                } else {
+                    coordinates[children[i]] = {
+                        "fx": screenToSVG(getBrowserWidth(), 0).x - nodeSpace,
+                        "fy": getTapestryDimensions().height / 2
+                    };
+                }
+            } else {
+                if (i % 2 === 0) {
+                    coordinates[children[i]] = {
+                        "fx": getTapestryDimensions().width / 2,
+                        "fy": 0
+                    };
+                } else {
+                    coordinates[children[i]] = {
+                        "fx": getTapestryDimensions().width / 2,
+                        "fy": getTapestryDimensions().height - nodeSpace
+                    };
+                }
+            }
+        } else {
+            if (lightboxDimensions.adjustedOn === "width") {
+                if (i % 2 === 0) {
+                    coordinates[children[i]] = {
+                        "fx": 0,
+                        "fy": Math.min(screenToSVG(0, getBrowserHeight() * (i / (children.length - 1))).y + nodeRadius, getTapestryDimensions().height - nodeSpace)
+                    };
+                } else {
+                    coordinates[children[i]] = {
+                        "fx": screenToSVG(getBrowserWidth(), 0).x - nodeSpace,
+                        "fy": Math.min(screenToSVG(0, getBrowserHeight() * ((i-1) / (children.length - 1))).y + nodeRadius, getTapestryDimensions().height - nodeSpace)
+                    };
+                }
+            } else {
+                if (i % 2 === 0) {
+                    coordinates[children[i]] = {
+                        "fx": Math.min(getTapestryDimensions().width * (i / (children.length - 1)) + nodeRadius, getTapestryDimensions().width - (nodeSpace * 2)),
+                        "fy": 0
+                    };
+                } else {
+                    coordinates[children[i]] = {
+                        "fx": Math.min(getTapestryDimensions().width * ((i - 1) / (children.length - 1)) + nodeRadius, getTapestryDimensions().width - (nodeSpace * 2)),
+                        "fy": screenToSVG(0, (NORMAL_RADIUS * 1.5) + (NORMAL_RADIUS * 0.1) + $("#spotlight-content").height() + $(".mediaButtonIcon").height()).y
+                    };
+                }
+            }
+        }
+    }
+
+    return coordinates;
+}
+
+// For calculating adjustment ratio for adjusting the size of NORMAL_RADIUS for the child nodes while in view mode
+// Returns 1 if not in view mode
+function setAdjustedRadiusRatio(adjustedOn, numChildren) {
+    if (inViewMode) {
+        if (adjustedOn === "width") {
+            adjustedRadiusRatio = (getBrowserHeight() / (Math.ceil(numChildren / 2) * NORMAL_RADIUS * 2 * 1.2)).toPrecision(4);
+        } else {
+            adjustedRadiusRatio = (getBrowserWidth() / (Math.ceil(numChildren / 2) * NORMAL_RADIUS)).toPrecision(4);
+        }
+
+        if (adjustedRadiusRatio > 1) adjustedRadiusRatio = 1;
+    } else adjustedRadiusRatio = 1;
+}
+
+function exitViewMode() {
+    // For reapplying the coordinates of all the nodes prior to transitioning to play-mode
+    for (var i in dataset.nodes) {
+        var id = dataset.nodes[i].id;
+        dataset.nodes[i].fx = nodeCoordinates[id].fx;
+        dataset.nodes[i].fy = nodeCoordinates[id].fy;
+    }
+
+    d3.selectAll('g.node')
+        .transition()
+        .duration(TRANSITION_DURATION)
+        .attr("cx", function(d) { return d.fx; })
+        .attr("cy", function(d) { return d.fy; });
+
+    inViewMode = false;
+    filterLinks();
+    filterGrandchildNodes();
+    updateTapestrySize();
+    if (adjustedRadiusRatio < 1) {
+        setAdjustedRadiusRatio(null, null);  //Values set to null because we don't really care; Function should just return 1
+        rebuildNodeContents();
+    }
+    startForce();
+}
+
+// Helper function for hiding/showing grandchild nodes when entering/exiting view mode
+function filterGrandchildNodes() {
+    var nodesToHide = nodes.filter(function (d) {
+        var shouldRender = false;
+        if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode)) {
+            shouldRender = false;
+        } else shouldRender = true;
+        return !shouldRender;
+    });
+
+    var nodesToShow = nodes.filter(function (d) {
+        var shouldRender = false;
+        if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode)) {
+            shouldRender = false;
+        } else shouldRender = true;
+        return shouldRender;
+    });
+
+    nodesToShow
+        .style("display", "block");
+
+    nodesToHide
+        .transition()
+        .duration(TRANSITION_DURATION)
+        .style("opacity", "0");
+
+    nodesToShow
+        .transition()
+        .duration(TRANSITION_DURATION)
+        .style("opacity", "1");
+
+    setTimeout(function(){
+        nodesToHide.style("display", "block");
+    }, TRANSITION_DURATION);
+}
+
 /****************************************************
  * HELPER FUNCTIONS
  ****************************************************/
@@ -931,7 +1140,7 @@ function getNodesDimensions(dataset) {
 
 function getTapestryDimensions() {
 
-    var nodeDimensions = getNodesDimensions(dataset);
+    var nodeDimensions = getNodesDimensions(originalDataset);
     var tapestryWidth = nodeDimensions['x'];
     var tapestryHeight = nodeDimensions['y'];
 
@@ -948,10 +1157,39 @@ function getTapestryDimensions() {
         tapestryWidth *= 1.2;
     }
 
+    // Set to be at least the size of the browser
+    if (document.getElementById("tapestry-svg") !== null) {
+        if (tapestryWidth < screenToSVG(getBrowserWidth(), 0).x) {
+            tapestryWidth = screenToSVG(getBrowserWidth(), 0).x;
+        }
+
+        if (tapestryHeight < screenToSVG(0, getBrowserHeight() - $("#footer").height()).y) {
+            tapestryHeight = screenToSVG(0, getBrowserHeight() - $("#footer").height()).y;
+        }
+    }
+
     return {
         'width': tapestryWidth,
         'height': tapestryHeight
     };
+}
+
+function updateTapestrySize() {
+    if (!inViewMode) {
+        var nodeDimensions = getNodesDimensions(dataset);
+
+        // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
+        // For example, vertically long tapestries should be transposed so they are horizontally long on desktop,
+        // but kept the same way on mobile phones where the browser is vertically longer
+        var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
+        var windowAspectRatio = getAspectRatio();
+        if (tapestryAspectRatio > 1 && windowAspectRatio < 1 || tapestryAspectRatio < 1 && windowAspectRatio > 1) {
+            transposeNodes();
+        }
+
+        // Update svg dimensions to the new dimensions of the browser
+        updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+    }
 }
 
 function transposeNodes() {
@@ -1011,16 +1249,17 @@ function getGrandchildren(children) {
 }
 
 function getRadius(d) {
-    var nodeDiff;
+    // var nodeDiff;
+    var radius;
     if (d.nodeType === "") {
         return 0;
     } else if (d.nodeType === "root") {
-        nodeDiff = ROOT_RADIUS_DIFF;
+        radius = NORMAL_RADIUS * adjustedRadiusRatio + ROOT_RADIUS_DIFF;
     } else if (d.nodeType === "grandchild") {
-        nodeDiff = GRANDCHILD_RADIUS_DIFF;
-    } else nodeDiff = 0
+        radius = NORMAL_RADIUS + GRANDCHILD_RADIUS_DIFF;
+    } else radius = NORMAL_RADIUS * adjustedRadiusRatio;
 
-    return NORMAL_RADIUS + nodeDiff;
+    return radius;
 }
 
 //Updates the data in the node for how much the video has been viewed
@@ -1171,6 +1410,18 @@ function wrapText(text, width) {
     });
 }
 
+// For saving the coordinates of all the nodes prior to transitioning to play-mode
+function saveCoordinates() {
+    for (var i in dataset.nodes) {
+        var node = dataset.nodes[i];
+        var id = node.id;
+        nodeCoordinates[id] = {
+            "fx": node.fx,
+            "fy": node.fy
+        };
+    }
+}
+
 })();
 
 function closeLightbox(id, mediaType) {
@@ -1231,6 +1482,28 @@ function getMediaIconClass(mediaType, action) {
     return classStr;
 }
 
+// Helper for converting the screen coordinates to SVG coordinates
+function screenToSVG(screenX, screenY) {
+    var svg = document.getElementById("tapestry-svg");
+    var p = svg.createSVGPoint();
+    p.x = screenX;
+    p.y = screenY;
+    return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+// Helper for converting the SVG coordinates to screen coordinates
+// function SVGToScreen(svgX, svgY) {
+//     var svg = $("#tapestry-svg");
+//     var p = svg.createSVGPoint();
+//     p.x = svgX;
+//     p.y = svgY;
+//     return p.matrixTransform(svg.getScreenCTM());
+// }
+
+/****************************************************
+ * ANALYTICS FUNCTIONS
+ ****************************************************/
+
 var analyticsAJAXUrl = '/wp-admin/admin-ajax.php',  // Analytics (set to empty string to disable analytics)
     analyticsAJAXAction = 'tapestry_tool_log_event';// Analytics
 
@@ -1283,10 +1556,10 @@ $(document).ready(function(){
         var y = event.clientY + $(window).scrollTop();
         recordAnalyticsEvent('user', 'click', 'screen', null, {'x': x, 'y': y});
     }, true);
-    
+
     document.getElementById('tapestry').addEventListener('click', function(event) {
         var x = event.clientX + $(window).scrollLeft();
         var y = event.clientY + $(window).scrollTop();
         recordAnalyticsEvent('user', 'click', 'tapestry', null, {'x': x, 'y': y});
-    }, true); 
+    }, true);
 });
