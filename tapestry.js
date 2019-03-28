@@ -89,6 +89,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     
     setNodeTypes(dataset.rootId);
     setLinkTypes(dataset.rootId);
+    setUnlocked();
 
     if (dataset.settings !== undefined && dataset.settings.thumbDiff !== undefined) {
         nodeImageHeight += dataset.settings.thumbDiff;
@@ -101,7 +102,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
     links = createLinks();
     nodes = createNodes();
-    
+
     filterLinks();
     
     buildNodeContents();
@@ -157,11 +158,10 @@ function startForce() {
 
 //Resize all nodes, where id is now the root
 function resizeNodes(id) {
-
     setNodeTypes(id);
     setLinkTypes(id);
     filterLinks();
-    filterGrandchildNodes();
+    filterNodes();
 
     rebuildNodeContents();
 
@@ -256,7 +256,7 @@ function createLinks() {
                         else return COLOR_LINK;
                     })
                     .attr("style", function(d){
-                        if (d.type === "") 
+                        if (d.type === "")
                             return "display: none"
                         else if (d.optional)
                             return CSS_OPTIONAL_LINK;
@@ -290,9 +290,10 @@ function filterLinks() {
         }
 
         var shouldRender = false;
-        if (sourceId === root || targetId === root) {
+        var targetIndex = findNodeIndex(targetId);
+        if ((sourceId === root || targetId === root) && dataset.nodes[targetIndex].typeData.unlocked) {
             shouldRender = true;
-        } else if ((getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) && !inViewMode) {
+        } else if ((getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) && !inViewMode && dataset.nodes[targetIndex].typeData.unlocked) {
             shouldRender = true;
         }
         return !shouldRender;
@@ -309,9 +310,10 @@ function filterLinks() {
         }
 
         var shouldRender = false;
-        if (sourceId === root || targetId === root) {
+        var targetIndex = findNodeIndex(targetId);
+        if ((sourceId === root || targetId === root) && dataset.nodes[targetIndex].typeData.unlocked) {
             shouldRender = true;
-        } else if ((getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) && !inViewMode) {
+        } else if ((getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) && !inViewMode && dataset.nodes[targetIndex].typeData.unlocked) {
             shouldRender = true;
         }
 
@@ -359,18 +361,18 @@ function buildNodeContents() {
             return PROGRESS_THICKNESS * adjustedRadiusRatio;
         })
         .attr("stroke", function (d) {
-            if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode))
+            if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked)
                 return "transparent";
             else if (d.nodeType === "grandchild")
                 return COLOR_GRANDCHILD;
             else return COLOR_STROKE;
         })
         .attr("width", function (d) {
-            if (d.nodeType === "") return 0;
+            if (d.nodeType === "" || !d.typeData.unlocked) return 0;
             return getRadius(d) * 2;
         })
         .attr("height", function (d) {
-            if (d.nodeType === "") return 0;
+            if (d.nodeType === "" || !d.typeData.unlocked) return 0;
             return getRadius(d) * 2;
         })
         .attr("x", function (d) {
@@ -399,7 +401,7 @@ function buildNodeContents() {
                 return 0;
         })
         .attr("fill", function (d) {
-            if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode))
+            if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked)
                 return "transparent";
             else if (d.nodeType === "grandchild")
                 return COLOR_GRANDCHILD;
@@ -462,7 +464,7 @@ function rebuildNodeContents() {
                     return 0;
             })
             .attr("fill", function (d) {
-                if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode)) {
+                if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked) {
                     return "transparent";
                 } else if (d.nodeType === "grandchild")
                     return COLOR_GRANDCHILD;
@@ -471,7 +473,7 @@ function rebuildNodeContents() {
             
     nodes.selectAll(".imageContainer")
             .attr("class", function (d) {
-                if (d.nodeType === "grandchild" || d.nodeType === "") 
+                if (d.nodeType === "grandchild" || d.nodeType === "" || !d.typeData.unlocked)
                     return "imageContainer expandGrandchildren";
                 else return "imageContainer";
             })
@@ -484,7 +486,7 @@ function rebuildNodeContents() {
                 return getRadius(d);
             })
             .attr("stroke", function (d) {
-                if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode))
+                if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked)
                     return "transparent";
                 else if (d.nodeType === "grandchild") 
                     return COLOR_GRANDCHILD;
@@ -544,7 +546,7 @@ function buildPathAndButton() {
 
     nodes
         .filter(function (d) {
-            return d.nodeType !== ""
+            return d.nodeType !== ""  && d.typeData.unlocked;
         })
         .append("text")
         .attr("text-anchor", "middle")
@@ -564,7 +566,7 @@ function buildPathAndButton() {
 
     nodes
         .filter(function (d) {
-            return d.nodeType !== ""
+            return d.nodeType !== "" && d.typeData.unlocked;
         })
         .append("svg:foreignObject")
         .html(function (d) {
@@ -605,13 +607,13 @@ function buildPathAndButton() {
 function updateViewedProgress() {
     path = nodes
         .filter(function (d) {
-            return d.nodeType !== ""
+            return d.nodeType !== "" && d.typeData.unlocked
         })
         .selectAll("path")
         .data(function (d, i) {
             var data = d.typeData.progress;
             data.forEach(function (e) {
-                e.extra = {'nodeType': d.nodeType}
+                e.extra = {'nodeType': d.nodeType, 'unlocked': d.typeData.unlocked }
             })
             return pieGenerator(data, i);
         });
@@ -622,12 +624,12 @@ function updateViewedProgress() {
         .append("path")
         .attr("fill", function (d, i) {
             if (d.data.group !== "viewed") return "transparent";
-            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "") 
+            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "" || !d.data.extra.unlocked)
                 return "#cad7dc";
             else return "#11a6d8";
         })
         .attr("class", function (d) {
-            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "")
+            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "" || !d.data.extra.unlocked)
                 return "expandGrandchildren";
         })
         .attr("d", function (d) {
@@ -775,6 +777,8 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
     var viewedAmount;
     var mediaEl;
 
+    var childrenData = getChildrenData(id);
+
     if (mediaFormat === "mp4") {
 
         mediaEl = $('<video id="' + mediaFormat + '" controls><source id="video-source" src="' + mediaUrl + '" type="video/mp4"><\/video>');
@@ -796,6 +800,14 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
             // Update the progress circle for this video
             video.addEventListener('timeupdate', function () {
                 if (video.played.length > 0 && viewedAmount < video.currentTime) {
+                    for (var i = 0; i < childrenData.length; i++) {
+                        if (childrenData[i].appearsAt < video.currentTime && !dataset.nodes[childrenData[i].nodeIndex].typeData.unlocked) {
+                            setUnlocked();
+                            filterLinks();
+                            filterNodes();
+                            rebuildNodeContents();
+                        }
+                    }
                     updateViewedValue(id, video.currentTime, video.duration);
                     updateViewedProgress();
                 }
@@ -948,7 +960,7 @@ function changeToViewMode(lightboxDimensions) {
     });
 
     filterLinks();
-    filterGrandchildNodes();
+    filterNodes();
     if (adjustedRadiusRatio < 1) {
         rebuildNodeContents();
     }
@@ -1051,7 +1063,7 @@ function exitViewMode() {
 
     inViewMode = false;
     filterLinks();
-    filterGrandchildNodes();
+    filterNodes();
     updateTapestrySize();
     if (adjustedRadiusRatio < 1) {
         setAdjustedRadiusRatio(null, null);  //Values set to null because we don't really care; Function should just return 1
@@ -1061,10 +1073,10 @@ function exitViewMode() {
 }
 
 // Helper function for hiding/showing grandchild nodes when entering/exiting view mode
-function filterGrandchildNodes() {
+function filterNodes() {
     var nodesToHide = nodes.filter(function (d) {
         var shouldRender = false;
-        if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode)) {
+        if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked) {
             shouldRender = false;
         } else shouldRender = true;
         return !shouldRender;
@@ -1072,7 +1084,7 @@ function filterGrandchildNodes() {
 
     var nodesToShow = nodes.filter(function (d) {
         var shouldRender = false;
-        if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode)) {
+        if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked) {
             shouldRender = false;
         } else shouldRender = true;
         return shouldRender;
@@ -1251,7 +1263,7 @@ function getGrandchildren(children) {
 function getRadius(d) {
     // var nodeDiff;
     var radius;
-    if (d.nodeType === "") {
+    if (d.nodeType === "" || !d.typeData.unlocked) {
         return 0;
     } else if (d.nodeType === "root") {
         radius = NORMAL_RADIUS * adjustedRadiusRatio + ROOT_RADIUS_DIFF;
@@ -1351,14 +1363,31 @@ function setLinkTypes(rootId) {
         var link = dataset.links[i];
         var targetId = link.target.id;
 
-        if (targetId === root) {
-            link.type = "root";
-        } else if (children.indexOf(targetId) > -1) {
-            link.type = "child";
-        } else if (grandchildren.indexOf(targetId) > -1) {
-            link.type = "grandchild";
+        // If unlocked, set proper link type. Else, set it as "" to present that it shouldn't be shown
+        var parentIndex = findNodeIndex(dataset.links[i].source.id);
+        if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
+            if (targetId === root) {
+                link.type = "root";
+            } else if (children.indexOf(targetId) > -1) {
+                link.type = "child";
+            } else if (grandchildren.indexOf(targetId) > -1) {
+                link.type = "grandchild";
+            } else {
+                link.type = "";
+            }
         } else {
             link.type = "";
+        }
+    }
+}
+
+/* For setting the "unlocked" field of nodes.typeData in dataset */
+function setUnlocked() {
+    for (var i = 0; i < dataset.links.length; i++) {
+        var parentIndex = findNodeIndex(dataset.links[i].source.id);
+        var childIndex = findNodeIndex(dataset.links[i].target.id);
+        if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
+            dataset.nodes[childIndex].typeData.unlocked = true;
         }
     }
 }
@@ -1422,16 +1451,41 @@ function saveCoordinates() {
     }
 }
 
+// Get data from child needed for knowing whether it is unlocked or not
+function getChildrenData(parentId) {
+    var childrenData = [];
+    for (var i = 0; i < dataset.links.length; i++) {
+        var source = typeof dataset.links[i].source === 'object' ? dataset.links[i].source.id : dataset.links[i].source;
+        if (source == parentId) {
+            childrenData.push({
+                "id": dataset.links[i].target.id,
+                "nodeIndex": findNodeIndex(dataset.links[i].target.id),
+                "appearsAt": dataset.links[i].appearsAt
+            });
+        }
+    }
+
+    return childrenData;
+}
+
 })();
 
 function closeLightbox(id, mediaType) {
     	
     // Pause the H5P video before closing it. This will also trigger saving of the settings
     // TODO: Do this for HTML5 video as well
-    var h5pObj = document.getElementById('h5p').contentWindow.H5P;
-    if (h5pObj !== undefined && mediaType == "video") {
-		var h5pVideo = h5pObj.instances[0].video;
-		h5pVideo.pause();
+    // var h5pObj = document.getElementById('h5p').contentWindow.H5P;
+    // if (h5pObj !== undefined && mediaType == "video") {
+		// var h5pVideo = h5pObj.instances[0].video;
+		// h5pVideo.pause();
+    // }
+
+    if (document.getElementById('h5p') !== null) {
+        var h5pObj = document.getElementById('h5p').contentWindow.H5P;
+        if (h5pObj !== undefined && mediaType == "video") {
+            var h5pVideo = h5pObj.instances[0].video;
+            h5pVideo.pause();
+        }
     }
     
     updateMediaIcon(id, mediaType, 'play');
