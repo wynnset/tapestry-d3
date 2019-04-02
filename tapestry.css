@@ -215,7 +215,7 @@ i {
 
 .lightbox-close {
     text-transform: uppercase;
-    background: transparent;
+    background: none;
     position: absolute;
     font-weight: 300;
     font-size: 12px;
@@ -223,7 +223,9 @@ i {
     border: none;
     color: white;
     top: -22px;
-    right: 3%;
+    right: 0.5%;
+    text-align: right;
+    box-shadow: none;
 }
 
 #instructions-wrapper {
