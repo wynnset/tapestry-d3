@@ -689,6 +689,18 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
         distance: 8
     });
 
+    $('<a class="lightbox-close">X</a>')
+        .css({
+            background: "none",
+            "box-shadow": "none",
+            cursor: "pointer"
+        })
+        .on("click", function() {
+            closeLightbox(id, mediaType);
+            exitViewMode();
+        })
+        .appendTo('#spotlight-content');
+
     media.appendTo('#spotlight-content');
 
     setTimeout(function(){
