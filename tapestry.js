@@ -17,7 +17,14 @@ const // declared
     COLOR_LINK = "#999",
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
-    FONT_ADJUST = 1.25;
+    FONT_ADJUST = 1.25,
+    // Constants specifically for user types
+    USER_ADMIN = "admin",
+    USER_CONSUMER = "consumer",
+    USER_EDITOR = "optional",
+    FILTER_HIDDEN = "hidden",
+    FILTER_NORMAL = "normal",
+    FILTER_OPTIONAL = "optional";
 
 var dataset, root, svg, links, nodes,               // Basics
     originalDataset,                                // For saving the value of the original dataset pre-changes
@@ -291,9 +298,9 @@ function filterLinks() {
 
         var shouldRender = false;
         var targetIndex = findNodeIndex(targetId);
-        if ((sourceId === root || targetId === root) && dataset.nodes[targetIndex].typeData.unlocked) {
+        if ((sourceId === root || targetId === root) && getViewable(dataset.nodes[targetIndex])) {
             shouldRender = true;
-        } else if ((getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) && !inViewMode && dataset.nodes[targetIndex].typeData.unlocked) {
+        } else if ((getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) && getViewable(dataset.nodes[targetIndex])) {
             shouldRender = true;
         }
         return !shouldRender;
@@ -311,9 +318,10 @@ function filterLinks() {
 
         var shouldRender = false;
         var targetIndex = findNodeIndex(targetId);
-        if ((sourceId === root || targetId === root) && dataset.nodes[targetIndex].typeData.unlocked) {
+        if ((sourceId === root || targetId === root) && getViewable(dataset.nodes[targetIndex])) {
             shouldRender = true;
-        } else if ((getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) && !inViewMode && dataset.nodes[targetIndex].typeData.unlocked) {
+        } else if (
+            (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) && getViewable(dataset.nodes[targetIndex])) {
             shouldRender = true;
         }
 
@@ -361,18 +369,18 @@ function buildNodeContents() {
             return PROGRESS_THICKNESS * adjustedRadiusRatio;
         })
         .attr("stroke", function (d) {
-            if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked)
+            if (!getViewable(d))
                 return "transparent";
             else if (d.nodeType === "grandchild")
                 return COLOR_GRANDCHILD;
             else return COLOR_STROKE;
         })
         .attr("width", function (d) {
-            if (d.nodeType === "" || !d.typeData.unlocked) return 0;
+            if (!getViewable(d)) return 0;
             return getRadius(d) * 2;
         })
         .attr("height", function (d) {
-            if (d.nodeType === "" || !d.typeData.unlocked) return 0;
+            if (!getViewable(d)) return 0;
             return getRadius(d) * 2;
         })
         .attr("x", function (d) {
@@ -401,7 +409,7 @@ function buildNodeContents() {
                 return 0;
         })
         .attr("fill", function (d) {
-            if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked)
+            if (!getViewable(d))
                 return "transparent";
             else if (d.nodeType === "grandchild")
                 return COLOR_GRANDCHILD;
@@ -464,7 +472,7 @@ function rebuildNodeContents() {
                     return 0;
             })
             .attr("fill", function (d) {
-                if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked) {
+                if (!getViewable(d)) {
                     return "transparent";
                 } else if (d.nodeType === "grandchild")
                     return COLOR_GRANDCHILD;
@@ -473,7 +481,7 @@ function rebuildNodeContents() {
             
     nodes.selectAll(".imageContainer")
             .attr("class", function (d) {
-                if (d.nodeType === "grandchild" || d.nodeType === "" || !d.typeData.unlocked)
+                if (!getViewable(d))
                     return "imageContainer expandGrandchildren";
                 else return "imageContainer";
             })
@@ -486,7 +494,7 @@ function rebuildNodeContents() {
                 return getRadius(d);
             })
             .attr("stroke", function (d) {
-                if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked)
+                if (!getViewable(d))
                     return "transparent";
                 else if (d.nodeType === "grandchild") 
                     return COLOR_GRANDCHILD;
@@ -546,7 +554,7 @@ function buildPathAndButton() {
 
     nodes
         .filter(function (d) {
-            return d.nodeType !== ""  && d.typeData.unlocked;
+            return getViewable(d);
         })
         .append("text")
         .attr("text-anchor", "middle")
@@ -566,7 +574,7 @@ function buildPathAndButton() {
 
     nodes
         .filter(function (d) {
-            return d.nodeType !== "" && d.typeData.unlocked;
+            return getViewable(d);
         })
         .append("svg:foreignObject")
         .html(function (d) {
@@ -607,14 +615,17 @@ function buildPathAndButton() {
 function updateViewedProgress() {
     path = nodes
         .filter(function (d) {
-            return d.nodeType !== "" && d.typeData.unlocked
+            return getViewable(d);
         })
         .selectAll("path")
         .data(function (d, i) {
             var data = d.typeData.progress;
             data.forEach(function (e) {
-                e.extra = {'nodeType': d.nodeType, 'unlocked': d.typeData.unlocked }
-            })
+                e.extra = {
+                    "nodeType": d.nodeType,
+                    "unlocked": d.typeData.unlocked,
+                    "userTypes": d.userTypes }
+            });
             return pieGenerator(data, i);
         });
 
@@ -624,12 +635,21 @@ function updateViewedProgress() {
         .append("path")
         .attr("fill", function (d, i) {
             if (d.data.group !== "viewed") return "transparent";
-            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "" || !d.data.extra.unlocked)
+
+            var viewableByUser = true;
+            if (d.data.extra.userTypes != undefined) {
+                d.data.extra.userTypes[dataset.userType] === FILTER_HIDDEN ? viewableByUser = false : viewableByUser = true;
+            }
+            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "" || !d.data.extra.unlocked || !viewableByUser)
                 return "#cad7dc";
             else return "#11a6d8";
         })
         .attr("class", function (d) {
-            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "" || !d.data.extra.unlocked)
+            var viewableByUser = true;
+            if (d.data.extra.userTypes != undefined) {
+                d.data.extra.userTypes[dataset.userType] === FILTER_HIDDEN ? viewableByUser = false : viewableByUser = true;
+            }
+            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "" || !d.data.extra.unlocked || !viewableByUser)
                 return "expandGrandchildren";
         })
         .attr("d", function (d) {
@@ -1088,7 +1108,7 @@ function exitViewMode() {
 function filterNodes() {
     var nodesToHide = nodes.filter(function (d) {
         var shouldRender = false;
-        if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked) {
+        if (!getViewable(d)) {
             shouldRender = false;
         } else shouldRender = true;
         return !shouldRender;
@@ -1096,7 +1116,7 @@ function filterNodes() {
 
     var nodesToShow = nodes.filter(function (d) {
         var shouldRender = false;
-        if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked) {
+        if (!getViewable(d)) {
             shouldRender = false;
         } else shouldRender = true;
         return shouldRender;
@@ -1402,6 +1422,26 @@ function setUnlocked() {
             dataset.nodes[childIndex].typeData.unlocked = true;
         }
     }
+}
+
+// ALL the checks for whether a certain node is viewable
+function getViewable(node) {
+    // CHECK 1: If user is authorized to view it
+    if (node.userTypes !== undefined) {
+        if (node.userTypes[dataset.userType] === FILTER_HIDDEN) return false;
+    }
+
+    // CHECK 2: If the user has unlocked the node
+    if (!node.typeData.unlocked) return false;
+
+    // CHECK 3: If the node is currently in view (ie: root/child/grandchild)
+    if (node.nodeType === "") return false;
+
+    // CHECK 4: If we are currently in view mode & if the node will be viewable in that case
+    if (node.nodeType === "grandchild" && inViewMode) return false;
+
+    // If it passes all the checks, return true!
+    return true;
 }
 
 // Wrap function specifically for SVG text
