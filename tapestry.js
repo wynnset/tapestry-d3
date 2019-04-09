@@ -572,6 +572,7 @@ function buildPathAndButton() {
         })
         .call(wrapText, NORMAL_RADIUS * 2);
 
+    // Append mediaButton
     nodes
         .filter(function (d) {
             return getViewable(d);
@@ -579,7 +580,7 @@ function buildPathAndButton() {
         .append("svg:foreignObject")
         .html(function (d) {
             return '<i id="mediaButtonIcon' + d.id + '"' + 
-                ' class="' + getMediaIconClass(d.mediaType, 'play') + ' mediaButtonIcon"' + 
+                ' class="' + getIconClass(d.mediaType, 'play') + ' mediaButtonIcon"' +
                 ' data-id="' + d.id + '"' + 
                 ' data-format="' + d.mediaFormat + '"' + 
                 ' data-media-type="' + d.mediaType + '"' + 
@@ -610,6 +611,33 @@ function buildPathAndButton() {
         setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
         recordAnalyticsEvent('user', 'open', 'lightbox', thisBtn.dataset.id);
     });
+
+    // Append addNodeButton
+    nodes.filter(function(d) {
+        return getViewable(d);
+    })
+    .append("svg:foreignObject")
+    .html(function (d) {
+        return '<i id="addNodeButton' + d.id + '"' +
+            ' class="' + getIconClass('add') + ' addNodeButtonIcon"' +
+            ' data-id="' + d.id + '"><\/i>';
+    })
+    .attr("id", function (d) {
+        return "addNodeButton" + d.id;
+    })
+    .attr("data-id", function (d) {
+        return d.id;
+    })
+    .attr("width", "60px")
+    .attr("height", "62px")
+    .attr("x", -27)
+    .attr("y", function (d) {
+        return -NORMAL_RADIUS * adjustedRadiusRatio - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);
+    })
+    .attr("style", function (d) {
+        return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
+    })
+    .attr("class", "mediaButton");
 }
 
 function updateViewedProgress() {
@@ -1557,13 +1585,13 @@ function closeLightbox(id, mediaType) {
 function updateMediaIcon(id, mediaType, action) {
 
     var buttonElementId = "#mediaButtonIcon" + id;
-    var classStr = getMediaIconClass(mediaType, action);
+    var classStr = getIconClass(mediaType, action);
 
     $(buttonElementId).removeAttr('style');
     $(buttonElementId).attr('class', classStr);
 }
 
-function getMediaIconClass(mediaType, action) {
+function getIconClass(mediaType, action) {
 
     var classStrStart = 'fas fa-';
     var classStrEnd = '-circle';
@@ -1579,6 +1607,9 @@ function getMediaIconClass(mediaType, action) {
             else
                 classStr = classStrStart + 'play' + classStrEnd;
             break;
+
+        case "add":
+            classStr = classStrStart + 'plus' + classStrEnd;
             
         default:
             classStr = classStrStart + 'exclamation' + classStrEnd;
