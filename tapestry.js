@@ -31,13 +31,15 @@ var dataset, root, svg, links, nodes,               // Basics
     path, pieGenerator, arcGenerator,               // Donut
     linkForce, collideForce, force,                 // Force
     nodeCoordinates = [],                           // For saving the coordinates of the Tapestry pre transition to play mode
-    inViewMode = false,                             // Flag for when we're in view mode
     adjustedRadiusRatio = 1,                        // Radius adjusted for view mode
     tapestrySlug, saveProgressToCookie = true,      // Cookie
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
 	h5pVideoSettings = {};
+
+// FLAGS
+var inViewMode = false;                             // Flag for when we're in view mode
 
 const // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30;     // 30 is to count for the icon
@@ -124,6 +126,95 @@ $.getJSON( jsonUrl, function(result){
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
+});
+
+/****************************************************
+ * ADDING NEW FORM
+ ****************************************************/
+
+$(function() {
+    $('#addNodeForm').on("submit",function(e) {
+        e.preventDefault(); // cancel the actual submit
+        inAddMode = true;
+        //TODO: Validate form
+        var formData = $('form').serializeArray();
+        console.log(formData);
+
+        // Add the node data first
+        var newNodeEntry = {
+            "id": dataset["nodes"].length + 1,
+            "nodeType": "",
+            "title": "",
+            "imageURL": "",
+            "mediaType": "video",
+            "mediaFormat": "",
+            "mediaDuration": 0,
+            "typeId": 1,
+            "group": 1,
+            "typeData": {
+                "progress": [
+                    {"group": "viewed", "value": 0},
+                    {"group": "unviewed", "value": 1}
+                ],
+                "mediaURL": "",
+                "mediaWidth": 960,
+                "mediaHeight": 600,
+                "unlocked": true
+            },
+            "userTypes": {
+                "admin": "normal",
+                "consumer": "normal",
+                "editor": "optional"
+            },
+            "fx": 500,
+            "fy": 500,
+            "completedNode": false          // Flag for adding new nodes; Sets to false when node
+        };
+
+        for (var i = 0; i < formData.length; i++) {
+            var fieldName = formData[i]["name"];
+            var fieldValue = formData[i]["value"];
+
+            switch (fieldName) {
+                case "mp4-mediaURL":
+                case "h5p-mediaURL":
+                    newNodeEntry["typeData"]["mediaURL"] = fieldValue;
+                    break;
+                case "mp4-mediaDuration":
+                case "h5p-mediaDuration":
+                    newNodeEntry["typeData"]["mediaDuration"] = fieldValue;
+                    break;
+                default:
+                    newNodeEntry[fieldName] = fieldValue;
+                    break;
+            }
+        }
+
+        console.log(dataset);
+
+        dataset["nodes"].push(newNodeEntry);
+
+        // Add the link data
+        dataset["links"].push({"source": 1, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": 0 });
+        links = createLinks();  // Recreate the links
+
+        $('#addNodeForm').trigger("reset");
+        $('#addNodeForm').css({ display: "none" });
+
+        console.log(dataset);
+
+        updateTapestrySize();
+        setNodeTypes(1);
+        setLinkTypes(1);
+        filterNodes();
+        filterLinks();
+        buildNodeContents();
+        rebuildNodeContents();
+        startForce();
+
+        console.log(dataset);
+        // return true;
+    });
 });
 
 /****************************************************
@@ -248,6 +339,7 @@ function updateSvgDimensions(containerId) {
 }
 
 function createLinks() {
+    console.log(dataset);
     /* Need to remove old links when redrawing graph */
     return svg.append("svg:g")
                 .attr("class", "links")
@@ -534,6 +626,7 @@ function rebuildNodeContents() {
     // Remove elements and add them back in
     nodes.selectAll("text").remove();
     nodes.selectAll(".mediaButton").remove();
+    nodes.selectAll(".addNodeButton").remove();
     nodes.selectAll("path").remove();
     setTimeout(function(){
         buildPathAndButton();
@@ -613,31 +706,49 @@ function buildPathAndButton() {
     });
 
     // Append addNodeButton
-    nodes.filter(function(d) {
-        return getViewable(d);
-    })
-    .append("svg:foreignObject")
-    .html(function (d) {
-        return '<i id="addNodeButton' + d.id + '"' +
-            ' class="' + getIconClass('add') + ' addNodeButtonIcon"' +
-            ' data-id="' + d.id + '"><\/i>';
-    })
-    .attr("id", function (d) {
-        return "addNodeButton" + d.id;
-    })
-    .attr("data-id", function (d) {
-        return d.id;
-    })
-    .attr("width", "60px")
-    .attr("height", "62px")
-    .attr("x", -27)
-    .attr("y", function (d) {
-        return -NORMAL_RADIUS * adjustedRadiusRatio - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);
-    })
-    .attr("style", function (d) {
-        return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
-    })
-    .attr("class", "mediaButton");
+    nodes
+        .filter(function (d) {
+            return d.nodeType === "root";
+        })
+        .append("svg:foreignObject")
+        .html(function (d) {
+            return '<i id="addNodeIcon' + d.id + '"' +
+                ' class="' + getIconClass("add") + ' addNodeIcon"' +
+                ' data-id="' + d.id + '"><\/i>';
+        })
+        .attr("id", function (d) {
+            return "addNodeIcon" + d.id;
+        })
+        .attr("data-id", function (d) {
+            return d.id;
+        })
+        .attr("width", "60px")
+        .attr("height", "62px")
+        .attr("x", -27)
+        .attr("y", function (d) {
+            return NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30;
+        })
+        .attr("style", function (d) {
+            return d.nodeType === "grandchild" || d.nodeType === "child" ? "visibility: hidden" : "visibility: visible";
+        })
+        .attr("class", "addNodeButton");
+
+    $('.addNodeButton > i').click(function(){
+        var thisBtn = $(this)[0];
+        // WORKFLOW:
+        // 1. Pop-up dialog of the add form
+        document.getElementById("addNodeForm").style.display = "block";
+
+        // 2. The user will need to fill it up
+
+
+        // 3. After submit + validation, a new detached node will pop-up, and the user can drag it to where they want it to be placed
+
+        // 4. After confirming placement, capture the location and generate the new node for it
+
+        // setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
+        // recordAnalyticsEvent('user', 'open', 'lightbox', thisBtn.dataset.id);
+    });
 }
 
 function updateViewedProgress() {
@@ -1168,6 +1279,14 @@ function filterNodes() {
     }, TRANSITION_DURATION);
 }
 
+function showAddNodeForm (parentId) {
+
+}
+
+function addNode(parentId, formData) {
+
+}
+
 /****************************************************
  * HELPER FUNCTIONS
  ****************************************************/
@@ -1306,6 +1425,7 @@ function getChildren(id) {
         }
     }
 
+    console.log("Children", children);
     return children;
 }
 
@@ -1459,13 +1579,16 @@ function getViewable(node) {
         if (node.userTypes[dataset.userType] === FILTER_HIDDEN) return false;
     }
 
-    // CHECK 2: If the user has unlocked the node
+    // CHECK 2: If it is a new node that needs the position to be set (ie: incomplete), show it so that the user can place the node
+    if (node.completedNode !== undefined && !node.completedNode) return true;
+
+    // CHECK 3: If the user has unlocked the node
     if (!node.typeData.unlocked) return false;
 
-    // CHECK 3: If the node is currently in view (ie: root/child/grandchild)
+    // CHECK 4: If the node is currently in view (ie: root/child/grandchild)
     if (node.nodeType === "") return false;
 
-    // CHECK 4: If we are currently in view mode & if the node will be viewable in that case
+    // CHECK 5: If we are currently in view mode & if the node will be viewable in that case
     if (node.nodeType === "grandchild" && inViewMode) return false;
 
     // If it passes all the checks, return true!
@@ -1610,6 +1733,7 @@ function getIconClass(mediaType, action) {
 
         case "add":
             classStr = classStrStart + 'plus' + classStrEnd;
+            break;
             
         default:
             classStr = classStrStart + 'exclamation' + classStrEnd;

@@ -134,6 +134,8 @@ text {
     stroke-opacity: 5;
 }
 
+/* MEDIA BUTTON */
+
 .mediaButton {
     transition: all 0.25s ease;
     cursor: pointer;
@@ -165,6 +167,28 @@ text {
     height: 94%;
     background-size: 98%;
     box-shadow: 0 0 0 2px #666 inset;
+}
+
+/* ADD NODE BUTTON */
+.addNodeButton {
+    transition: all 0.25s ease;
+    cursor: pointer;
+    color: #666666;
+    overflow: hidden;
+    border-radius: 100%;
+}
+
+.addNodeButton:hover,
+.addNodeButton:active {
+    transform: scale(1.15) translate(0, -21px);
+    color: #11a6d8;
+}
+
+.addNodeButton > i:not(.mediaButtonLoading) {
+    font-size: 55px;
+    background: #fff;
+    border: solid 1px #fff;
+    padding: 2px;
 }
 
 i {

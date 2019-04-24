@@ -1,9 +1,9 @@
 {
     "rootId": 1,
-    "userType": "consumer",
+    "userType": "admin",
     "settings": {
         "tapestrySlug": "intercultural-understanding",
-        "saveProgressToCookie": false,
+        "saveProgressToCookie": true,
         "zoom": 1
     },
     "nodes": [

@@ -15,12 +15,136 @@
   <link href="./libs/jquery-ui.min.css"
         rel="stylesheet">
 </head>
+<style>
+  body {font-family: Arial, Helvetica, sans-serif;}
+  * {box-sizing: border-box;}
+
+  /* The popup form - hidden by default */
+  .form-popup {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    right: 15px;
+    border: 3px solid #f1f1f1;
+    z-index: 9;
+  }
+
+  /* Add styles to the form container */
+  .form-container {
+    max-width: 300px;
+    padding: 10px;
+    background-color: white;
+  }
+
+  /* Full-width input fields */
+  .form-container input[type=text], .form-container input[type=url] {
+    width: 100%;
+    padding: 15px;
+    margin: 5px 0 22px 0;
+    border: none;
+    background: #f1f1f1;
+
+  /* When the inputs get focus, do something */
+  .form-container input[type=text]:focus, .form-container input[type=password]:focus {
+    background-color: #ddd;
+    outline: none;
+  }
+
+  /* Set a style for the submit/login button */
+  .form-container .btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 16px 20px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom:10px;
+    opacity: 0.8;
+  }
+
+  /* Add a red background color to the cancel button */
+  .form-container .cancel {
+    background-color: red;
+  }
+
+  /* Add some hover effects to buttons */
+  .form-container .btn:hover, .open-button:hover {
+    opacity: 1;
+  }
+
+  /* Contents details - hidden by default */
+  .contents-details {
+    display: none !important;
+  }
+
+  .mp4-content {
+    display: none !important;
+  }
+
+  .h5p-content {
+    display: none !important;
+  }
+</style>
 <body translate="no">
   <header id="header">
     <h1>Tapestry</h1>
     <h2>Intercultural Understanding</h2>
   </header>
-  <div id="tapestry"></div>
+  <div id="tapestry">
+  </div>
+
+  <!-- FORM FOR ADDING NODES -->
+  <!--<button onclick="showAddNodeForm()">Add node to node 1</button>-->
+  <div class="form-popup" id="addNodeForm" name="addNodeForm">
+    <form class="form-container">
+      <h2>Add new sub-topic to [placeholder title]</h2>
+      <label>Title
+        <input name="title" type="text" placeholder="Enter the topic title" required >
+      </label>
+      <label>Thumbnail
+        <input name="imageURL" type="url" placeholder="Enter the URL for the thumbnail" required>
+      </label>
+      <label>Media Type
+        <div class="dropdown">
+          <select id="mediaType" name="mediaType">
+            <option value="default">Select type:</option>
+            <option value="video">video</option>
+            <!--<option value="image">image</option>-->
+          </select>
+        </div>
+      </label>
+      <label>Media Format
+        <div class="dropdown">
+          <select id="mediaFormat" name="mediaFormat">
+            <option value="default">Select format:</option>
+            <option value="mp4">MP4</option>
+            <option value="h5p">H5P</option>
+            <!--<option value="jpeg">JPEG</option>-->
+          </select>
+        </div>
+      </label>
+      <div id="contents-details" class="content-details" style="display: none">
+        <h3>Content Details</h3>
+        <div id="mp4-content" class="mp4-content">
+          <label>Video URL
+            <input name="mp4-mediaURL" type="url" placeholder="Enter URL for MP4 Video" >
+          </label>
+          <label>Video Duration
+            <input name="mp4-mediaDuration" type="text" placeholder="Enter URL for MP4 Video" >
+          </label>
+        </div>
+        <div id="h5p-content" class="h5p-content">
+          <label>H5P Embed Link
+            <input name="h5p-mediaURL" type="url" placeholder="Enter H5P Embed Link" >
+          </label>
+          <label>H5P Content Duration
+            <input name="h5p-mediaDuration" type="text" placeholder="Enter URL for MP4 Video" >
+          </label>
+        </div>
+      </div>
+      <button type="submit" class="btn">Submit</button>
+    </form>
+  </div>
   <div id="instructions-wrapper">
     Instructions: Click nodes to explore. Click play icon to play a video.
   </div>
@@ -42,5 +166,32 @@
   </script> 
   <script src="./tapestry.js"
         type="application/javascript"></script>
+  <script>
+//    function showAddNodeForm() {
+//      document.getElementById("addNodeForm").style.display = "block";
+//    }
+
+    $('#mediaFormat').on('change', function(){
+        var selectedType = $(this).val();
+        switch(selectedType)
+        {
+            case 'mp4':
+                $('#contents-details').show();
+                $('#mp4-content').show();
+                $('#h5p-content').hide();
+                break;
+            case 'h5p':
+                $('#contents-details').show();
+                $('#mp4-content').hide();
+                $('#h5p-content').show();
+                break;
+            default:
+                $('#contents-details').hide();
+                $('#mp4-content').hide();
+                $('#h5p-content').hide();
+                break;
+        }
+    });
+  </script>
 </body>
 </html>
