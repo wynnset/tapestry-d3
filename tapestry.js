@@ -93,11 +93,11 @@ $.getJSON( jsonUrl, function(result){
     //---------------------------------------------------
     // 3. SET NODES/LINKS AND CREATE THE SVG OBJECTS
     //---------------------------------------------------
-    
-    root = dataset.rootId,
-    
-    setNodeTypes(dataset.rootId);
-    setLinkTypes(dataset.rootId);
+
+    root = dataset.rootId;
+
+    setNodeTypes(root);
+    setLinkTypes(root);
     setUnlocked();
 
     if (dataset.settings !== undefined && dataset.settings.thumbDiff !== undefined) {
@@ -129,16 +129,15 @@ $.getJSON( jsonUrl, function(result){
 });
 
 /****************************************************
- * ADDING NEW FORM
+ * FUNCTIONS FOR ADD NEW NODE FORM
  ****************************************************/
-
 $(function() {
-    $('#addNodeForm').on("submit",function(e) {
+    $("#addNodeForm").on("submit", function(e) {
         e.preventDefault(); // cancel the actual submit
-        inAddMode = true;
         //TODO: Validate form
-        var formData = $('form').serializeArray();
+        var formData = $("form").serializeArray();
         console.log(formData);
+        var rootIndex = findNodeIndex(root);
 
         // Add the node data first
         var newNodeEntry = {
@@ -157,7 +156,7 @@ $(function() {
                     {"group": "unviewed", "value": 1}
                 ],
                 "mediaURL": "",
-                "mediaWidth": 960,
+                "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
                 "mediaHeight": 600,
                 "unlocked": true
             },
@@ -166,9 +165,9 @@ $(function() {
                 "consumer": "normal",
                 "editor": "optional"
             },
-            "fx": 500,
-            "fy": 500,
-            "completedNode": false          // Flag for adding new nodes; Sets to false when node
+            // Just pit the node right under
+            "fx": dataset.nodes[rootIndex].fx,
+            "fy": dataset.nodes[rootIndex].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50
         };
 
         for (var i = 0; i < formData.length; i++) {
@@ -178,11 +177,18 @@ $(function() {
             switch (fieldName) {
                 case "mp4-mediaURL":
                 case "h5p-mediaURL":
-                    newNodeEntry["typeData"]["mediaURL"] = fieldValue;
+                    if (fieldValue !== "") {
+                        newNodeEntry["typeData"]["mediaURL"] = fieldValue;
+                    }
                     break;
                 case "mp4-mediaDuration":
                 case "h5p-mediaDuration":
-                    newNodeEntry["typeData"]["mediaDuration"] = fieldValue;
+                    if (fieldValue !== "") {
+                        newNodeEntry["typeData"]["mediaDuration"] = fieldValue;
+                    }
+                    break;
+                case "appearsAt":
+
                     break;
                 default:
                     newNodeEntry[fieldName] = fieldValue;
@@ -190,30 +196,59 @@ $(function() {
             }
         }
 
-        console.log(dataset);
-
+        // Add the new data to the dataset
         dataset["nodes"].push(newNodeEntry);
+        dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": 0 });
 
-        // Add the link data
-        dataset["links"].push({"source": 1, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": 0 });
+        // Remove the values from form
+        $("#addNodeForm input[type='text']").val("");
+        $("#addNodeForm input[type='url']").val("");
+        $("#addNodeForm").hide();
+
+        // Rebuild the nodes and links
         links = createLinks();  // Recreate the links
-
-        $('#addNodeForm').trigger("reset");
-        $('#addNodeForm').css({ display: "none" });
-
-        console.log(dataset);
-
+        nodes = createNodes();
+        saveCoordinates();
         updateTapestrySize();
-        setNodeTypes(1);
-        setLinkTypes(1);
-        filterNodes();
+
+        setLinkTypes(root);
+        setNodeTypes(root);
+
         filterLinks();
+        filterNodes();
+
+        // Rebuild everything to include the new node
         buildNodeContents();
         rebuildNodeContents();
         startForce();
+    });
 
-        console.log(dataset);
-        // return true;
+    $("#mediaFormat").on("change", function(){
+        var selectedType = $(this).val();
+        switch(selectedType)
+        {
+            case "mp4":
+                $("#contents-details").show();
+                $("#mp4-content").show();
+                $("#h5p-content").hide();
+                break;
+            case "h5p":
+                $("#contents-details").show();
+                $("#mp4-content").hide();
+                $("#h5p-content").show();
+                break;
+            default:
+                $("#contents-details").hide();
+                $("#mp4-content").hide();
+                $("#h5p-content").hide();
+                break;
+        }
+    });
+
+    $("#cancelButton").on("click", function() {
+        $("#addNodeForm input[type='text']").val("");
+        $("#addNodeForm input[type='url']").val("");
+        $("#addNodeForm").hide();
     });
 });
 
@@ -339,8 +374,14 @@ function updateSvgDimensions(containerId) {
 }
 
 function createLinks() {
-    console.log(dataset);
     /* Need to remove old links when redrawing graph */
+    if (links !== undefined) {
+        svg.selectAll('line')
+            .data(dataset.links)
+            .remove();
+    }
+
+    /* Now, can draw the links */
     return svg.append("svg:g")
                 .attr("class", "links")
                 .selectAll("line")
@@ -366,6 +407,13 @@ function createLinks() {
 
 function createNodes() {
     /* Need to remove old nodes when redrawing graph */
+    if (nodes !== undefined) {
+        svg.selectAll("g.node")
+            .data(dataset.nodes)
+            .remove();
+    }
+
+    /* Now, can draw the nodes */
     return svg.selectAll("g.node")
                 .data(dataset.nodes)
                 .enter()
@@ -441,7 +489,6 @@ function filterLinks() {
 
 /* Draws the components that make up node */
 function buildNodeContents() {
-
     /* Draws the circle that defines how large the node is */
     nodes.append("rect")
         .attr("class", function (d) {
@@ -631,7 +678,6 @@ function rebuildNodeContents() {
     setTimeout(function(){
         buildPathAndButton();
     }, TRANSITION_DURATION);
-    
 }
 
 function buildPathAndButton() {
@@ -734,20 +780,11 @@ function buildPathAndButton() {
         .attr("class", "addNodeButton");
 
     $('.addNodeButton > i').click(function(){
-        var thisBtn = $(this)[0];
-        // WORKFLOW:
-        // 1. Pop-up dialog of the add form
+        // Set up the title of the form
+        $('#formTitle').html("Add new sub-topic to " + dataset.nodes[findNodeIndex(root)].title);
+
+        // Show the form
         document.getElementById("addNodeForm").style.display = "block";
-
-        // 2. The user will need to fill it up
-
-
-        // 3. After submit + validation, a new detached node will pop-up, and the user can drag it to where they want it to be placed
-
-        // 4. After confirming placement, capture the location and generate the new node for it
-
-        // setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
-        // recordAnalyticsEvent('user', 'open', 'lightbox', thisBtn.dataset.id);
     });
 }
 
@@ -1279,14 +1316,6 @@ function filterNodes() {
     }, TRANSITION_DURATION);
 }
 
-function showAddNodeForm (parentId) {
-
-}
-
-function addNode(parentId, formData) {
-
-}
-
 /****************************************************
  * HELPER FUNCTIONS
  ****************************************************/
@@ -1425,7 +1454,6 @@ function getChildren(id) {
         }
     }
 
-    console.log("Children", children);
     return children;
 }
 
@@ -1580,7 +1608,7 @@ function getViewable(node) {
     }
 
     // CHECK 2: If it is a new node that needs the position to be set (ie: incomplete), show it so that the user can place the node
-    if (node.completedNode !== undefined && !node.completedNode) return true;
+    // if (node.completedNode !== undefined && !node.completedNode) return true;
 
     // CHECK 3: If the user has unlocked the node
     if (!node.typeData.unlocked) return false;
