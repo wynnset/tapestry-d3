@@ -7,34 +7,34 @@
         "zoom": 1
     },
     "nodes": [
-        {
-            "id": 1,
-            "nodeType": "",
-            "title": "Intercultural Understanding",
-            "imageURL": "https://beta.tapestry-tool.com/wp-content/uploads/2018/10/intercultural-understanding-resized.png",
-            "mediaType": "video",
-            "mediaFormat": "mp4",
-            "mediaDuration": 232,
-            "typeId": 1,
-            "group": 1,
-            "typeData": {
-                "progress": [
-                    {"group": "viewed", "value": 0},
-                    {"group": "unviewed", "value": 1}
-                ],
-                "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/MAIN.mp4",
-                "mediaWidth": 960,
-                "mediaHeight": 600,
-                "unlocked": true
-            },
-            "userTypes": {
-                "admin": "normal",
-                "consumer": "normal",
-                "editor": "optional"
-            },
-            "fx": 800,
-            "fy": 470
-        },
+{
+    "id": 1,
+    "nodeType": "",
+    "title": "Intercultural Understanding",
+    "imageURL": "https://beta.tapestry-tool.com/wp-content/uploads/2018/10/intercultural-understanding-resized.png",
+    "mediaType": "video",
+    "mediaFormat": "mp4",
+    "mediaDuration": 232,
+    "typeId": 1,
+    "group": 1,
+    "typeData": {
+        "progress": [
+            {"group": "viewed", "value": 0},
+            {"group": "unviewed", "value": 1}
+        ],
+        "mediaURL": "https://tapestry-vid.sfo2.cdn.digitaloceanspaces.com/ICUS/MAIN.mp4",
+        "mediaWidth": 960,
+        "mediaHeight": 600,
+        "unlocked": true
+    },
+    "userTypes": {
+        "admin": "normal",
+        "consumer": "normal",
+        "editor": "optional"
+    },
+    "fx": 800,
+    "fy": 470
+},
         {
             "id": 2,
             "nodeType": "",

@@ -1324,7 +1324,7 @@ function filterNodes() {
  * HELPER FUNCTIONS
  ****************************************************/
 
-// Get width, height, and aspect ratio of viewable region
+/* Get width, height, and aspect ratio of viewable region */
 function getBrowserWidth() {
     return Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
 }
@@ -1362,6 +1362,7 @@ function getNodesDimensions(dataset) {
     };
 }
 
+/* Gets the boundary of the tapestry */
 function getTapestryDimensions() {
 
     var nodeDimensions = getNodesDimensions(originalDataset);
@@ -1398,6 +1399,9 @@ function getTapestryDimensions() {
     };
 }
 
+/* Updates the size of the overall tapestry
+(ie: the area that encompasses the boundaries of the nodes)
+ according to where the nodes are placed in the dataset */
 function updateTapestrySize() {
     if (!inViewMode) {
         var nodeDimensions = getNodesDimensions(dataset);
@@ -1416,6 +1420,7 @@ function updateTapestrySize() {
     }
 }
 
+/* Changes the node depending on horizontal/vertical view */
 function transposeNodes() {
     for (var index in dataset.nodes) {
         var temp_fx = dataset.nodes[index].fy;
@@ -1424,7 +1429,7 @@ function transposeNodes() {
     }
 }
 
-// Finds the node index with node ID
+/* Finds the node index with node ID */
 function findNodeIndex(id) {
     function helper(obj) {
         return obj.id == id;
@@ -1437,6 +1442,7 @@ function getBoundedCoord(coord, maxCoord) {
     return Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
 }
 
+/* Get the children of the current root */
 function getChildren(id) {
     var children = [];
     var dataLinks = dataset.links;
@@ -1461,6 +1467,7 @@ function getChildren(id) {
     return children;
 }
 
+/* Get the grandchildren  of the current root */
 function getGrandchildren(children) {
     var grandchildren = [];
     for (var childId in children) {
@@ -1472,8 +1479,8 @@ function getGrandchildren(children) {
     return grandchildren;
 }
 
+/* Gets the size of the node depending on the type of the node relevant to the current root */
 function getRadius(d) {
-    // var nodeDiff;
     var radius;
     if (d.nodeType === "" || !d.typeData.unlocked) {
         return 0;
@@ -1486,7 +1493,7 @@ function getRadius(d) {
     return radius;
 }
 
-//Updates the data in the node for how much the video has been viewed
+/* Updates the data in the node for how much the video has been viewed */
 function updateViewedValue(id, amountViewedTime, duration) {
     var amountViewed = amountViewedTime / duration;
     var amountUnviewed = 1.00 - amountViewed;
@@ -1504,6 +1511,7 @@ function updateViewedValue(id, amountViewedTime, duration) {
     }
 }
 
+/* Tells the overall dataset progress of the entire tapestry */
 function getDatasetProgress() {
     
     var progressObj = {};
@@ -1705,6 +1713,7 @@ function getChildrenData(parentId) {
 
 })();
 
+// Functionality for the X button that closes the media and the light-box
 function closeLightbox(id, mediaType) {
     	
     // Pause the H5P video before closing it. This will also trigger saving of the settings
@@ -1746,6 +1755,7 @@ function updateMediaIcon(id, mediaType, action) {
     $(buttonElementId).attr('class', classStr);
 }
 
+// Helper function for getting the name for the Font Awesome icons
 function getIconClass(mediaType, action) {
 
     var classStrStart = 'fas fa-';
