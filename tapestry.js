@@ -170,6 +170,7 @@ $(function() {
             "fy": dataset.nodes[rootIndex].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50
         };
 
+        var appearsAt = 0;
         for (var i = 0; i < formData.length; i++) {
             var fieldName = formData[i]["name"];
             var fieldValue = formData[i]["value"];
@@ -188,7 +189,12 @@ $(function() {
                     }
                     break;
                 case "appearsAt":
-
+                    appearsAt = fieldValue;
+                    break;
+                case "admin":
+                case "consumer":
+                case "editor":
+                    newNodeEntry["userTypes"][fieldName] = fieldValue;
                     break;
                 default:
                     newNodeEntry[fieldName] = fieldValue;
@@ -196,9 +202,11 @@ $(function() {
             }
         }
 
+        console.log(newNodeEntry);
+
         // Add the new data to the dataset
         dataset["nodes"].push(newNodeEntry);
-        dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": 0 });
+        dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
 
         // Remove the values from form
         $("#addNodeForm input[type='text']").val("");
