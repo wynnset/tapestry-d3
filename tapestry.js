@@ -134,9 +134,7 @@ $.getJSON( jsonUrl, function(result){
 $(function() {
     $("#addNodeForm").on("submit", function(e) {
         e.preventDefault(); // cancel the actual submit
-        //TODO: Validate form
         var formData = $("form").serializeArray();
-        console.log(formData);
         var rootIndex = findNodeIndex(root);
 
         // Add the node data first
@@ -201,8 +199,6 @@ $(function() {
                     break;
             }
         }
-
-        console.log(newNodeEntry);
 
         // Add the new data to the dataset
         dataset["nodes"].push(newNodeEntry);
