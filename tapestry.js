@@ -891,6 +891,52 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
  * HELPER FUNCTIONS
  ****************************************************/
 
+function setNodeTypesZoomed(rootId) {
+
+    root = rootId;
+    var children = getChildren(root),
+        grandchildren = getGrandchildrenRec(children,1);
+
+    for (var i in dataset.nodes) {
+        var node = dataset.nodes[i];
+        var id = node.id;
+
+        //NOTE: If there are any nodes are that fit two roles (ie: root and the grandchild),
+        //      should default to being the more senior role
+        if (id === root) {
+            node.nodeType = "root";
+        } else if (grandchildren.indexOf(id) > -1) {
+            node.nodeType = "grandchild";
+        } else {
+            node.nodeType = "";
+        }
+    }
+}
+
+function setNodeTypesMaxed(rootId) {
+    root = rootId;
+    var children = getChildren(root),
+        grandchildren = getGrandchildrenRec(children,3);
+
+    for (var i in dataset.nodes) {
+        var node = dataset.nodes[i];
+        var id = node.id;
+
+        //NOTE: If there are any nodes are that fit two roles (ie: root and the grandchild),
+        //      should default to being the more senior role
+        if (id === root) {
+            node.nodeType = "root";
+        } else if (grandchildren.indexOf(id) > -1) {
+            node.nodeType = "child";
+//        } else if (greatgrandchildren.indexOf(id) > -1) {
+//            node.nodeType = "grandchild"
+        } else {
+            node.nodeType = "grandchild";
+        }
+    }
+}
+
+
 // Get width, height, and aspect ratio of viewable region
 function getBrowserWidth() {
     return Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
@@ -998,6 +1044,23 @@ function getChildren(id) {
 
     return children;
 }
+
+// level refers to the level of descendents.
+// 1 is only children, 2 is grandchildren, 3 is greatgrandchildren, etc.
+function getGrandchildrenRec(children,level) {
+    var grandchildren = children;
+    var levelAt = 1;
+    while (levelAt < level) {
+        for (var childId in grandchildren) {
+            var child = grandchildren[childId];
+            var currentGrandchildren = getChildren(child);
+            grandchildren = grandchildren.concat(currentGrandchildren);
+        }
+        levelAt++;
+    }
+    return grandchildren;
+}
+
 
 function getGrandchildren(children) {
     var grandchildren = [];
