@@ -1289,4 +1289,16 @@ $(document).ready(function(){
         var y = event.clientY + $(window).scrollTop();
         recordAnalyticsEvent('user', 'click', 'tapestry', null, {'x': x, 'y': y});
     }, true); 
+
+    const url = "http://localhost:8888/tapestry-wp/wp-json/myplugin/v1/author/1";
+    const testData = {
+        'action': 'rest_api_init',
+        'x':1, 
+        'y':2
+    };
+    console.log("hello2");
+    jQuery.get(url, testData, function (response) {
+        console.log("success");
+        console.log(response);
+    });
 });
