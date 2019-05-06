@@ -30,6 +30,11 @@ body {
     padding-top: 33px;
     margin: 0;
 }
+#header div, p {
+    vertical-align: middle;
+    padding-left: 50px;
+    display: inline-block;
+}
 
 @media (max-width: 670px) {
   #header h2 {
@@ -50,6 +55,20 @@ body {
 
 #tapestry {
     margin-top: 100px;
+}
+
+#slider-wrapper {
+    max-width: 430px;
+    border: solid 1px #CCC;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 8px;
+    text-align:center; 
+    color: #666; 
+    margin: 0 auto 1em; 
+    float: none;
+    font-size: 0.8em;
+    position:absolute;
 }
 
 #footer {
