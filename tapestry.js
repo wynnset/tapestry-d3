@@ -31,17 +31,24 @@ var dataset, root, svg, links, nodes,               // Basics
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
-	h5pVideoSettings = {};
+    h5pVideoSettings = {},
+    userId;
 
 /****************************************************
  * INITIALIZATION
  ****************************************************/
 
+const url = "http://localhost:8888/tapestry-wp/wp-json/myplugin/v1/posts/getnodes";
+
+
 /* Import data from json file, then start D3 */
-$.getJSON( jsonUrl, function(result){
-
+jQuery.get( url, function(result){
+    console.log("success");
+    console.log(result);
     dataset = result;
-
+    console.log("After set");
+    console.log(result);
+    console.log(userId);
     //---------------------------------------------------
     // 1. GET PROGRESS FROM COOKIE (IF ENABLED)
     //---------------------------------------------------
@@ -1276,6 +1283,13 @@ function createUUID() {
     });
 }
 
+function getUserId() {
+    const url2 = "http://localhost:8888/tapestry-wp/wp-json/myplugin/v1/users/getcurrentuserid";
+    jQuery.get(url2, function (response) {
+        userId = response;
+    });
+}
+
 // Capture click events anywhere inside or outside tapestry
 $(document).ready(function(){
     document.body.addEventListener('click', function(event) {
@@ -1289,16 +1303,4 @@ $(document).ready(function(){
         var y = event.clientY + $(window).scrollTop();
         recordAnalyticsEvent('user', 'click', 'tapestry', null, {'x': x, 'y': y});
     }, true); 
-
-    const url = "http://localhost:8888/tapestry-wp/wp-json/myplugin/v1/author/1";
-    const testData = {
-        'action': 'rest_api_init',
-        'x':1, 
-        'y':2
-    };
-    console.log("hello2");
-    jQuery.get(url, testData, function (response) {
-        console.log("success");
-        console.log(response);
-    });
 });
