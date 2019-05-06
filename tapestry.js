@@ -1,22 +1,3 @@
-   var slider = d3
-    .sliderHorizontal()
-    .min(0)
-    .max(3)
-    .step(1)
-    .width(300)
-    .displayValue(false)
-    .on('onchange', val => {
-      d3.select('#value').text(val);
-    });
-
-  d3.select('#slider')
-    .append('svg')
-    .attr('width', 500)
-    .attr('height', 100)
-    .append('g')
-    .attr('transform', 'translate(30,30)')
-    .call(slider);
-
 (function(){
 
 /****************************************************
@@ -53,6 +34,7 @@ var dataset, root, svg, links, nodes,               // Basics
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
 	h5pVideoSettings = {};
+
 
 /****************************************************
  * INITIALIZATION
@@ -1047,6 +1029,7 @@ function getBoundedCoord(coord, maxCoord) {
 }
 
 function addDepth(rootId, depth) {
+    dataset.nodes[findNodeIndex(rootId)].depth = null;
     dataset.nodes[findNodeIndex(rootId)].depth = depth;
 
     var children = getChildren(rootId);
@@ -1055,10 +1038,11 @@ function addDepth(rootId, depth) {
 
     console.log(dataset.nodes[findNodeIndex(rootId)].depth);
 
-    for (var childId in children) {
-        var acc = depth++;
-        addDepth(childId,acc);
-        console.log(acc);
+    for (childId in children) {
+        console.log(children[childId])
+        var acc = depth + 1;
+        addDepth(children[childId],acc);
+ //       console.log(acc);
     }
 }
 
