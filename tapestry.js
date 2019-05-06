@@ -1,8 +1,29 @@
+   var slider = d3
+    .sliderHorizontal()
+    .min(0)
+    .max(3)
+    .step(1)
+    .width(300)
+    .displayValue(false)
+    .on('onchange', val => {
+      d3.select('#value').text(val);
+    });
+
+  d3.select('#slider')
+    .append('svg')
+    .attr('width', 500)
+    .attr('height', 100)
+    .append('g')
+    .attr('transform', 'translate(30,30)')
+    .call(slider);
+
 (function(){
 
 /****************************************************
  * CONSTANTS AND GLOBAL VARIABLES
  ****************************************************/
+
+
 
 const // declared
     TAPESTRY_CONTAINER_ID = "tapestry",
@@ -167,6 +188,8 @@ function resizeNodes(id) {
     filterLinks();
 
     rebuildNodeContents();
+
+    addDepth(id,0)
 
     /* Restart force */
     startForce();
@@ -937,6 +960,8 @@ function setNodeTypesMaxed(rootId) {
 }
 
 
+
+
 // Get width, height, and aspect ratio of viewable region
 function getBrowserWidth() {
     return Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
@@ -1019,6 +1044,22 @@ function findNodeIndex(id) {
 
 function getBoundedCoord(coord, maxCoord) {
     return Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
+}
+
+function addDepth(rootId, depth) {
+    dataset.nodes[findNodeIndex(rootId)].depth = depth;
+
+    var children = getChildren(rootId);
+
+    console.log(children);
+
+    console.log(dataset.nodes[findNodeIndex(rootId)].depth);
+
+    for (var childId in children) {
+        var acc = depth++;
+        addDepth(childId,acc);
+        console.log(acc);
+    }
 }
 
 function getChildren(id) {
