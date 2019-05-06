@@ -171,7 +171,7 @@ function resizeNodes(id) {
 
     rebuildNodeContents();
 
-    addDepth(id,0)
+    addDepth(id,0,[id]);
 
     /* Restart force */
     startForce();
@@ -1028,8 +1028,11 @@ function getBoundedCoord(coord, maxCoord) {
     return Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
 }
 
-function addDepth(rootId, depth) {
-    dataset.nodes[findNodeIndex(rootId)].depth = null;
+function addDepth(rootId, depth, visitlist) {
+    var visited = visitlist;
+
+    var depthAt = 0;
+
     dataset.nodes[findNodeIndex(rootId)].depth = depth;
 
     var children = getChildren(rootId);
@@ -1038,12 +1041,27 @@ function addDepth(rootId, depth) {
 
     console.log(dataset.nodes[findNodeIndex(rootId)].depth);
 
-    for (childId in children) {
-        console.log(children[childId])
-        var acc = depth + 1;
-        addDepth(children[childId],acc);
- //       console.log(acc);
+    while (depthAt < children.length) {
+        for (childId in children) {
+            if (visited.includes(children[childId])) {
+                depthAt++;
+            }
+            else {
+                var opChild = children[childId];
+
+                console.log(children[childId])
+                var acc = depth + 1;
+                dataset.nodes[findNodeIndex(children[childId])].depth = acc;
+         //       console.log(acc);
+                console.log(dataset.nodes[findNodeIndex(children[childId])].depth)
+                visited.push(children[childId])
+                console.log(visited);
+                addDepth(children[childId],acc,visited);
+                depthAt++;
+            }
+        }
     }
+
 }
 
 function getChildren(id) {
