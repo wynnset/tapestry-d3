@@ -17,7 +17,8 @@ const // declared
     COLOR_LINK = "#999",
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
-    FONT_ADJUST = 1.25;
+    FONT_ADJUST = 1.25,
+    NODE_UNLOCK_TIMEFRAME = 2;
 
 var dataset, root, svg, links, nodes,               // Basics
     originalDataset,                                // For saving the value of the original dataset pre-changes
@@ -813,7 +814,7 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
             video.addEventListener('timeupdate', function () {
                 if (video.played.length > 0 && viewedAmount < video.currentTime) {
                     for (var i = 0; i < childrenData.length; i++) {
-                        if (childrenData[i].appearsAt < video.currentTime && !dataset.nodes[childrenData[i].nodeIndex].typeData.unlocked) {
+                        if (Math.abs(childrenData[i].appearsAt - video.currentTime) <= NODE_UNLOCK_TIMEFRAME && !dataset.nodes[childrenData[i].nodeIndex].typeData.unlocked) {
                             setUnlocked();
                             filterLinks();
                             filterNodes();
@@ -1056,7 +1057,9 @@ function setAdjustedRadiusRatio(adjustedOn, numChildren) {
         }
 
         if (adjustedRadiusRatio > 1) adjustedRadiusRatio = 1;
-    } else adjustedRadiusRatio = 1;
+    } else {
+        adjustedRadiusRatio = 1;
+    }
 }
 
 function exitViewMode() {
@@ -1090,7 +1093,9 @@ function filterNodes() {
         var shouldRender = false;
         if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked) {
             shouldRender = false;
-        } else shouldRender = true;
+        } else {
+            shouldRender = true;
+        }
         return !shouldRender;
     });
 
@@ -1098,7 +1103,9 @@ function filterNodes() {
         var shouldRender = false;
         if (d.nodeType === "" || (d.nodeType === "grandchild" && inViewMode) || !d.typeData.unlocked) {
             shouldRender = false;
-        } else shouldRender = true;
+        } else {
+            shouldRender = true;
+        }
         return shouldRender;
     });
 
@@ -1281,8 +1288,9 @@ function getRadius(d) {
         radius = NORMAL_RADIUS * adjustedRadiusRatio + ROOT_RADIUS_DIFF;
     } else if (d.nodeType === "grandchild") {
         radius = NORMAL_RADIUS + GRANDCHILD_RADIUS_DIFF;
-    } else radius = NORMAL_RADIUS * adjustedRadiusRatio;
-
+    } else {
+        radius = NORMAL_RADIUS * adjustedRadiusRatio;
+    }
     return radius;
 }
 
