@@ -814,7 +814,7 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
             video.addEventListener('timeupdate', function () {
                 if (video.played.length > 0 && viewedAmount < video.currentTime) {
                     for (var i = 0; i < childrenData.length; i++) {
-                        if (Math.abs(childrenData[i].appearsAt - video.currentTime) <= NODE_UNLOCK_TIMEFRAME && !dataset.nodes[childrenData[i].nodeIndex].typeData.unlocked) {
+                        if (Math.abs(childrenData[i].appearsAt - video.currentTime) <= NODE_UNLOCK_TIMEFRAME && video.paused === false && !dataset.nodes[childrenData[i].nodeIndex].typeData.unlocked) {
                             setUnlocked();
                             filterLinks();
                             filterNodes();
