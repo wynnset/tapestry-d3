@@ -31,8 +31,7 @@ var dataset, root, svg, links, nodes,               // Basics
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
-    h5pVideoSettings = {},
-    userId;
+    h5pVideoSettings = {};
 
 /****************************************************
  * INITIALIZATION
@@ -42,13 +41,16 @@ const url = "http://localhost:8888/tapestry-wp/wp-json/myplugin/v1/posts/getnode
 
 
 /* Import data from json file, then start D3 */
-jQuery.get( url, function(result){
+// jQuery.get( url, function(result){
+$.getJSON( jsonUrl, function(result){
+    console.log(tapestryWpPostId);
     console.log("success");
     console.log(result);
     dataset = result;
     console.log("After set");
     console.log(result);
-    console.log(userId);
+    console.log(tapestryWpUserId);
+    
     //---------------------------------------------------
     // 1. GET PROGRESS FROM COOKIE (IF ENABLED)
     //---------------------------------------------------
