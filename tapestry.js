@@ -1,23 +1,24 @@
+// var fdata = [1,2,3]
 
+// var slider = d3
+// .sliderHorizontal()
+// .min(d3.min(fdata))
+// .max(d3.max(fdata))
+// .step(1)
+// .width(300)
+// .ticks(fdata.length - 1)
+// .displayValue(false)
+// .on('onchange', val => {
+//   d3.select('#value').text(val);
+// });
 
-  var slider = d3
-    .sliderHorizontal()
-    .min(0)
-    .max(3)
-    .step(1)
-    .width(300)
-    .displayValue(false)
-    .on('onchange', val => {
-      d3.select('#value').text(val);
-    });
-
-  d3.select('#slider')
-    .append('svg')
-    .attr('width', 500)
-    .attr('height', 100)
-    .append('g')
-    .attr('transform', 'translate(30,30)')
-    .call(slider);
+// d3.select('#slider')
+// .append('svg')
+// .attr('width', 500)
+// .attr('height', 100)
+// .append('g')
+// .attr('transform', 'translate(30,30)')
+// .call(slider);
 
 
 (function(){
@@ -26,7 +27,12 @@
  * CONSTANTS AND GLOBAL VARIABLES
  ****************************************************/
 
+var slider = document.getElementById("myRange");
 
+slider.oninput = function() {
+    locn = this.value;
+    console.log(locn);
+}
 
 const // declared
     TAPESTRY_CONTAINER_ID = "tapestry",
@@ -55,7 +61,8 @@ var dataset, root, svg, links, nodes,               // Basics
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
-	h5pVideoSettings = {};
+    h5pVideoSettings = {};
+    locn = 2;
 
 
 /****************************************************
@@ -199,6 +206,36 @@ function resizeNodes(id) {
     startForce();
 }
 
+function resizeNodesZoomed(id) {
+
+    setNodeTypesZoomed(id);
+    setLinkTypes(id);
+    filterLinks();
+
+    rebuildNodeContents();
+
+    addDepth(id,0,[id]);
+
+    /* Restart force */
+    startForce();
+}
+
+function resizeNodesMaxed(id) {
+
+    setNodeTypesMaxed(id);
+    setLinkTypes(id);
+    filterLinks();
+
+    rebuildNodeContents();
+
+    addDepth(id,0,[id]);
+
+    /* Restart force */
+    startForce();
+}
+
+
+
 function ticked() {
     var tapestryDimensions = getTapestryDimensions();
     links
@@ -257,7 +294,7 @@ function createSvgContainer(containerId) {
     return d3.select("#"+containerId)
                 .append("svg:svg")
                 .attr("id", containerId+"-svg")
-                .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
+                .attr("viewBox", "5 5 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g")
                 .attr("transform", "translate(-20, -20)");
@@ -266,7 +303,7 @@ function createSvgContainer(containerId) {
 function updateSvgDimensions(containerId) {
     var tapestryDimensions = getTapestryDimensions();
     d3.select("#"+containerId+"-svg")
-        .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height']);
+        .attr("viewBox", "5 5 " + tapestryDimensions['width'] + " " + tapestryDimensions['height']);
     startForce();
 }
 
@@ -474,7 +511,16 @@ function buildNodeContents() {
             // prevent multiple clicks
             if (root != d.id) {
                 root = d.id;
-                resizeNodes(d.id);
+//                resizeNodes(d.id);
+                if (locn == 1) {
+                    resizeNodesZoomed(d.id);
+                }
+                else if (locn == 3) {
+                    resizeNodesMaxed(d.id);
+                }
+                else {
+                    resizeNodes(d.id);
+                }
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
         });
@@ -1060,7 +1106,6 @@ function addDepth(rootId, depth, visitlist) {
     var children = getChildren(rootId);
 
     console.log(children);
-
     console.log(dataset.nodes[findNodeIndex(rootId)].depth);
 
     while (depthAt < children.length) {
@@ -1074,7 +1119,6 @@ function addDepth(rootId, depth, visitlist) {
                 console.log(children[childId])
                 var acc = depth + 1;
                 dataset.nodes[findNodeIndex(children[childId])].depth = acc;
-         //       console.log(acc);
                 console.log(dataset.nodes[findNodeIndex(children[childId])].depth)
                 visited.push(children[childId])
                 console.log(visited);
@@ -1359,7 +1403,7 @@ function getMediaIconClass(mediaType, action) {
     return classStr;
 }
 
-var analyticsAJAXUrl = '/wp-admin/admin-ajax.php',  // Analytics (set to empty string to disable analytics)
+var analyticsAJAXUrl = '',  // Analytics (set to empty string to disable analytics)
     analyticsAJAXAction = 'tapestry_tool_log_event';// Analytics
 
 function recordAnalyticsEvent(actor, action, object, objectID, details){
