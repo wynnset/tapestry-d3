@@ -194,6 +194,8 @@ function startForce() {
 //Resize all nodes, where id is now the root
 function resizeNodes(id) {
     addDepth(id,0,[]);
+    getChildrenRec(id,locn)
+
 
     setNodeTypes(id);
     setLinkTypes(id);
@@ -202,34 +204,6 @@ function resizeNodes(id) {
     rebuildNodeContents();
 
 
-    /* Restart force */
-    startForce();
-}
-
-function resizeNodesZoomed(id) {
-    addDepth(id,0,[]);
-
-    setNodeTypesZoomed(id);
-    setLinkTypes(id);
-    filterLinks(locn);
-
-    rebuildNodeContents();
-
-
-    /* Restart force */
-    startForce();
-}
-
-function resizeNodesMaxed(id) {
-    addDepth(id,0,[]);
-
-    setNodeTypesMaxed(id);
-    setLinkTypes(id);
-    filterLinks(locn);
-
-    rebuildNodeContents();
-
-    
 
     /* Restart force */
     startForce();
@@ -347,11 +321,11 @@ function createNodes() {
 
 // TODO: Get rid of this function (use buildNodeContents and rebuildNodeContents instead)
 function filterLinks(depthAt) {
-    console.log("REFILTER")
+    // console.log("REFILTER")
     for (i = 1; i <= dataset.nodes.length; i++) {
-        console.log("node title: " + dataset.nodes[findNodeIndex(i)].title)
-        console.log("node ID: " + dataset.nodes[findNodeIndex(i)].id)
-        console.log("depth: " + dataset.nodes[findNodeIndex(i)].depth)
+        // console.log("node title: " + dataset.nodes[findNodeIndex(i)].title)
+        // console.log("node ID: " + dataset.nodes[findNodeIndex(i)].id)
+        // console.log("depth: " + dataset.nodes[findNodeIndex(i)].depth)
     }
     var linksToHide = links.filter(function (d) {
         var sourceId, targetId;
@@ -367,13 +341,9 @@ function filterLinks(depthAt) {
         if ((dataset.nodes[findNodeIndex(sourceId)].depth > depthAt) && (dataset.nodes[findNodeIndex(targetId)].depth > depthAt)) {
             shouldRender = true;
         }
-        // return !shouldRender;
-        // if (sourceId === root || targetId === root) {
+        // else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
         //     shouldRender = true;
-        // } 
-        else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
-            shouldRender = true;
-        }
+        // }
         return !shouldRender;
     });
     
@@ -392,9 +362,10 @@ function filterLinks(depthAt) {
         //     shouldRender = true;
         if ((dataset.nodes[findNodeIndex(sourceId)].depth <= depthAt) && (dataset.nodes[findNodeIndex(targetId)].depth <= depthAt)) {
             shouldRender = true;
-        } else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
-            shouldRender = true;
-        }
+        } 
+        // else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
+        //     shouldRender = true;
+        // }
 
         return shouldRender;
     });
@@ -526,16 +497,7 @@ function buildNodeContents() {
             // prevent multiple clicks
             if (root != d.id) {
                 root = d.id;
-//                resizeNodes(d.id);
-                if (locn == 1) {
-                    resizeNodesZoomed(d.id);
-                }
-                else if (locn == 3) {
-                    resizeNodesMaxed(d.id);
-                }
-                else {
-                    resizeNodes(d.id);
-                }
+                resizeNodes(d.id);
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
         });
@@ -979,53 +941,6 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
  * HELPER FUNCTIONS
  ****************************************************/
 
-function setNodeTypesZoomed(rootId) {
-
-    root = rootId;
-    var children = getChildren(root),
-        grandchildren = getGrandchildrenRec(children,1);
-
-    for (var i in dataset.nodes) {
-        var node = dataset.nodes[i];
-        var id = node.id;
-
-        //NOTE: If there are any nodes are that fit two roles (ie: root and the grandchild),
-        //      should default to being the more senior role
-        if (id === root) {
-            node.nodeType = "root";
-        } else if (grandchildren.indexOf(id) > -1) {
-            node.nodeType = "grandchild";
-        } else {
-            node.nodeType = "";
-        }
-    }
-}
-
-function setNodeTypesMaxed(rootId) {
-    root = rootId;
-    var children = getChildren(root),
-        grandchildren = getGrandchildrenRec(children,3);
-
-    for (var i in dataset.nodes) {
-        var node = dataset.nodes[i];
-        var id = node.id;
-
-        //NOTE: If there are any nodes are that fit two roles (ie: root and the grandchild),
-        //      should default to being the more senior role
-        if (id === root) {
-            node.nodeType = "root";
-        } else if (grandchildren.indexOf(id) > -1) {
-            node.nodeType = "child";
-//        } else if (greatgrandchildren.indexOf(id) > -1) {
-//            node.nodeType = "grandchild"
-        } else {
-            node.nodeType = "grandchild";
-        }
-    }
-}
-
-
-
 
 // Get width, height, and aspect ratio of viewable region
 function getBrowserWidth() {
@@ -1171,6 +1086,50 @@ function getChildren(id) {
     return children;
 }
 
+function getChildrenRec(id,depth) {
+    var acc = 0;
+    var children = [];
+    var dataLinks = dataset.links;
+    for (step = 0; step < depth; step++) {
+        for (var linkId in dataLinks) {
+            var link = dataLinks[linkId];
+            if (typeof link.source === 'number' && link.source === id) {
+                children.push(link.target);
+                var children2 = getChildrenRec(link.target,depth-1);
+                children.concat(children2);
+            }
+            else if (typeof link.source === 'object' && link.source.id === id) {
+                children.push(link.target.id);
+                var children2 = getChildrenRec(link.target.id,depth-1);
+                children = children.concat(children2);
+            }
+
+            if (typeof link.target === 'number' && link.target === id) {
+                children.push(link.source);
+                var children2 = getChildrenRec(link.source,depth-1);
+                children.concat(children2);
+            }
+            else if (typeof link.target === 'object' && link.target.id === id) {
+                children.push(link.source.id);
+                var children2 = getChildrenRec(link.source.id,depth-1);
+                children = children.concat(children2);
+            }
+        }
+    }
+    var rchildren = arrayRemove(children,id);
+    console.log(rchildren);
+    return rchildren;
+}
+
+function arrayRemove(arr, value) {
+
+    return arr.filter(function(ele){
+        return ele != value;
+    });
+ 
+ }
+
+
 // level refers to the level of descendents.
 // 1 is only children, 2 is grandchildren, 3 is greatgrandchildren, etc.
 function getGrandchildrenRec(children,level) {
@@ -1270,8 +1229,8 @@ function setDatasetProgress(progressObj) {
 function setNodeTypes(rootId) {
 
     root = rootId;
-    var children = getChildren(root),
-        grandchildren = getGrandchildren(children);
+    var children = getChildrenRec(root,locn-1),
+        grandchildren = getChildrenRec(root,locn);
 
     for (var i in dataset.nodes) {
         var node = dataset.nodes[i];
