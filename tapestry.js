@@ -262,7 +262,7 @@ function createSvgContainer(containerId) {
     return d3.select("#"+containerId)
                 .append("svg:svg")
                 .attr("id", containerId+"-svg")
-                .attr("viewBox", "5 5 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
+                .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g")
                 .attr("transform", "translate(-20, -20)");
@@ -271,7 +271,7 @@ function createSvgContainer(containerId) {
 function updateSvgDimensions(containerId) {
     var tapestryDimensions = getTapestryDimensions();
     d3.select("#"+containerId+"-svg")
-        .attr("viewBox", "5 5 " + tapestryDimensions['width'] + " " + tapestryDimensions['height']);
+        .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height']);
     startForce();
 }
 
@@ -1034,7 +1034,7 @@ function addDepth(rootId, depth, visitlist) {
 //    console.log(dataset.nodes[findNodeIndex(rootId)].depth);
 
     while (depthAt < children.length) {
-        for (childId in children) {
+        for (var childId in children) {
             if (visited.includes(children[childId])) {
                 depthAt++;
             }
@@ -1045,7 +1045,7 @@ function addDepth(rootId, depth, visitlist) {
                 var acc = depth + 1;
                 dataset.nodes[findNodeIndex(children[childId])].depth = acc;
 //                console.log(dataset.nodes[findNodeIndex(children[childId])].depth)
-                visited.push(children[childId])
+                visited.push(children[childId]);
 //                console.log(visited);
                 addDepth(children[childId],acc,visited);
                 depthAt++;
@@ -1088,24 +1088,20 @@ function getChildrenRec(id,depth) {
             var link = dataLinks[linkId];
             if (typeof link.source === 'number' && link.source === id) {
                 children.push(link.target);
-                var children2 = getChildrenRec(link.target,depth-1);
-                children.concat(children2);
+                children.concat(getChildrenRec(link.target,depth-1));
             }
             else if (typeof link.source === 'object' && link.source.id === id) {
                 children.push(link.target.id);
-                var children2 = getChildrenRec(link.target.id,depth-1);
-                children = children.concat(children2);
+                children = children.concat(getChildrenRec(link.target.id,depth-1));
             }
 
             if (typeof link.target === 'number' && link.target === id) {
                 children.push(link.source);
-                var children2 = getChildrenRec(link.source,depth-1);
-                children.concat(children2);
+                children.concat(getChildrenRec(link.source,depth-1));
             }
             else if (typeof link.target === 'object' && link.target.id === id) {
                 children.push(link.source.id);
-                var children2 = getChildrenRec(link.source.id,depth-1);
-                children = children.concat(children2);
+                children = children.concat(getChildrenRec(link.source.id,depth-1));
             }
         }
     }
