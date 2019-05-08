@@ -37,19 +37,17 @@ var dataset, root, svg, links, nodes,               // Basics
  * INITIALIZATION
  ****************************************************/
 
-const url = "http://localhost:8888/tapestry-wp/wp-json/myplugin/v1/posts/getnodes";
+const testurl = "http://localhost:8888/tapestry-wp/wp-json/myplugin/v1/posts/getnodes";
 
 
 /* Import data from json file, then start D3 */
-// jQuery.get( url, function(result){
-$.getJSON( jsonUrl, function(result){
-    console.log(tapestryWpPostId);
+jQuery.get( testurl, function(result){
+// $.getJSON( jsonUrl, function(result){
     console.log("success");
-    console.log(result);
     dataset = result;
-    console.log("After set");
     console.log(result);
     console.log(tapestryWpUserId);
+    console.log(tapestryWpPostId);
     
     //---------------------------------------------------
     // 1. GET PROGRESS FROM COOKIE (IF ENABLED)
@@ -1047,6 +1045,8 @@ function updateViewedValue(id, amountViewedTime, duration) {
         var progressObj = JSON.stringify(getDatasetProgress());
         Cookies.set("progress-data-"+tapestrySlug, progressObj);
         Cookies.set("h5p-video-settings", h5pVideoSettings);
+        console.log(progressObj);
+        console.log(h5pVideoSettings);
     }
 }
 
