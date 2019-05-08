@@ -1,38 +1,10 @@
-// var fdata = [1,2,3]
-
-// var slider = d3
-// .sliderHorizontal()
-// .min(d3.min(fdata))
-// .max(d3.max(fdata))
-// .step(1)
-// .width(300)
-// .ticks(fdata.length - 1)
-// .displayValue(false)
-// .on('onchange', val => {
-//   d3.select('#value').text(val);
-// });
-
-// d3.select('#slider')
-// .append('svg')
-// .attr('width', 500)
-// .attr('height', 100)
-// .append('g')
-// .attr('transform', 'translate(30,30)')
-// .call(slider);
-
-
 (function(){
 
 /****************************************************
  * CONSTANTS AND GLOBAL VARIABLES
  ****************************************************/
 
-var slider = document.getElementById("myRange");
 
-slider.oninput = function() {
-    locn = this.value;
-    console.log(locn);
-}
 
 const // declared
     TAPESTRY_CONTAINER_ID = "tapestry",
@@ -157,6 +129,27 @@ $.getJSON( jsonUrl, function(result){
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
 });
 
+var slider = document.getElementById("myRange");
+
+slider.onchange = function() {
+    locn = this.value;
+    console.log(locn);
+
+
+    addDepth(root,0,[]);
+    getChildrenRec(root,locn);
+
+
+    setNodeTypes(root);
+    setLinkTypes(root);
+    filterLinks(locn);
+
+    rebuildNodeContents();
+
+    /* Restart force */
+    startForce();
+}
+
 /****************************************************
  * D3 RELATED FUNCTIONS
  ****************************************************/
@@ -194,7 +187,7 @@ function startForce() {
 //Resize all nodes, where id is now the root
 function resizeNodes(id) {
     addDepth(id,0,[]);
-    getChildrenRec(id,locn)
+    getChildrenRec(id,locn);
 
 
     setNodeTypes(id);
