@@ -144,7 +144,7 @@ $.getJSON( jsonUrl, function(result){
     links = createLinks();
     nodes = createNodes();
     
-    filterLinks();
+    filterLinks(locn);
     
     buildNodeContents();
     
@@ -193,42 +193,43 @@ function startForce() {
 
 //Resize all nodes, where id is now the root
 function resizeNodes(id) {
+    addDepth(id,0,[]);
 
     setNodeTypes(id);
     setLinkTypes(id);
-    filterLinks();
+    filterLinks(locn);
 
     rebuildNodeContents();
 
-    addDepth(id,0,[id]);
 
     /* Restart force */
     startForce();
 }
 
 function resizeNodesZoomed(id) {
+    addDepth(id,0,[]);
 
     setNodeTypesZoomed(id);
     setLinkTypes(id);
-    filterLinks();
+    filterLinks(locn);
 
     rebuildNodeContents();
 
-    addDepth(id,0,[id]);
 
     /* Restart force */
     startForce();
 }
 
 function resizeNodesMaxed(id) {
+    addDepth(id,0,[]);
 
     setNodeTypesMaxed(id);
     setLinkTypes(id);
-    filterLinks();
+    filterLinks(locn);
 
     rebuildNodeContents();
 
-    addDepth(id,0,[id]);
+    
 
     /* Restart force */
     startForce();
@@ -345,7 +346,13 @@ function createNodes() {
 }
 
 // TODO: Get rid of this function (use buildNodeContents and rebuildNodeContents instead)
-function filterLinks() {
+function filterLinks(depthAt) {
+    console.log("REFILTER")
+    for (i = 1; i <= dataset.nodes.length; i++) {
+        console.log("node title: " + dataset.nodes[findNodeIndex(i)].title)
+        console.log("node ID: " + dataset.nodes[findNodeIndex(i)].id)
+        console.log("depth: " + dataset.nodes[findNodeIndex(i)].depth)
+    }
     var linksToHide = links.filter(function (d) {
         var sourceId, targetId;
         if (typeof d.source === 'number' && typeof d.target === 'number') {
@@ -357,9 +364,14 @@ function filterLinks() {
         }
 
         var shouldRender = false;
-        if (sourceId === root || targetId === root) {
+        if ((dataset.nodes[findNodeIndex(sourceId)].depth > depthAt) && (dataset.nodes[findNodeIndex(targetId)].depth > depthAt)) {
             shouldRender = true;
-        } else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
+        }
+        // return !shouldRender;
+        // if (sourceId === root || targetId === root) {
+        //     shouldRender = true;
+        // } 
+        else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
             shouldRender = true;
         }
         return !shouldRender;
@@ -376,7 +388,9 @@ function filterLinks() {
         }
 
         var shouldRender = false;
-        if (sourceId === root || targetId === root) {
+        // if (sourceId === root || targetId === root) {
+        //     shouldRender = true;
+        if ((dataset.nodes[findNodeIndex(sourceId)].depth <= depthAt) && (dataset.nodes[findNodeIndex(targetId)].depth <= depthAt)) {
             shouldRender = true;
         } else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
             shouldRender = true;
@@ -384,6 +398,7 @@ function filterLinks() {
 
         return shouldRender;
     });
+
 
     linksToShow
         .style("display", "block");
@@ -1099,14 +1114,16 @@ function getBoundedCoord(coord, maxCoord) {
 function addDepth(rootId, depth, visitlist) {
     var visited = visitlist;
 
+    visited.push(rootId);
+
     var depthAt = 0;
 
     dataset.nodes[findNodeIndex(rootId)].depth = depth;
 
     var children = getChildren(rootId);
 
-    console.log(children);
-    console.log(dataset.nodes[findNodeIndex(rootId)].depth);
+//    console.log(children);
+//    console.log(dataset.nodes[findNodeIndex(rootId)].depth);
 
     while (depthAt < children.length) {
         for (childId in children) {
@@ -1116,12 +1133,12 @@ function addDepth(rootId, depth, visitlist) {
             else {
                 var opChild = children[childId];
 
-                console.log(children[childId])
+//                console.log(children[childId])
                 var acc = depth + 1;
                 dataset.nodes[findNodeIndex(children[childId])].depth = acc;
-                console.log(dataset.nodes[findNodeIndex(children[childId])].depth)
+//                console.log(dataset.nodes[findNodeIndex(children[childId])].depth)
                 visited.push(children[childId])
-                console.log(visited);
+//                console.log(visited);
                 addDepth(children[childId],acc,visited);
                 depthAt++;
             }
