@@ -315,11 +315,11 @@ function createNodes() {
 // TODO: Get rid of this function (use buildNodeContents and rebuildNodeContents instead)
 function filterLinks(depthAt) {
     // console.log("REFILTER")
-    for (i = 1; i <= dataset.nodes.length; i++) {
+//    for (i = 1; i <= dataset.nodes.length; i++) {
         // console.log("node title: " + dataset.nodes[findNodeIndex(i)].title)
         // console.log("node ID: " + dataset.nodes[findNodeIndex(i)].id)
         // console.log("depth: " + dataset.nodes[findNodeIndex(i)].depth)
-    }
+//    }
     var linksToHide = links.filter(function (d) {
         var sourceId, targetId;
         if (typeof d.source === 'number' && typeof d.target === 'number') {
@@ -331,15 +331,14 @@ function filterLinks(depthAt) {
         }
 
         var shouldRender = false;
-        if ((dataset.nodes[findNodeIndex(sourceId)].depth > depthAt) && (dataset.nodes[findNodeIndex(targetId)].depth > depthAt)) {
+        if (sourceId === root || targetId === root) {
+            shouldRender = true;
+        } else if (getChildrenRec(root,locn-1).indexOf(sourceId) > -1 || getChildrenRec(root,locn-1).indexOf(targetId) > -1) {
             shouldRender = true;
         }
-        // else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
-        //     shouldRender = true;
-        // }
         return !shouldRender;
     });
-    
+
     var linksToShow = links.filter(function (d) {
         var sourceId, targetId;
         if (typeof d.source === 'number' && typeof d.target === 'number') {
@@ -351,18 +350,13 @@ function filterLinks(depthAt) {
         }
 
         var shouldRender = false;
-        // if (sourceId === root || targetId === root) {
-        //     shouldRender = true;
-        if ((dataset.nodes[findNodeIndex(sourceId)].depth <= depthAt) && (dataset.nodes[findNodeIndex(targetId)].depth <= depthAt)) {
+        if (sourceId === root || targetId === root) {
             shouldRender = true;
-        } 
-        // else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
-        //     shouldRender = true;
-        // }
-
+        } else if (getChildrenRec(root,locn-1).indexOf(sourceId) > -1 || getChildrenRec(root,locn-1).indexOf(targetId) > -1) {
+            shouldRender = true;
+        }
         return shouldRender;
     });
-
 
     linksToShow
         .style("display", "block");
