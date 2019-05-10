@@ -57,18 +57,31 @@ body {
     margin-top: 100px;
 }
 
-#slider-wrapper {
-    max-width: 430px;
-    border: solid 1px #CCC;
-    padding: 10px;
+#header slider-wrapper {
+    display: inline-block;
+}
+
+.slider {
+    -webkit-appearance: none;
+    outline: none;
+    background: #d3d3d3;
+    height: 15px;
     border-radius: 5px;
-    box-shadow: 0 0 8px;
-    text-align:center; 
-    color: #666; 
-    margin: 0 auto 1em; 
-    float: none;
-    font-size: 0.8em;
-    position:absolute;
+    opacity: 0.7;
+    transition: opacity .2s;
+}
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%; 
+    background: #ed7565;
+    cursor: pointer;
+}
+
+.slider:hover {
+    opacity: 1
 }
 
 #footer {

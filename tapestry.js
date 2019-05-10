@@ -116,7 +116,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     links = createLinks();
     nodes = createNodes();
     
-    filterLinks(locn);
+    filterLinks();
     
     buildNodeContents();
     
@@ -131,20 +131,22 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 
 var slider = document.getElementById("myRange");
 
+
+
 slider.onchange = function() {
     locn = this.value;
     console.log(locn);
 
-
-    addDepth(root,0,[]);
     getChildrenRec(root,locn);
 
 
     setNodeTypes(root);
     setLinkTypes(root);
-    filterLinks(locn);
+    filterLinks();
+//    getSize(root);
 
     rebuildNodeContents();
+    addDepth(root,0,[]);
 
     /* Restart force */
     startForce();
@@ -186,17 +188,14 @@ function startForce() {
 
 //Resize all nodes, where id is now the root
 function resizeNodes(id) {
-    addDepth(id,0,[]);
+//    getSize(id);
     getChildrenRec(id,locn);
-
 
     setNodeTypes(id);
     setLinkTypes(id);
-    filterLinks(locn);
+    filterLinks();
 
     rebuildNodeContents();
-
-
 
     /* Restart force */
     startForce();
@@ -313,13 +312,7 @@ function createNodes() {
 }
 
 // TODO: Get rid of this function (use buildNodeContents and rebuildNodeContents instead)
-function filterLinks(depthAt) {
-    // console.log("REFILTER")
-//    for (i = 1; i <= dataset.nodes.length; i++) {
-        // console.log("node title: " + dataset.nodes[findNodeIndex(i)].title)
-        // console.log("node ID: " + dataset.nodes[findNodeIndex(i)].id)
-        // console.log("depth: " + dataset.nodes[findNodeIndex(i)].depth)
-//    }
+function filterLinks() {
     var linksToHide = links.filter(function (d) {
         var sourceId, targetId;
         if (typeof d.source === 'number' && typeof d.target === 'number') {
@@ -1013,68 +1006,41 @@ function getBoundedCoord(coord, maxCoord) {
     return Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
 }
 
+
 function addDepth(rootId, depth, visitlist) {
     var visited = visitlist;
-
     visited.push(rootId);
 
     var depthAt = 0;
 
     dataset.nodes[findNodeIndex(rootId)].depth = depth;
-
-    var children = getChildren(rootId);
-
-//    console.log(children);
-//    console.log(dataset.nodes[findNodeIndex(rootId)].depth);
+    var children = getChildrenRec(rootId,1);
 
     while (depthAt < children.length) {
         for (var childId in children) {
             if (visited.includes(children[childId])) {
-                depthAt++;
+                var acc = depth;
+                if (dataset.nodes[findNodeIndex(children[childId])].depth > acc) {
+                    dataset.nodes[findNodeIndex(children[childId])].depth = acc;
+                }
+                else {
+                    depthAt++;
+                }
             }
             else {
-                var opChild = children[childId];
-
-//                console.log(children[childId])
                 var acc = depth + 1;
                 dataset.nodes[findNodeIndex(children[childId])].depth = acc;
-//                console.log(dataset.nodes[findNodeIndex(children[childId])].depth)
+                console.log('id: ' + dataset.nodes[findNodeIndex(children[childId])].id + ' depth: ' + dataset.nodes[findNodeIndex(children[childId])].depth)
                 visited.push(children[childId]);
-//                console.log(visited);
+
                 addDepth(children[childId],acc,visited);
                 depthAt++;
             }
         }
     }
-
-}
-
-function getChildren(id) {
-    var children = [];
-    var dataLinks = dataset.links;
-    for (var linkId in dataLinks) {
-        var link = dataLinks[linkId];
-        //SEARCH FOR: CURRENT_ID_NODE -> CHILD links
-        if (typeof link.source === 'number' && link.source === id) {
-            children.push(link.target);
-        } else if (typeof link.source === 'object' && link.source.id === id) {
-            children.push(link.target.id);
-        }
-
-        //SEARCH FOR: PARENT -> CURRENT_ID_NODE links;
-        // These should also appear as "children" because they're adjacent to the current node
-        if (typeof link.target === 'number' && link.target === id) {
-            children.push(link.source);
-        } else if (typeof link.target === 'object' && link.target.id === id) {
-            children.push(link.source.id);
-        }
-    }
-
-    return children;
 }
 
 function getChildrenRec(id,depth) {
-    var acc = 0;
     var children = [];
     var dataLinks = dataset.links;
     for (step = 0; step < depth; step++) {
@@ -1082,7 +1048,7 @@ function getChildrenRec(id,depth) {
             var link = dataLinks[linkId];
             if (typeof link.source === 'number' && link.source === id) {
                 children.push(link.target);
-                children.concat(getChildrenRec(link.target,depth-1));
+                children = children.concat(getChildrenRec(link.target,depth-1));
             }
             else if (typeof link.source === 'object' && link.source.id === id) {
                 children.push(link.target.id);
@@ -1091,7 +1057,7 @@ function getChildrenRec(id,depth) {
 
             if (typeof link.target === 'number' && link.target === id) {
                 children.push(link.source);
-                children.concat(getChildrenRec(link.source,depth-1));
+                children = children.concat(getChildrenRec(link.source,depth-1));
             }
             else if (typeof link.target === 'object' && link.target.id === id) {
                 children.push(link.source.id);
@@ -1100,7 +1066,7 @@ function getChildrenRec(id,depth) {
         }
     }
     var rchildren = arrayRemove(children,id);
-    console.log(rchildren);
+    //console.log(rchildren);
     return rchildren;
 }
 
@@ -1111,35 +1077,6 @@ function arrayRemove(arr, value) {
     });
  
  }
-
-
-// level refers to the level of descendents.
-// 1 is only children, 2 is grandchildren, 3 is greatgrandchildren, etc.
-function getGrandchildrenRec(children,level) {
-    var grandchildren = children;
-    var levelAt = 1;
-    while (levelAt < level) {
-        for (var childId in grandchildren) {
-            var child = grandchildren[childId];
-            var currentGrandchildren = getChildren(child);
-            grandchildren = grandchildren.concat(currentGrandchildren);
-        }
-        levelAt++;
-    }
-    return grandchildren;
-}
-
-
-function getGrandchildren(children) {
-    var grandchildren = [];
-    for (var childId in children) {
-        var child = children[childId];
-        var currentGrandchildren = getChildren(child);
-        grandchildren = grandchildren.concat(currentGrandchildren);
-    }
-
-    return grandchildren;
-}
 
 function getRadius(d) {
     var nodeDiff;
@@ -1236,8 +1173,8 @@ function setNodeTypes(rootId) {
 /* For setting the "type" field of links in dataset */
 function setLinkTypes(rootId) {
     root = rootId;
-    var children = getChildren(root),
-        grandchildren = getGrandchildren(children);
+    var children = getChildrenRec(root,locn-1),
+        grandchildren = getChildrenRec(root,locn);
 
     for (var i in dataset.links) {
         var link = dataset.links[i];
