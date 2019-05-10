@@ -19,14 +19,14 @@
   <header id="header">
     <h1>Tapestry</h1>
     <h2>Intercultural Understanding</h2>
+    <div id="slider-wrapper">
+      <input type="range" min="1" max="3" value="2" class="slider" id="myRange">
+    </div>
 
   </header>
 
   <div id="tapestry"></div>
-  <div id="slider-wrapper">
-    <p id="value">value</p>
-    <div id="slider">slider</div>
-  </div>
+
   <div id="instructions-wrapper">
     Instructions: Click nodes to explore. Click play icon to play a video.
 
@@ -36,6 +36,8 @@
     Copyright &copy; 2019 <a href="http://tapestry-tool.com/">Tapestry Tool</a>
 
   </footer>
+  <script src="./libs/d3-simple-slider.min.js"
+        type="application/javascript"></script>
   <script src="./libs/jquery.min.js"
         type="application/javascript"></script> 
   <script src="./libs/jquery-ui.min.js"
@@ -51,10 +53,7 @@
   </script> 
   <script src="./tapestry.js"
         type="application/javascript"></script>
-  <script src="https://unpkg.com/d3-simple-slider"
-        type="application/javascript"></script>
-  <script src="https://d3js.org/d3.v5.js"
-        type="application/javascript"></script>
+
 
 </body>
 </html>
