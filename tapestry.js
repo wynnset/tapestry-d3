@@ -39,8 +39,15 @@ var dataset, root, svg, links, nodes,               // Basics
  ****************************************************/
 
 /* Import data from json file, then start D3 */
-jQuery.get( GET_TAPESTRY_URL, function(result){
+const getTapestryData = {
+    userid: tapestryWpUserId,
+    postid: tapestryWpPostId
+}
 
+// $.getJSON( jsonUrl, function(result){
+jQuery.get(GET_TAPESTRY_URL, getTapestryData, function(result){
+    console.log(tapestryWpUserId); 
+    console.log(tapestryWpPostId);
     dataset = result;
 
     //---------------------------------------------------
