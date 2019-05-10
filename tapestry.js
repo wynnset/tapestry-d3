@@ -17,7 +17,9 @@ const // declared
     COLOR_LINK = "#999",
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
-    FONT_ADJUST = 1.25;
+    FONT_ADJUST = 1.25,
+    GET_TAPESTRY_URL = "http://localhost:8888/tapestry-wp/wp-json/myplugin/v1/posts/getnodes",
+    PROGRESS_URL = "http://localhost:8888/tapestry-wp/wp-json/myplugin/v1/users/progress";
 
 const // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
@@ -37,17 +39,10 @@ var dataset, root, svg, links, nodes,               // Basics
  * INITIALIZATION
  ****************************************************/
 
-const testurl = "http://localhost:8888/tapestry-wp/wp-json/myplugin/v1/posts/getnodes";
-
-
 /* Import data from json file, then start D3 */
-jQuery.get( testurl, function(result){
+jQuery.get( GET_TAPESTRY_URL, function(result){
 // $.getJSON( jsonUrl, function(result){
-    console.log("success");
     dataset = result;
-    console.log(result);
-    console.log(tapestryWpUserId);
-    console.log(tapestryWpPostId);
     
     //---------------------------------------------------
     // 1. GET PROGRESS FROM COOKIE (IF ENABLED)
@@ -57,11 +52,17 @@ jQuery.get( testurl, function(result){
     
     if (saveProgressToCookie) {
         // Update dataset with data from cookie (if any)
-        var cookieProgress = Cookies.get("progress-data-"+tapestrySlug);
-        if (cookieProgress !== undefined) {
-            cookieProgress = JSON.parse( cookieProgress );
-            setDatasetProgress(cookieProgress);
+        var getProgData = {
+            userid: tapestryWpUserId,
+            postid: 44
         }
+        var cookieProgress; //= Cookies.get("progress-data-"+tapestrySlug);
+        jQuery.get(PROGRESS_URL, getProgData, function(result) {
+            if (result !== undefined) {
+                cookieProgress = JSON.parse( result );
+                setDatasetProgress(cookieProgress);
+            }
+        });
         // Update H5P Video Settings from cookie (if any)
         var cookieH5PVideoSettings = Cookies.get("h5p-video-settings");
         if (cookieH5PVideoSettings !== undefined) {
@@ -101,7 +102,8 @@ jQuery.get( testurl, function(result){
     //---------------------------------------------------
     // 3. SET NODES/LINKS AND CREATE THE SVG OBJECTS
     //---------------------------------------------------
-    
+    console.log("Progress should be set");
+    console.log(dataset);
     root = dataset.rootId,
     
     setNodeTypes(dataset.rootId);
@@ -1040,11 +1042,23 @@ function updateViewedValue(id, amountViewedTime, duration) {
     //Update the dataset with new values
     dataset.nodes[index].typeData.progress[0].value = amountViewed;
     dataset.nodes[index].typeData.progress[1].value = amountUnviewed;
-
+    console.log(dataset.nodes[index].id);
+    console.log(amountViewed);
+    
     if (saveProgressToCookie) {
         var progressObj = JSON.stringify(getDatasetProgress());
         Cookies.set("progress-data-"+tapestrySlug, progressObj);
         Cookies.set("h5p-video-settings", h5pVideoSettings);
+
+        var progData = {
+            userid: tapestryWpUserId,
+            postid: 44, //tapestryWpPostId
+            json: JSON.stringify(progressObj)
+        };
+        jQuery.post(PROGRESS_URL, progData, function(result) {
+            console.log(result);
+        });
+
         console.log(progressObj);
         console.log(h5pVideoSettings);
     }
