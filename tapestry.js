@@ -17,7 +17,10 @@ const // declared
     COLOR_LINK = "#999",
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
-    FONT_ADJUST = 1.25;
+    FONT_ADJUST = 1.25,    
+    GET_TAPESTRY_URL = "http://localhost:8888/tapestry-wp/wp-json/myplugin/v1/posts/getnodes",
+    PROGRESS_URL = "http://localhost:8888/tapestry-wp/wp-json/myplugin/v1/users/progress";
+
 
 const // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
@@ -38,7 +41,9 @@ var dataset, root, svg, links, nodes,               // Basics
  ****************************************************/
 
 /* Import data from json file, then start D3 */
-$.getJSON( jsonUrl, function(result){
+jQuery.get( GET_TAPESTRY_URL, function(result){
+    console.log(tapestryWpUserId);
+    console.log(tapestryWpPostId);
 
     dataset = result;
 
@@ -50,11 +55,17 @@ $.getJSON( jsonUrl, function(result){
     
     if (saveProgressToCookie) {
         // Update dataset with data from cookie (if any)
-        var cookieProgress = Cookies.get("progress-data-"+tapestrySlug);
-        if (cookieProgress !== undefined) {
-            cookieProgress = JSON.parse( cookieProgress );
-            setDatasetProgress(cookieProgress);
+        var getProgData = {
+            userid: tapestryWpUserId,
+            postid: 44
         }
+        var cookieProgress; //= Cookies.get("progress-data-"+tapestrySlug);
+        jQuery.get(PROGRESS_URL, getProgData, function(result) {
+            if (result !== undefined) {
+                cookieProgress = JSON.parse( result );
+                setDatasetProgress(cookieProgress);
+            }
+        });
         // Update H5P Video Settings from cookie (if any)
         var cookieH5PVideoSettings = Cookies.get("h5p-video-settings");
         if (cookieH5PVideoSettings !== undefined) {
@@ -1038,6 +1049,15 @@ function updateViewedValue(id, amountViewedTime, duration) {
         var progressObj = JSON.stringify(getDatasetProgress());
         Cookies.set("progress-data-"+tapestrySlug, progressObj);
         Cookies.set("h5p-video-settings", h5pVideoSettings);
+
+        var progData = {
+            userid: tapestryWpUserId,
+            postid: 44, //tapestryWpPostId
+            json: JSON.stringify(progressObj)
+        };
+        jQuery.post(PROGRESS_URL, progData, function(result) {
+            console.log(result);
+        });
     }
 }
 
