@@ -61,7 +61,7 @@ $.getJSON( jsonUrl, function(result){
             var getProgData = {
                 userid: tapestryWpUserId,
                 postid: tapestryWpPostId
-            }
+            };
 
             jQuery.get(PROGRESS_URL, getProgData, function(result) {
                 if (result !== undefined) {
@@ -73,7 +73,7 @@ $.getJSON( jsonUrl, function(result){
             var getH5PData = {
                 userid: tapestryWpUserId,
                 postid: tapestryWpPostId
-            }
+            };
             jQuery.get(H5P_SETTINGS_URL, getH5PData, function(result) {
                 if (result !== undefined) {
                     cookieH5PVideoSettings = JSON.parse( result );
