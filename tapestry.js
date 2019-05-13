@@ -41,9 +41,7 @@ var dataset, root, svg, links, nodes,               // Basics
  ****************************************************/
 
 /* Import data from json file, then start D3 */
-jQuery.get( GET_TAPESTRY_URL, function(result){
-    console.log(tapestryWpUserId);
-    console.log(tapestryWpPostId);
+$.getJSON( jsonUrl, function(result){
 
     dataset = result;
 
@@ -55,22 +53,43 @@ jQuery.get( GET_TAPESTRY_URL, function(result){
     
     if (saveProgressToCookie) {
         // Update dataset with data from cookie (if any)
-        var getProgData = {
-            userid: tapestryWpUserId,
-            postid: 44
-        }
-        var cookieProgress; //= Cookies.get("progress-data-"+tapestrySlug);
-        jQuery.get(PROGRESS_URL, getProgData, function(result) {
-            if (result !== undefined) {
-                cookieProgress = JSON.parse( result );
-                setDatasetProgress(cookieProgress);
+        var cookieProgress; 
+
+        // If user is logged in, use database
+        if (tapestryWpUserId) {
+            var getProgData = {
+                userid: tapestryWpUserId,
+                postid: 44
             }
-        });
-        // Update H5P Video Settings from cookie (if any)
-        var cookieH5PVideoSettings = Cookies.get("h5p-video-settings");
-        if (cookieH5PVideoSettings !== undefined) {
-            cookieH5PVideoSettings = JSON.parse( cookieH5PVideoSettings );
-            h5pVideoSettings = cookieH5PVideoSettings;
+
+            jQuery.get(PROGRESS_URL, getProgData, function(result) {
+                if (result !== undefined) {
+                    cookieProgress = JSON.parse( result );
+                    setDatasetProgress(cookieProgress);
+                }
+            });
+
+            //to change
+            // Update H5P Video Settings from cookie (if any)
+            var cookieH5PVideoSettings = Cookies.get("h5p-video-settings");
+            if (cookieH5PVideoSettings !== undefined) {
+                cookieH5PVideoSettings = JSON.parse( cookieH5PVideoSettings );
+                h5pVideoSettings = cookieH5PVideoSettings;
+            }
+
+        } else { // else use cookies
+            cookieProgress = Cookies.get("progress-data-"+tapestrySlug);
+            if (cookieProgress !== undefined) {
+                cookieProgress = JSON.parse( cookieProgress );
+                setDatasetProgress(cookieProgress);	
+            }
+
+            // Update H5P Video Settings from cookie (if any)
+            var cookieH5PVideoSettings = Cookies.get("h5p-video-settings");
+            if (cookieH5PVideoSettings !== undefined) {
+                cookieH5PVideoSettings = JSON.parse( cookieH5PVideoSettings );
+                h5pVideoSettings = cookieH5PVideoSettings;
+            }
         }
     }
 
@@ -1047,17 +1066,23 @@ function updateViewedValue(id, amountViewedTime, duration) {
 
     if (saveProgressToCookie) {
         var progressObj = JSON.stringify(getDatasetProgress());
-        Cookies.set("progress-data-"+tapestrySlug, progressObj);
-        Cookies.set("h5p-video-settings", h5pVideoSettings);
+        
+        // Save to database if logged in
+        if (tapestryWpUserId) {
+            var progData = {
+                userid: tapestryWpUserId,
+                postid: tapestryWpPostId,
+                json: JSON.stringify(progressObj)
+            };
+            jQuery.post(PROGRESS_URL, progData, function(result) {
+                console.log(result);
+            });
+        } else {
+            // Set Cookies if not logged in
+            Cookies.set("progress-data-"+tapestrySlug, progressObj);
+            Cookies.set("h5p-video-settings", h5pVideoSettings);
+        }
 
-        var progData = {
-            userid: tapestryWpUserId,
-            postid: 44, //tapestryWpPostId
-            json: JSON.stringify(progressObj)
-        };
-        jQuery.post(PROGRESS_URL, progData, function(result) {
-            console.log(result);
-        });
     }
 }
 
@@ -1094,6 +1119,10 @@ function setDatasetProgress(progressObj) {
     
     }
     
+    if (tapestryWpUserId) {
+        updateViewedProgress();
+    }
+
     return true;
 }
 
