@@ -18,7 +18,6 @@ const // declared
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
     FONT_ADJUST = 1.25,    
-    GET_TAPESTRY_URL = "http://localhost:8888/tapestry-wp/wp-json/tapestry-tool/v1/posts/getnodes",
     PROGRESS_URL = "http://localhost:8888/tapestry-wp/wp-json/tapestry-tool/v1/users/progress",
     H5P_SETTINGS_URL = "http://localhost:8888/tapestry-wp/wp-json/tapestry-tool/v1/users/h5psettings";
 
@@ -75,7 +74,7 @@ $.getJSON( jsonUrl, function(result){
                 userid: tapestryWpUserId,
                 postid: tapestryWpPostId
             }
-            jQuery.get(PROGRESS_URL, getH5PData, function(result) {
+            jQuery.get(H5P_SETTINGS_URL, getH5PData, function(result) {
                 if (result !== undefined) {
                     cookieH5PVideoSettings = JSON.parse( result );
                     h5pVideoSettings = cookieH5PVideoSettings;
