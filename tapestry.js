@@ -17,7 +17,7 @@ const // declared
     COLOR_LINK = "#999",
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
-    FONT_ADJUST = 1.25.
+    FONT_ADJUST = 1.25,
     GET_TAPESTRY_URL = "http://localhost:8888/tapestry-wp/wp-json/myplugin/v1/posts/getnodes";
 
 const // calculated
