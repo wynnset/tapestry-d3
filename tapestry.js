@@ -35,8 +35,6 @@ var dataset, root, svg, links, nodes,               // Basics
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {};
     locn = 2;
-    tapestryDepth = null;
-
 
 /****************************************************
  * INITIALIZATION
@@ -1049,8 +1047,8 @@ function maxDepth(rootId) {
     for (count = 1; count <= nodes.length; count++) {
         if (dataset.nodes[findNodeIndex(count)].depth > deep) {
             deep = dataset.nodes[findNodeIndex(count)].depth;
-            console.log('id: ' + dataset.nodes[findNodeIndex(count)].id 
-                      + ' depth: ' + dataset.nodes[findNodeIndex(count)].depth);
+//            console.log('id: ' + dataset.nodes[findNodeIndex(count)].id 
+//                      + ' depth: ' + dataset.nodes[findNodeIndex(count)].depth);
         }
     }
     return deep;
@@ -1082,6 +1080,7 @@ function getChildrenRec(id,depth) {
             }
         }
     }
+
     var rchildren = arrayRemove(children,id);
     //console.log(rchildren);
     return rchildren;
