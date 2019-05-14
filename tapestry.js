@@ -18,8 +18,8 @@ const // declared
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
     FONT_ADJUST = 1.25,    
-    PROGRESS_URL = "http://localhost:8888/tapestry-wp/wp-json/tapestry-tool/v1/users/progress",
-    H5P_SETTINGS_URL = "http://localhost:8888/tapestry-wp/wp-json/tapestry-tool/v1/users/h5psettings";
+    TAPESTRY_PROGRESS_URL = "http://localhost:8888/tapestry-wp/wp-json/tapestry-tool/v1/users/progress",
+    TAPESTRY_H5P_SETTINGS_URL = "http://localhost:8888/tapestry-wp/wp-json/tapestry-tool/v1/users/h5psettings";
 
 
 const // calculated
@@ -59,23 +59,23 @@ $.getJSON( jsonUrl, function(result){
         // If user is logged in, get progress from database database
         if (tapestryWpUserId) {
             var getProgData = {
-                userid: tapestryWpUserId,
-                postid: tapestryWpPostId
+                "user_id": tapestryWpUserId,
+                "post_id": tapestryWpPostId
             };
 
-            jQuery.get(PROGRESS_URL, getProgData, function(result) {
-                if (result !== undefined) {
+            jQuery.get(TAPESTRY_PROGRESS_URL, getProgData, function(result) {
+                if (result && !isEmptyObject(result)) {
                     cookieProgress = JSON.parse( result );
                     setDatasetProgress(cookieProgress);
                 }
             });
 
             var getH5PData = {
-                userid: tapestryWpUserId,
-                postid: tapestryWpPostId
+                "user_id": tapestryWpUserId,
+                "post_id": tapestryWpPostId
             };
-            jQuery.get(H5P_SETTINGS_URL, getH5PData, function(result) {
-                if (result !== undefined) {
+            jQuery.get(TAPESTRY_H5P_SETTINGS_URL, getH5PData, function(result) {
+                if (result && !isEmptyObject(result)) {
                     cookieH5PVideoSettings = JSON.parse( result );
                     h5pVideoSettings = cookieH5PVideoSettings;
                 }
@@ -84,14 +84,14 @@ $.getJSON( jsonUrl, function(result){
         } else { 
 
             cookieProgress = Cookies.get("progress-data-"+tapestrySlug);
-            if (cookieProgress !== undefined) {
+            if (cookieProgress) {
                 cookieProgress = JSON.parse( cookieProgress );
                 setDatasetProgress(cookieProgress);	
             }
 
             // Update H5P Video Settings from cookie (if any)
             cookieH5PVideoSettings = Cookies.get("h5p-video-settings");
-            if (cookieH5PVideoSettings !== undefined) {
+            if (cookieH5PVideoSettings) {
                 cookieH5PVideoSettings = JSON.parse( cookieH5PVideoSettings );
                 h5pVideoSettings = cookieH5PVideoSettings;
             }
@@ -1074,21 +1074,26 @@ function updateViewedValue(id, amountViewedTime, duration) {
         
         // Save to database if logged in
         if (tapestryWpUserId) {
-            var progData = {
-                userid: tapestryWpUserId,
-                postid: tapestryWpPostId,
-                json: JSON.stringify(progressObj)
-            };
-            jQuery.post(PROGRESS_URL, progData, function(result) {
-            });
+            
+            if (progressObj && !isEmptyObject(progressObj)) {
+                var progData = {
+                    "user_id": tapestryWpUserId,
+                    "post_id": tapestryWpPostId,
+                    json: JSON.stringify(progressObj)
+                };
+                jQuery.post(TAPESTRY_PROGRESS_URL, progData, function(result) {
+                });
+            }
 
-            var h5pData = {
-                userid: tapestryWpUserId,
-                postid: tapestryWpPostId,
-                json: JSON.stringify(h5pVideoSettings)
-            };
-            jQuery.post(H5P_SETTINGS_URL, h5pData, function(result) {
-            });
+            if (h5pVideoSettings && !isEmptyObject(h5pVideoSettings)) {
+                var h5pData = {
+                    "user_id": tapestryWpUserId,
+                    "post_id": tapestryWpPostId,
+                    json: JSON.stringify(h5pVideoSettings)
+                };
+                jQuery.post(TAPESTRY_H5P_SETTINGS_URL, h5pData, function(result) {
+                });
+            }
 
         } else {
             // Set Cookies if not logged in
@@ -1337,6 +1342,14 @@ function createUUID() {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
+}
+
+function isEmptyObject(obj) {
+    for(var key in obj) {
+        if(obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
 }
 
 // Capture click events anywhere inside or outside tapestry
