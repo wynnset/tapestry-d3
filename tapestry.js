@@ -148,7 +148,7 @@ slider.onchange = function() {
     startForce();
 };
 
-svg.call(d3.zoom().on('zoom', zoomed));
+// svg.call(d3.zoom().on('zoom', zoomed));
 
 
 /****************************************************
@@ -160,8 +160,10 @@ function startForce() {
 
     var tapestryDimensions = getTapestryDimensions();
 
+    // log children, nearest neighbours @ depth - ford
     var linkedByIndex = getChildrenRec(root,locn-1);
     console.log(linkedByIndex);
+
 
     linkForce = d3.forceLink()
         .id(function (d) {
@@ -186,6 +188,9 @@ function startForce() {
     force
         .force("link")
         .links(dataset.links);
+    
+    force
+        .
 }
 
 //Resize all nodes, where id is now the root
@@ -925,9 +930,9 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
  ****************************************************/
 
 
-function zoomed() {
-    container.attr("transform", "translate(" + d3.event.transform.x + ", " + d3.event.transform.y + ") scale(" + d3.event.transform.k + ")");
-}
+// function zoomed() {
+//     container.attr("transform", "translate(" + d3.event.transform.x + ", " + d3.event.transform.y + ") scale(" + d3.event.transform.k + ")");
+// }
 
 
 // Get width, height, and aspect ratio of viewable region
