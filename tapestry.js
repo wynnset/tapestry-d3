@@ -148,6 +148,9 @@ slider.onchange = function() {
     startForce();
 };
 
+svg.call(d3.zoom().on('zoom', zoomed));
+
+
 /****************************************************
  * D3 RELATED FUNCTIONS
  ****************************************************/
@@ -156,6 +159,9 @@ slider.onchange = function() {
 function startForce() {
 
     var tapestryDimensions = getTapestryDimensions();
+
+    var linkedByIndex = getChildrenRec(root,locn-1);
+    console.log(linkedByIndex);
 
     linkForce = d3.forceLink()
         .id(function (d) {
@@ -917,6 +923,11 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
 /****************************************************
  * HELPER FUNCTIONS
  ****************************************************/
+
+
+function zoomed() {
+    container.attr("transform", "translate(" + d3.event.transform.x + ", " + d3.event.transform.y + ") scale(" + d3.event.transform.k + ")");
+}
 
 
 // Get width, height, and aspect ratio of viewable region
