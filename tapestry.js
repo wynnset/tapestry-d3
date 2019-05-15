@@ -58,9 +58,10 @@ $.getJSON( jsonUrl, function(result){
 
         // If user is logged in, get progress from database database
         if (tapestryWpUserId) {
+            var nodeIdArr = dataset.nodes.map(node => node.id);
             var getProgData = {
-                "user_id": tapestryWpUserId,
-                "post_id": tapestryWpPostId
+                "post_id": tapestryWpPostId,
+                "node_id_arr": JSON.stringify(nodeIdArr)
             };
 
             jQuery.get(TAPESTRY_PROGRESS_URL, getProgData, function(result) {
@@ -71,7 +72,6 @@ $.getJSON( jsonUrl, function(result){
             });
 
             var getH5PData = {
-                "user_id": tapestryWpUserId,
                 "post_id": tapestryWpPostId
             };
             jQuery.get(TAPESTRY_H5P_SETTINGS_URL, getH5PData, function(result) {
@@ -1069,17 +1069,17 @@ function updateViewedValue(id, amountViewedTime, duration) {
     dataset.nodes[index].typeData.progress[0].value = amountViewed;
     dataset.nodes[index].typeData.progress[1].value = amountUnviewed;
 
+    var progressObj = JSON.stringify(getDatasetProgress());
     if (saveProgressToCookie) {
-        var progressObj = JSON.stringify(getDatasetProgress());
         
         // Save to database if logged in
         if (tapestryWpUserId) {
             
-            if (progressObj && !isEmptyObject(progressObj)) {
+            if (id) {
                 var progData = {
-                    "user_id": tapestryWpUserId,
                     "post_id": tapestryWpPostId,
-                    json: JSON.stringify(progressObj)
+                    "node_id": id,
+                    "progress_value": amountViewed
                 };
                 jQuery.post(TAPESTRY_PROGRESS_URL, progData, function(result) {
                 });
@@ -1087,9 +1087,8 @@ function updateViewedValue(id, amountViewedTime, duration) {
 
             if (h5pVideoSettings && !isEmptyObject(h5pVideoSettings)) {
                 var h5pData = {
-                    "user_id": tapestryWpUserId,
                     "post_id": tapestryWpPostId,
-                    json: JSON.stringify(h5pVideoSettings)
+                    "json": JSON.stringify(h5pVideoSettings)
                 };
                 jQuery.post(TAPESTRY_H5P_SETTINGS_URL, h5pData, function(result) {
                 });
