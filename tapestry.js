@@ -8,7 +8,7 @@
 
 const // declared
     TAPESTRY_CONTAINER_ID = "tapestry",
-    PROGRESS_THICKNESS = 20,
+    PROGRESS_THICKNESS = (20 / 10),  // RM /100 - ford
     LINK_THICKNESS = 6,
     NORMAL_RADIUS = 140,
     ROOT_RADIUS_DIFF = 70,
@@ -148,7 +148,7 @@ slider.onchange = function() {
 
     /* Restart force */
     startForce();
-    simulator();
+    // simulator();
 };
 
 
@@ -191,10 +191,10 @@ function startForce() {
     //         return d.id;
     //     });
 
-    // collideForce = d3.forceCollide(
-    //     function (d) {
-    //         return getRadius(d) * 1.2;
-    //     });
+    collideForce = d3.forceCollide(
+        function (d) {
+            return getRadius(d) * 1.2;
+        });
 
     // force = d3.forceSimulation()
     //     .force("link", linkForce)
@@ -212,11 +212,14 @@ function startForce() {
     var tapestryDimensions = getTapestryDimensions();
 
     simulation = d3.forceSimulation(nodes)
-    .force("charge", d3.forceManyBody())
-    .force("link", d3.forceLink(dataset.links).id(function(d) {return d.id}))
-    .force("center", d3.forceCenter()
-        .x(tapestryDimensions['width'] / 2)
-        .y(tapestryDimensions['height'] / 2));
+        .force("charge", d3.forceManyBody().strength(-5000))
+        .force("link", d3.forceLink(dataset.links).id(function(d) {
+            return d.id
+        }))
+        .force("collide",collideForce)
+        .force("center", d3.forceCenter()
+            .x(tapestryDimensions['width'] / 2)
+            .y(tapestryDimensions['height'] / 2));
 
     // nodes
     //     .attr("class","nodes")
@@ -228,10 +231,9 @@ function startForce() {
     //     return "translate(" + getBoundedCoord(d.x, tapestryDimensions['width']) + "," + getBoundedCoord(d.y, tapestryDimensions['height']) + ")";
     // })
 
-    simulation.nodes(dataset.nodes).on("tick",ticked)
-
-    console.log("simulator: ");
-    console.log(dataset.nodes);
+    simulation
+        .nodes(dataset.nodes)
+        .on("tick",ticked)
 
     console.log("startforce: tapdim: ");
     console.log(tapestryDimensions);
@@ -253,8 +255,6 @@ function resizeNodes(id) {
     /* Restart force */
     startForce();
 }
-
-
 
 function ticked() {
     var tapestryDimensions = getTapestryDimensions();
@@ -523,19 +523,19 @@ function buildNodeContents() {
     buildPathAndButton();
 
     /* Add dragging and node selection functionality to the node */
-    // nodes.call(d3.drag()
-    //     .on("start", dragstarted)
-    //     .on("drag", dragged)
-    //     .on("end", dragended))
-    //     .on("click", function (d) {
-    //         // prevent multiple clicks
-    //         if (root != d.id) {
-    //             root = d.id;
-    //             resizeNodes(d.id);
-    //             slider.max = maxDepth(root);
-    //         }
-    //         recordAnalyticsEvent('user', 'click', 'node', d.id);
-    //     });
+    nodes.call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended))
+        .on("click", function (d) {
+            // prevent multiple clicks
+            if (root != d.id) {
+                root = d.id;
+                resizeNodes(d.id);
+                slider.max = maxDepth(root);
+            }
+            recordAnalyticsEvent('user', 'click', 'node', d.id);
+        });
 
     // ^^^^ uncomment - ford
 }
@@ -1153,9 +1153,6 @@ function getChildrenRec(id,depth) {
     return rchildren;
 }
 
-
-
-
 // remove any duplicates in an array
 function arrayRemove(arr, value) {
 
@@ -1165,23 +1162,20 @@ function arrayRemove(arr, value) {
  
  }
 
- // REMOVE COMMENTS - ford
-// function getRadius(d) {
-//     var nodeDiff;
-//     if (d.nodeType === "") {
-//         return 0;
-//     } else if (d.nodeType === "root") {
-//         nodeDiff = ROOT_RADIUS_DIFF;
-//     } else if (d.nodeType === "grandchild") {
-//         nodeDiff = GRANDCHILD_RADIUS_DIFF;
-//     } else nodeDiff = 0
-
-//     return NORMAL_RADIUS + nodeDiff;
-// }
-
+ // REMOVE /100 - ford
 function getRadius(d) {
-    return 10;
+    var nodeDiff;
+    if (d.nodeType === "") {
+        return 0;
+    } else if (d.nodeType === "root") {
+        nodeDiff = ROOT_RADIUS_DIFF;
+    } else if (d.nodeType === "grandchild") {
+        nodeDiff = GRANDCHILD_RADIUS_DIFF;
+    } else nodeDiff = 0
+
+    return ((NORMAL_RADIUS + nodeDiff)/10);
 }
+
 
 //Updates the data in the node for how much the video has been viewed
 function updateViewedValue(id, amountViewedTime, duration) {
