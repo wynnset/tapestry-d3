@@ -179,6 +179,8 @@ function startForce() {
 
     var tapestryDimensions = getTapestryDimensions();
 
+    var nodes = dataset.nodes
+
     // log children, nearest neighbours @ depth - ford
     // var linkedByIndex = getChildrenRec(root,locn-1);
     // console.log(linkedByIndex);
@@ -209,14 +211,24 @@ function startForce() {
     //     .links(dataset.links);
     var tapestryDimensions = getTapestryDimensions();
 
-    var simulation = d3.forceSimulation(dataset.nodes)
+    simulation = d3.forceSimulation(nodes)
     .force("charge", d3.forceManyBody())
     .force("link", d3.forceLink(dataset.links).id(function(d) {return d.id}))
     .force("center", d3.forceCenter()
         .x(tapestryDimensions['width'] / 2)
         .y(tapestryDimensions['height'] / 2));
 
-//    simulation.nodes(dataset.nodse).on("tick",ticked)
+    // nodes
+    //     .attr("class","nodes")
+    //     .selectAll('nodes')
+    //     .attr("transform", function(d) {
+    //     return "translate(" + d.x + "," + d.y + ")"
+    // });
+    // .attr("transform", function (d) {
+    //     return "translate(" + getBoundedCoord(d.x, tapestryDimensions['width']) + "," + getBoundedCoord(d.y, tapestryDimensions['height']) + ")";
+    // })
+
+    simulation.nodes(dataset.nodes).on("tick",ticked)
 
     console.log("simulator: ");
     console.log(dataset.nodes);
@@ -1153,17 +1165,22 @@ function arrayRemove(arr, value) {
  
  }
 
-function getRadius(d) {
-    var nodeDiff;
-    if (d.nodeType === "") {
-        return 0;
-    } else if (d.nodeType === "root") {
-        nodeDiff = ROOT_RADIUS_DIFF;
-    } else if (d.nodeType === "grandchild") {
-        nodeDiff = GRANDCHILD_RADIUS_DIFF;
-    } else nodeDiff = 0
+ // REMOVE COMMENTS - ford
+// function getRadius(d) {
+//     var nodeDiff;
+//     if (d.nodeType === "") {
+//         return 0;
+//     } else if (d.nodeType === "root") {
+//         nodeDiff = ROOT_RADIUS_DIFF;
+//     } else if (d.nodeType === "grandchild") {
+//         nodeDiff = GRANDCHILD_RADIUS_DIFF;
+//     } else nodeDiff = 0
 
-    return NORMAL_RADIUS + nodeDiff;
+//     return NORMAL_RADIUS + nodeDiff;
+// }
+
+function getRadius(d) {
+    return 10;
 }
 
 //Updates the data in the node for how much the video has been viewed
