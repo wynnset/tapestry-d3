@@ -40,6 +40,7 @@ var dataset, root, svg, links, nodes,               // Basics
  * INITIALIZATION
  ****************************************************/
 
+
 /* Import data from json file, then start D3 */
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
@@ -116,6 +117,8 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     nodes = createNodes();
     
     filterLinks();
+    startForce(); // move this back to 4. START THE FORCED GRAPH - ford
+
     buildNodeContents();
 
     
@@ -123,7 +126,6 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     // 4. START THE FORCED GRAPH
     //---------------------------------------------------
     
-    startForce();
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
 });
@@ -134,7 +136,7 @@ var slider = document.getElementById("myRange");
 
 slider.onchange = function() {
     locn = this.value;
-    console.log(console.log(getChildrenRec(root,locn)));
+   // console.log(console.log(getChildrenRec(root,locn)));
 
     getChildrenRec(root,locn);
 
@@ -149,16 +151,19 @@ slider.onchange = function() {
     simulator();
 };
 
+
+// add x and y + vx and vy - ford
 function simulator() {
     var tapestryDimensions = getTapestryDimensions();
 
     var simulation = d3.forceSimulation(dataset.nodes)
     .force("charge", d3.forceManyBody())
-    .force("link", d3.forceLink(dataset.links))
+    .force("link", d3.forceLink(dataset.links).id(function(d) {return d.id}))
     .force("center", d3.forceCenter()
         .x(tapestryDimensions['width'] / 2)
         .y(tapestryDimensions['height'] / 2));
 
+    console.log("simulator: ");
     console.log(dataset.nodes);
 }
 
@@ -202,8 +207,23 @@ function startForce() {
     // force
     //     .force("link")
     //     .links(dataset.links);
+    var tapestryDimensions = getTapestryDimensions();
 
+    var simulation = d3.forceSimulation(dataset.nodes)
+    .force("charge", d3.forceManyBody())
+    .force("link", d3.forceLink(dataset.links).id(function(d) {return d.id}))
+    .force("center", d3.forceCenter()
+        .x(tapestryDimensions['width'] / 2)
+        .y(tapestryDimensions['height'] / 2));
+
+//    simulation.nodes(dataset.nodse).on("tick",ticked)
+
+    console.log("simulator: ");
+    console.log(dataset.nodes);
+
+    console.log("startforce: tapdim: ");
     console.log(tapestryDimensions);
+    console.log("startforce: dataset nodes: ");
     console.log(dataset.nodes);
     
 }
@@ -491,19 +511,21 @@ function buildNodeContents() {
     buildPathAndButton();
 
     /* Add dragging and node selection functionality to the node */
-    nodes.call(d3.drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended))
-        .on("click", function (d) {
-            // prevent multiple clicks
-            if (root != d.id) {
-                root = d.id;
-                resizeNodes(d.id);
-                slider.max = maxDepth(root);
-            }
-            recordAnalyticsEvent('user', 'click', 'node', d.id);
-        });
+    // nodes.call(d3.drag()
+    //     .on("start", dragstarted)
+    //     .on("drag", dragged)
+    //     .on("end", dragended))
+    //     .on("click", function (d) {
+    //         // prevent multiple clicks
+    //         if (root != d.id) {
+    //             root = d.id;
+    //             resizeNodes(d.id);
+    //             slider.max = maxDepth(root);
+    //         }
+    //         recordAnalyticsEvent('user', 'click', 'node', d.id);
+    //     });
+
+    // ^^^^ uncomment - ford
 }
 
 function rebuildNodeContents() {
@@ -945,6 +967,7 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
  ****************************************************/
 
 
+// rm - ford
 // function zoomed() {
 //     container.attr("transform", "translate(" + d3.event.transform.x + ", " + d3.event.transform.y + ") scale(" + d3.event.transform.k + ")");
 // }
@@ -974,11 +997,11 @@ function getNodesDimensions(dataset) {
     for (var index in dataset.nodes) {
         
         // save max point so we can calculate our tapestry width and height
-        if (dataset.nodes[index].fx > maxPointX) {
-            maxPointX = dataset.nodes[index].fx;
+        if (dataset.nodes[index].x > maxPointX) {  // BACK TO fx - ford
+            maxPointX = dataset.nodes[index].x;
         }
-        if (dataset.nodes[index].fy > maxPointY) {
-            maxPointY = dataset.nodes[index].fy;
+        if (dataset.nodes[index].y > maxPointY) { /// BACK TO fy - ford
+            maxPointY = dataset.nodes[index].y;
         }
     }
 
@@ -1015,9 +1038,9 @@ function getTapestryDimensions() {
 
 function transposeNodes() {
     for (var index in dataset.nodes) {
-        var temp_fx = dataset.nodes[index].fy;
-        dataset.nodes[index].fy = dataset.nodes[index].fx;
-        dataset.nodes[index].fx = temp_fx;
+        var temp_fx = dataset.nodes[index].y; // BACK TO FY
+        dataset.nodes[index].y = dataset.nodes[index].x; // BACK TO FX 
+        dataset.nodes[index].x = temp_fx; // BACK TO FX - ford
     }
 }
 
