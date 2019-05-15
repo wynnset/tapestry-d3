@@ -146,7 +146,21 @@ slider.onchange = function() {
 
     /* Restart force */
     startForce();
+    simulator();
 };
+
+function simulator() {
+    var tapestryDimensions = getTapestryDimensions();
+
+    var simulation = d3.forceSimulation(dataset.nodes)
+    .force("charge", d3.forceManyBody())
+    .force("link", d3.forceLink(dataset.links))
+    .force("center", d3.forceCenter()
+        .x(tapestryDimensions['width'] / 2)
+        .y(tapestryDimensions['height'] / 2));
+
+    console.log(dataset.nodes);
+}
 
 // svg.call(d3.zoom().on('zoom', zoomed));
 
@@ -161,36 +175,37 @@ function startForce() {
     var tapestryDimensions = getTapestryDimensions();
 
     // log children, nearest neighbours @ depth - ford
-    var linkedByIndex = getChildrenRec(root,locn-1);
-    console.log(linkedByIndex);
+    // var linkedByIndex = getChildrenRec(root,locn-1);
+    // console.log(linkedByIndex);
 
 
-    linkForce = d3.forceLink()
-        .id(function (d) {
-            return d.id;
-        });
+    // linkForce = d3.forceLink()
+    //     .id(function (d) {
+    //         return d.id;
+    //     });
 
-    collideForce = d3.forceCollide(
-        function (d) {
-            return getRadius(d) * 1.2;
-        });
+    // collideForce = d3.forceCollide(
+    //     function (d) {
+    //         return getRadius(d) * 1.2;
+    //     });
 
-    force = d3.forceSimulation()
-        .force("link", linkForce)
-        .force('collide', collideForce)
-        .force("charge", d3.forceManyBody().strength(-5000))
-        .force('center', d3.forceCenter(tapestryDimensions['width'] / 2, tapestryDimensions['height'] / 2));
+    // force = d3.forceSimulation()
+    //     .force("link", linkForce)
+    //     .force('collide', collideForce)
+    //     .force("charge", d3.forceManyBody().strength(-5000))
+    //     .force('center', d3.forceCenter(tapestryDimensions['width'] / 2, tapestryDimensions['height'] / 2));
 
-    force
-        .nodes(dataset.nodes)
-        .on("tick", ticked);
+    // force
+    //     .nodes(dataset.nodes)
+    //     .on("tick", ticked);
 
-    force
-        .force("link")
-        .links(dataset.links);
+    // force
+    //     .force("link")
+    //     .links(dataset.links);
+
+    console.log(tapestryDimensions);
+    console.log(dataset.nodes);
     
-    force
-        .
 }
 
 //Resize all nodes, where id is now the root
