@@ -8,7 +8,7 @@
 
 const // declared
     TAPESTRY_CONTAINER_ID = "tapestry",
-    PROGRESS_THICKNESS = (20 / 10),  // RM /100 - ford
+    PROGRESS_THICKNESS = (20/2),  // RM /100 - ford
     LINK_THICKNESS = 6,
     NORMAL_RADIUS = 140,
     ROOT_RADIUS_DIFF = 70,
@@ -212,11 +212,12 @@ function startForce() {
     var tapestryDimensions = getTapestryDimensions();
 
     simulation = d3.forceSimulation(nodes)
-        .force("charge", d3.forceManyBody().strength(-5000))
+        .force("charge", d3.forceManyBody().strength(-10000))
         .force("link", d3.forceLink(dataset.links).id(function(d) {
             return d.id
         }))
         .force("collide",collideForce)
+        .velocityDecay(0.99)
         .force("center", d3.forceCenter()
             .x(tapestryDimensions['width'] / 2)
             .y(tapestryDimensions['height'] / 2));
@@ -1173,7 +1174,7 @@ function getRadius(d) {
         nodeDiff = GRANDCHILD_RADIUS_DIFF;
     } else nodeDiff = 0
 
-    return ((NORMAL_RADIUS + nodeDiff)/10);
+    return ((NORMAL_RADIUS + nodeDiff)/2);
 }
 
 
