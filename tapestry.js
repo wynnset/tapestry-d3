@@ -117,7 +117,6 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     nodes = createNodes();
     
     filterLinks();
-    startForce(); // move this back to 4. START THE FORCED GRAPH - ford
 
     buildNodeContents();
 
@@ -125,7 +124,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     //---------------------------------------------------
     // 4. START THE FORCED GRAPH
     //---------------------------------------------------
-    
+    startForce();
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
 });
@@ -147,8 +146,7 @@ slider.onchange = function() {
     rebuildNodeContents();
 
     /* Restart force */
-    startForce();
-    // simulator();
+//    startForce();
 };
 
 
@@ -193,7 +191,7 @@ function startForce() {
 
     collideForce = d3.forceCollide(
         function (d) {
-            return getRadius(d) * 1.2;
+            return getRadius(d) * 1.5;
         });
 
     // force = d3.forceSimulation()
@@ -212,11 +210,11 @@ function startForce() {
     var tapestryDimensions = getTapestryDimensions();
 
     simulation = d3.forceSimulation(nodes)
-        .force("charge", d3.forceManyBody().strength(-10000))
+        .force("charge", d3.forceManyBody().strength(-15000))
         .force("link", d3.forceLink(dataset.links).id(function(d) {
             return d.id
         }))
-        .force("collide",collideForce)
+    //    .force("collide",collideForce)
         .velocityDecay(0.99)
         .force("center", d3.forceCenter()
             .x(tapestryDimensions['width'] / 2)
@@ -673,11 +671,11 @@ function buildPathAndButton() {
         .attr("data-id", function (d) {
             return d.id;
         })
-        .attr("width", "60px")
-        .attr("height", "62px")
+        .attr("width", "60px") // 60px
+        .attr("height", "62px") //62px
         .attr("x", -27)
         .attr("y", function (d) {
-            return -NORMAL_RADIUS - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);
+            return -NORMAL_RADIUS + 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);  // -normal-radius - 30 ford
         })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
