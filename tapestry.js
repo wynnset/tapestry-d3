@@ -72,6 +72,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     //---------------------------------------------------
 
     function updateTapestrySize() {
+        startForce();
 
         var nodeDimensions = getNodesDimensions(dataset);
     
@@ -80,7 +81,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
         // but kept the same way on mobile phones where the browser is vertically longer
         var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
         var windowAspectRatio = getAspectRatio();
-        if (tapestryAspectRatio > 1 && windowAspectRatio < 1 || tapestryAspectRatio < 1 && windowAspectRatio > 1) {
+        if (tapestryAspectRatio > 5 && windowAspectRatio < 5 || tapestryAspectRatio < 5 && windowAspectRatio > 5) {
             transposeNodes();
         }
         
@@ -88,7 +89,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
         updateSvgDimensions(TAPESTRY_CONTAINER_ID);
     }
 
-    // do it now
+    // do it now - ford
     updateTapestrySize();
     // also do it whenever window is resized
     $(window).resize(function(){
@@ -124,7 +125,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     //---------------------------------------------------
     // 4. START THE FORCED GRAPH
     //---------------------------------------------------
-    startForce();
+ //   startForce();
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
 });
@@ -316,7 +317,7 @@ function createSvgContainer(containerId) {
                 .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g")
-                .attr("transform", "translate(-20, -20)");
+                .attr("transform", "translate(0, 0)"); //ford
 }
 
 function updateSvgDimensions(containerId) {
