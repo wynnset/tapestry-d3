@@ -286,21 +286,21 @@ function ticked() {
 function dragstarted(d) {
     var tapestryDimensions = getTapestryDimensions();
     if (!d3.event.active) simulation.alphaTarget(0.2).restart();  // simulation == force ford
-    d.fx = getBoundedCoord(d.x, tapestryDimensions['width']);
-    d.fy = getBoundedCoord(d.y, tapestryDimensions['height']);
+    d.x = getBoundedCoord(d.x, tapestryDimensions['width']);  // fx = x ford
+    d.y = getBoundedCoord(d.y, tapestryDimensions['height']); // fy = y ford
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
 function dragged(d) {
-    d.fx = d3.event.x;
-    d.fy = d3.event.y;
+    d.x = d3.event.x;  // fx = x ford
+    d.y = d3.event.y; // fy = y ford
 }
 
 function dragended(d) {
     if (!d3.event.active) simulation.alphaTarget(0);  // simulation == force ford
-    d.fx = d.x;
-    d.fy = d.y;
+    d.x = d.x; // fx = x ford
+    d.y = d.y; // fy = y ford
     
     // Uncomment the line below to get the node positions saved into the container
     // and then copy over to json file to have updated coordinates
