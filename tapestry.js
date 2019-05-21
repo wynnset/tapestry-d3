@@ -285,7 +285,7 @@ function ticked() {
 
 function dragstarted(d) {
     var tapestryDimensions = getTapestryDimensions();
-    if (!d3.event.active) force.alphaTarget(0.2).restart();
+    if (!d3.event.active) simulation.alphaTarget(0.2).restart();  // simulation == force ford
     d.fx = getBoundedCoord(d.x, tapestryDimensions['width']);
     d.fy = getBoundedCoord(d.y, tapestryDimensions['height']);
 
@@ -298,7 +298,7 @@ function dragged(d) {
 }
 
 function dragended(d) {
-    if (!d3.event.active) force.alphaTarget(0);
+    if (!d3.event.active) simulation.alphaTarget(0);  // simulation == force ford
     d.fx = d.x;
     d.fy = d.y;
     
@@ -314,10 +314,10 @@ function createSvgContainer(containerId) {
     return d3.select("#"+containerId)
                 .append("svg:svg")
                 .attr("id", containerId+"-svg")
-                .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
+                .attr("viewBox", "-20 -20 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g")
-                .attr("transform", "translate(0, 0)"); //ford
+                .attr("transform", "translate(-20, -20)"); 
 }
 
 function updateSvgDimensions(containerId) {
