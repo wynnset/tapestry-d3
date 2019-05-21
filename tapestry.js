@@ -217,7 +217,10 @@ function startForce() {
         .velocityDecay(0.99)
         .force("center", d3.forceCenter()
             .x(tapestryDimensions['width'] / 2)
-            .y(tapestryDimensions['height'] / 2));
+            .y(tapestryDimensions['height'] / 2))
+        .force("collision", d3.forceCollide().radius(function (d) {
+            return getRadius(d)
+        }));
 
     // nodes
     //     .attr("class","nodes")
