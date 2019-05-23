@@ -33,8 +33,10 @@ var dataset, root, svg, links, nodes,               // Basics
     nodeImageHeight = (420/2),
     nodeImageWidth = (780/2),
     rootNodeImageHeightDiff = (70/2),
-    h5pVideoSettings = {};
-    locn = 2;                                       // default slider input
+    h5pVideoSettings = {},
+    locn = 2,                                       // default slider input
+    tapestryDimensions2 = {width : 1000, 
+                           height : 800};
 
 /****************************************************
  * INITIALIZATION
@@ -71,8 +73,20 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     // 2. SIZE AND SCALE THE TAPESTRY AND SVG TO FIT WELL
     //---------------------------------------------------
 
+
+    // establish initial positioning before the startforce()
+    // this so 'getNodeDimensions' is operational at this stage
+    for (var index in dataset.nodes) {
+        if (dataset.nodes[index].x == null) {
+            dataset.nodes[index].x = getBrowserWidth();
+        }
+        if (dataset.nodes[index].y == null) {
+            dataset.nodes[index].y = getBrowserHeight();
+        }
+    }
+
     function updateTapestrySize() {
-        startForce();
+    //    startForce();
 
         var nodeDimensions = getNodesDimensions(dataset);
     
@@ -81,7 +95,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
         // but kept the same way on mobile phones where the browser is vertically longer
         var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
         var windowAspectRatio = getAspectRatio();
-        if (tapestryAspectRatio > 5 && windowAspectRatio < 5 || tapestryAspectRatio < 5 && windowAspectRatio > 5) {
+        if (tapestryAspectRatio >= 1 && windowAspectRatio <= 1 || tapestryAspectRatio <= 1 && windowAspectRatio >= 1) {  /// ORIGINAL VALUE = 1 - ford
             transposeNodes();
         }
         
@@ -113,19 +127,25 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
         rootNodeImageHeightDiff += dataset.settings.thumbRootDiff;
     }
     
-    svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
+    svg = createSvgContainer(TAPESTRY_CONTAINER_ID); 
     links = createLinks();
     nodes = createNodes();
     
     filterLinks();
 
     buildNodeContents();
+    resizeNodes(root);
 
     
     //---------------------------------------------------
     // 4. START THE FORCED GRAPH
     //---------------------------------------------------
- //   startForce();
+//    updateTapestrySize();
+    startForce();
+
+    // d3.selectAll("svg:not(:root)")
+    //     .attr("overflow-x","scroll")
+    //     .attr("overflow-y","scroll");
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
 });
@@ -136,7 +156,6 @@ var slider = document.getElementById("myRange");
 
 slider.onchange = function() {
     locn = this.value;
-   // console.log(console.log(getChildrenRec(root,locn)));
 
     getChildrenRec(root,locn);
 
@@ -150,23 +169,6 @@ slider.onchange = function() {
 //    startForce();
 };
 
-
-// add x and y + vx and vy - ford
-function simulator() {
-    var tapestryDimensions = getTapestryDimensions();
-
-    var simulation = d3.forceSimulation(dataset.nodes)
-    .force("charge", d3.forceManyBody())
-    .force("link", d3.forceLink(dataset.links).id(function(d) {return d.id}))
-    .force("center", d3.forceCenter()
-        .x(tapestryDimensions['width'] / 2)
-        .y(tapestryDimensions['height'] / 2));
-
-    console.log("simulator: ");
-    console.log(dataset.nodes);
-}
-
-
 /****************************************************
  * D3 RELATED FUNCTIONS
  ****************************************************/
@@ -174,9 +176,11 @@ function simulator() {
 /* Define forces that will determine the layout of the graph */
 function startForce() {
 
+    var nodes = dataset.nodes
+
+
     var tapestryDimensions = getTapestryDimensions();
 
-    var nodes = dataset.nodes
 
     // log children, nearest neighbours @ depth - ford
     // var linkedByIndex = getChildrenRec(root,locn-1);
@@ -206,7 +210,6 @@ function startForce() {
     // force
     //     .force("link")
     //     .links(dataset.links);
-    var tapestryDimensions = getTapestryDimensions();
 
     simulation = d3.forceSimulation(nodes)
         .force("charge", d3.forceManyBody().strength(-4000))
@@ -219,7 +222,7 @@ function startForce() {
             .x(tapestryDimensions['width'] / 2)
             .y(tapestryDimensions['height'] / 2))
         .force("collision", d3.forceCollide().radius(function (d) {
-            return (MAX_RADIUS - 30)
+            return (MAX_RADIUS - 25)
         }));
 
     // nodes
@@ -236,10 +239,14 @@ function startForce() {
         .nodes(dataset.nodes)
         .on("tick",ticked)
 
-    console.log("startforce: tapdim: ");
-    console.log(tapestryDimensions);
-    console.log("startforce: dataset nodes: ");
-    console.log(dataset.nodes);
+    // console.log(tapestryDimensions);
+    // console.log("tapdim2: ");
+    // console.log(tapestryDimensions2);
+
+    // console.log("startforce: tapdim: ");
+    // console.log(tapestryDimensions);
+    // console.log("startforce: dataset nodes: ");
+    // console.log(dataset.nodes);
     
 }
 
@@ -254,7 +261,7 @@ function resizeNodes(id) {
     rebuildNodeContents();
 
     /* Restart force */
-    startForce();
+//    startForce();
 }
 
 function ticked() {
@@ -318,7 +325,8 @@ function createSvgContainer(containerId) {
                 .attr("viewBox", "-20 -20 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g")
-                .attr("transform", "translate(-20, -20)"); 
+                .attr("transform", "translate(-20, -20)");
+                
 }
 
 function updateSvgDimensions(containerId) {
@@ -1005,6 +1013,7 @@ function getAspectRatio() {
 }
 
 function getNodesDimensions(dataset) {
+ //   startForce();
     var maxPointX = 0;
     var maxPointY = 0;
     for (var index in dataset.nodes) {
@@ -1042,6 +1051,8 @@ function getTapestryDimensions() {
         tapestryHeight *= 1.2;
         tapestryWidth *= 1.2;
     }
+
+ //   console.log("width: " + tapestryWidth + " height: " + tapestryHeight);
 
     return {
         'width': tapestryWidth,
