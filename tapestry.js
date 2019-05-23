@@ -28,15 +28,13 @@ const // calculated
 
 var dataset, root, svg, links, nodes,               // Basics
     path, pieGenerator, arcGenerator,               // Donut
-    linkForce, collideForce, force,                 // Force
+    simulation,                                     // Force
     tapestrySlug, saveProgressToCookie = true,      // Cookie
     nodeImageHeight = (420/2),
     nodeImageWidth = (780/2),
     rootNodeImageHeightDiff = (70/2),
     h5pVideoSettings = {},
-    locn = 2,                                       // default slider input
-    tapestryDimensions2 = {width : 1000, 
-                           height : 800};
+    locn = 2                                       // default slider input
 
 /****************************************************
  * INITIALIZATION
@@ -140,17 +138,15 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     //---------------------------------------------------
     // 4. START THE FORCED GRAPH
     //---------------------------------------------------
-//    updateTapestrySize();
-    startForce();
 
-    // d3.selectAll("svg:not(:root)")
-    //     .attr("overflow-x","scroll")
-    //     .attr("overflow-y","scroll");
+    startForce();
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
 });
 
-// slider functionality
+/****************************************************
+ * D3 SLIDER FUNCTIONALITY
+ ****************************************************/
 
 var slider = document.getElementById("myRange");
 
@@ -165,8 +161,6 @@ slider.onchange = function() {
 
     rebuildNodeContents();
 
-    /* Restart force */
-//    startForce();
 };
 
 /****************************************************
@@ -177,76 +171,39 @@ slider.onchange = function() {
 function startForce() {
 
     var nodes = dataset.nodes
-
-
     var tapestryDimensions = getTapestryDimensions();
-
-
-    // log children, nearest neighbours @ depth - ford
-    // var linkedByIndex = getChildrenRec(root,locn-1);
-    // console.log(linkedByIndex);
-
-
-    // linkForce = d3.forceLink()
-    //     .id(function (d) {
-    //         return d.id;
-    //     });
 
     collideForce = d3.forceCollide(
         function (d) {
             return getRadius(d) * 1.5;
         });
 
-    // force = d3.forceSimulation()
-    //     .force("link", linkForce)
-    //     .force('collide', collideForce)
-    //     .force("charge", d3.forceManyBody().strength(-5000))
-    //     .force('center', d3.forceCenter(tapestryDimensions['width'] / 2, tapestryDimensions['height'] / 2));
-
-    // force
-    //     .nodes(dataset.nodes)
-    //     .on("tick", ticked);
-
-    // force
-    //     .force("link")
-    //     .links(dataset.links);
-
     simulation = d3.forceSimulation(nodes)
+
+        // "charge" and forceManyBody determine the the repulsion/attraction strength
         .force("charge", d3.forceManyBody().strength(-4000))
+
+        // establish links, the function sets IDs as endpoints, rather than indexes
         .force("link", d3.forceLink(dataset.links).id(function(d) {
             return d.id
         }))
-    //    .force("collide",collideForce)
+
+        // slow down the nodes from spinning
         .velocityDecay(0.99)
+
+        // "center" determines where the center of gravity is
         .force("center", d3.forceCenter()
             .x(tapestryDimensions['width'] / 2)
             .y(tapestryDimensions['height'] / 2))
+
+        // determines the minimum distance that nodes are allowed to be positioned at
         .force("collision", d3.forceCollide().radius(function (d) {
             return (MAX_RADIUS - 25)
         }));
 
-    // nodes
-    //     .attr("class","nodes")
-    //     .selectAll('nodes')
-    //     .attr("transform", function(d) {
-    //     return "translate(" + d.x + "," + d.y + ")"
-    // });
-    // .attr("transform", function (d) {
-    //     return "translate(" + getBoundedCoord(d.x, tapestryDimensions['width']) + "," + getBoundedCoord(d.y, tapestryDimensions['height']) + ")";
-    // })
-
     simulation
         .nodes(dataset.nodes)
         .on("tick",ticked)
-
-    // console.log(tapestryDimensions);
-    // console.log("tapdim2: ");
-    // console.log(tapestryDimensions2);
-
-    // console.log("startforce: tapdim: ");
-    // console.log(tapestryDimensions);
-    // console.log("startforce: dataset nodes: ");
-    // console.log(dataset.nodes);
     
 }
 
@@ -259,9 +216,6 @@ function resizeNodes(id) {
     filterLinks();
 
     rebuildNodeContents();
-
-    /* Restart force */
-//    startForce();
 }
 
 function ticked() {
@@ -293,23 +247,21 @@ function ticked() {
 
 function dragstarted(d) {
     var tapestryDimensions = getTapestryDimensions();
-    if (!d3.event.active) simulation.alphaTarget(0.2).restart();  // simulation == force ford
-    d.x = getBoundedCoord(d.x, tapestryDimensions['width']);  // fx = x ford
-    d.y = getBoundedCoord(d.y, tapestryDimensions['height']); // fy = y ford
+    if (!d3.event.active) simulation.alphaTarget(0.2).restart();
+    d.x = getBoundedCoord(d.x, tapestryDimensions['width']);
+    d.y = getBoundedCoord(d.y, tapestryDimensions['height']);
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
 function dragged(d) {
-    d.x = d3.event.x;  // fx = x ford
-    d.y = d3.event.y; // fy = y ford
+    d.x = d3.event.x;
+    d.y = d3.event.y;
 }
 
 function dragended(d) {
-    if (!d3.event.active) simulation.alphaTarget(0);  // simulation == force ford
-    d.x = d.x; // fx = x ford
-    d.y = d.y; // fy = y ford
-    
+    if (!d3.event.active) simulation.alphaTarget(0);
+
     // Uncomment the line below to get the node positions saved into the container
     // and then copy over to json file to have updated coordinates
     // $('#h5p-log').text(JSON.stringify(dataset.nodes));
@@ -545,8 +497,6 @@ function buildNodeContents() {
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
         });
-
-    // ^^^^ uncomment - ford
 }
 
 function rebuildNodeContents() {
@@ -685,7 +635,7 @@ function buildPathAndButton() {
         .attr("height", "62px") //62px - originals
         .attr("x", -27)
         .attr("y", function (d) {
-            return -NORMAL_RADIUS - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);  // -normal-radius - 30 ford
+            return -NORMAL_RADIUS - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);
         })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
@@ -988,12 +938,6 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
  ****************************************************/
 
 
-// rm - ford
-// function zoomed() {
-//     container.attr("transform", "translate(" + d3.event.transform.x + ", " + d3.event.transform.y + ") scale(" + d3.event.transform.k + ")");
-// }
-
-
 // Get width, height, and aspect ratio of viewable region
 function getBrowserWidth() {
     return Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
@@ -1052,8 +996,6 @@ function getTapestryDimensions() {
         tapestryWidth *= 1.2;
     }
 
- //   console.log("width: " + tapestryWidth + " height: " + tapestryHeight);
-
     return {
         'width': tapestryWidth,
         'height': tapestryHeight
@@ -1062,9 +1004,9 @@ function getTapestryDimensions() {
 
 function transposeNodes() {
     for (var index in dataset.nodes) {
-        var temp_fx = dataset.nodes[index].y; // BACK TO FY
-        dataset.nodes[index].y = dataset.nodes[index].x; // BACK TO FX 
-        dataset.nodes[index].x = temp_fx; // BACK TO FX - ford
+        var temp_fx = dataset.nodes[index].y;
+        dataset.nodes[index].y = dataset.nodes[index].x;
+        dataset.nodes[index].x = temp_fx;
     }
 }
 
@@ -1107,7 +1049,6 @@ function addDepth(rootId, depth, visitlist) {
             else {
                 acc = depth + 1;
                 dataset.nodes[findNodeIndex(children[childId])].depth = acc;
-//                console.log('id: ' + dataset.nodes[findNodeIndex(children[childId])].id + ' depth: ' + dataset.nodes[findNodeIndex(children[childId])].depth)
                 visited.push(children[childId]);
 
                 addDepth(children[childId],acc,visited);
@@ -1174,7 +1115,6 @@ function arrayRemove(arr, value) {
  
  }
 
- // REMOVE /2 - ford // rm'd?????
 function getRadius(d) {
     var nodeDiff;
     if (d.nodeType === "") {
