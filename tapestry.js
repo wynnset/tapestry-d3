@@ -8,11 +8,11 @@
 
 const // declared
     TAPESTRY_CONTAINER_ID = "tapestry",
-    PROGRESS_THICKNESS = (20/2),  // RM /100 - ford
+    PROGRESS_THICKNESS = (20/1.5),  // RM /100 - ford
     LINK_THICKNESS = 6,
-    NORMAL_RADIUS = (140/2),  //140 originally
-    ROOT_RADIUS_DIFF = (70/2), //70 originally
-    GRANDCHILD_RADIUS_DIFF = (-100/2), //-100 originally
+    NORMAL_RADIUS = (140/1.5),  //140 originally
+    ROOT_RADIUS_DIFF = (70/1.5), //70 originally
+    GRANDCHILD_RADIUS_DIFF = (-100/1.5), //-100 originally
     TRANSITION_DURATION = 800,
     COLOR_STROKE = "#072d42",
     COLOR_GRANDCHILD = "#CCC",
@@ -30,9 +30,9 @@ var dataset, root, svg, links, nodes,               // Basics
     path, pieGenerator, arcGenerator,               // Donut
     simulation,                                     // Force
     tapestrySlug, saveProgressToCookie = true,      // Cookie
-    nodeImageHeight = (420/2),
-    nodeImageWidth = (780/2),
-    rootNodeImageHeightDiff = (70/2),
+    nodeImageHeight = (420/1.5),
+    nodeImageWidth = (780/1.5),
+    rootNodeImageHeightDiff = (70/1.5),
     h5pVideoSettings = {},
     locn = 2                                       // default slider input
 
@@ -84,7 +84,6 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     }
 
     function updateTapestrySize() {
-    //    startForce();
 
         var nodeDimensions = getNodesDimensions(dataset);
     
@@ -99,6 +98,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
         
         // Update svg dimensions to the new dimensions of the browser
         updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+        console.log(getTapestryDimensions());
     }
 
     // do it now - ford
@@ -274,7 +274,7 @@ function createSvgContainer(containerId) {
     return d3.select("#"+containerId)
                 .append("svg:svg")
                 .attr("id", containerId+"-svg")
-                .attr("viewBox", "-20 -20 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
+                .attr("viewBox", "-20 -20 " + (tapestryDimensions['width']+MAX_RADIUS) + " " + (tapestryDimensions['height']+MAX_RADIUS)) // rm +20 - ford
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g")
                 .attr("transform", "translate(-20, -20)");
@@ -284,7 +284,7 @@ function createSvgContainer(containerId) {
 function updateSvgDimensions(containerId) {
     var tapestryDimensions = getTapestryDimensions();
     d3.select("#"+containerId+"-svg")
-        .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height']);
+        .attr("viewBox", "0 0 " + (tapestryDimensions['width']+MAX_RADIUS) + " " + (tapestryDimensions['height']+MAX_RADIUS)); // rm +20 - ford
     startForce();
 }
 
@@ -986,7 +986,7 @@ function getTapestryDimensions() {
     var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
     var tapestryBrowserRatio = tapestryWidth / getBrowserWidth();
 
-    if (tapestryHeight > getBrowserHeight() && tapestryAspectRatio < 1) {
+    if (tapestryHeight > getBrowserHeight() && tapestryAspectRatio < 5) {  // this was originally 1 instead of 5 - ford
         tapestryWidth *= tapestryHeight/getBrowserHeight() / tapestryBrowserRatio;
     }
     
