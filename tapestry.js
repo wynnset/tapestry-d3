@@ -198,7 +198,12 @@ function startForce() {
 
         // determines the minimum distance that nodes are allowed to be positioned at
         .force("collision", d3.forceCollide().radius(function (d) {
-            return (MAX_RADIUS - 25)
+            if (root === d.id) {
+                return MAX_RADIUS
+            }
+            else {
+                return (MAX_RADIUS - 25)
+            }
         }));
 
     simulation
