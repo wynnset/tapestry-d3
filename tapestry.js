@@ -40,7 +40,6 @@ var dataset, root, svg, links, nodes,               // Basics
 
 /* Import data from json file, then start D3 */
 
-// $.getJSON( jsonUrl, function(result){
 jQuery.get(GET_TAPESTRY_URL, function(result){
     dataset = result;
 
