@@ -58,10 +58,8 @@ $.getJSON( jsonUrl, function(result){
 
         // If user is logged in, get progress from database database
         if (tapestryWpUserId) {
-            var nodeIdArr = dataset.nodes.map(node => node.id);
             var getProgData = {
                 "post_id": tapestryWpPostId,
-                "node_id_arr": JSON.stringify(nodeIdArr)
             };
 
             jQuery.get(TAPESTRY_PROGRESS_URL, getProgData, function(result) {
