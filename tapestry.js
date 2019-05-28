@@ -253,6 +253,7 @@ function ticked() {
 function dragstarted(d) {
     var tapestryDimensions = getTapestryDimensions();
     if (!d3.event.active) simulation.alphaTarget(0.2).restart();
+    
     d.x = getBoundedCoord(d.x, tapestryDimensions['width']);
     d.y = getBoundedCoord(d.y, tapestryDimensions['height']);
 
@@ -266,7 +267,7 @@ function dragged(d) {
 
 function dragended(d) {
     if (!d3.event.active) simulation.alphaTarget(0);
-
+        
     // Uncomment the line below to get the node positions saved into the container
     // and then copy over to json file to have updated coordinates
     // $('#h5p-log').text(JSON.stringify(dataset.nodes));
@@ -489,7 +490,8 @@ function buildNodeContents() {
     buildPathAndButton();
 
     /* Add dragging and node selection functionality to the node */
-    nodes.call(d3.drag()
+    nodes.call(
+        d3.drag()
         .on("start", dragstarted)
         .on("drag", dragged)
         .on("end", dragended))
@@ -499,6 +501,15 @@ function buildNodeContents() {
                 root = d.id;
                 resizeNodes(d.id);
                 slider.max = maxDepth(root);
+                // simulation
+                //     .force("collision", d3.forceCollide().radius(function (d) {
+                //         if (root === d.id) {
+                //             return MAX_RADIUS
+                //         }
+                //         else {
+                //             return (MAX_RADIUS - 25)
+                //         }
+                //     }));
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
         });
