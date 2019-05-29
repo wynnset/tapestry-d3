@@ -789,7 +789,7 @@ function buildPathAndButton() {
 
         // Show the form
         document.getElementById("addNodeForm").style.display = "block";
-        $("#exampleModal").modal();
+        $("#createNewNodeModal").modal();
     });
 }
 
