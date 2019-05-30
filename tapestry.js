@@ -132,7 +132,7 @@ $.getJSON( jsonUrl, function(result){
  * FUNCTIONS FOR ADD NEW NODE FORM
  ****************************************************/
 $(function() {
-    $("#addNodeForm").on("submit", function(e) {
+    $("#submit-add-new-node").on("click", function(e) {
         e.preventDefault(); // cancel the actual submit
         var formData = $("form").serializeArray();
         var rootIndex = findNodeIndex(root);
@@ -205,9 +205,9 @@ $(function() {
         dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
 
         // Remove the values from form
-        $("#addNodeForm input[type='text']").val("");
-        $("#addNodeForm input[type='url']").val("");
-        $("#addNodeForm").hide();
+        $("#createNewNodeModalBody input[type='text']").val("");
+        $("#createNewNodeModalBody input[type='url']").val("");
+        $("#createNewNodeModal").modal("hide");
 
         // Rebuild the nodes and links
         links = createLinks();  // Recreate the links
@@ -249,10 +249,10 @@ $(function() {
         }
     });
 
-    $("#cancelButton").on("click", function() {
-        $("#addNodeForm input[type='text']").val("");
-        $("#addNodeForm input[type='url']").val("");
-        $("#addNodeForm").hide();
+    $("#cancel-add-new-node").on("click", function() {
+        $("#createNewNodeModal input[type='text']").val("");
+        $("#createNewNodeModal input[type='url']").val("");
+        $("#createNewNodeModal").modal("hide");
     });
 });
 
@@ -787,8 +787,7 @@ function buildPathAndButton() {
         // Set up the title of the form
         $('#formTitle').html("Add new sub-topic to " + dataset.nodes[findNodeIndex(root)].title);
 
-        // Show the form
-        document.getElementById("addNodeForm").style.display = "block";
+        // Show the modal
         $("#createNewNodeModal").modal();
     });
 }
