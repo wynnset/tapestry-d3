@@ -18,8 +18,8 @@ const // declared
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
     FONT_ADJUST = 1.25,    
-    TAPESTRY_PROGRESS_URL = "http://localhost:8888/tapestry-wp/wp-json/tapestry-tool/v1/users/progress",
-    TAPESTRY_H5P_SETTINGS_URL = "http://localhost:8888/tapestry-wp/wp-json/tapestry-tool/v1/users/h5psettings";
+    TAPESTRY_PROGRESS_URL = apiUrl + "/users/progress",
+    TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings";
 
 
 const // calculated
