@@ -17,8 +17,7 @@ const // declared
     COLOR_LINK = "#999",
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
-    FONT_ADJUST = 1.25,
-    GET_TAPESTRY_URL = "http://localhost:8888/tapestry-wp/wp-json/tapestry-tool/v1/tapestries/" + tapestryWpPostId;
+    FONT_ADJUST = 1.25;
 
 const // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
@@ -40,7 +39,7 @@ var dataset, root, svg, links, nodes,               // Basics
 
 /* Import data from json file, then start D3 */
 
-jQuery.get(GET_TAPESTRY_URL, function(result){
+jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
 
     //---------------------------------------------------
