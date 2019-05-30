@@ -52,8 +52,8 @@ var
  ****************************************************/
 
 /* Import data from json file, then start D3 */
-
-jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
+$.getJSON( jsonUrl, function(result){
+// jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
     originalDataset = result;
     saveCoordinates();
