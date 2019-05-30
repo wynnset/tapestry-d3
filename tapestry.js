@@ -230,8 +230,7 @@ function createSvgContainer(containerId) {
                 .attr("id", containerId+"-svg")
                 .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
                 .attr("preserveAspectRatio", "xMidYMid meet")
-                .append("svg:g")
-                .attr("transform", "translate(-20, -20)");
+                .append("svg:g");
 }
 
 function updateSvgDimensions(containerId) {
@@ -690,6 +689,8 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
         distance: 8
     });
 
+    media.appendTo('#spotlight-content');
+
     $('<a class="lightbox-close">X</a>')
         .css({
             background: "none",
@@ -701,8 +702,6 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
             exitViewMode();
         })
         .appendTo('#spotlight-content');
-
-    media.appendTo('#spotlight-content');
 
     setTimeout(function(){
         $('#spotlight-content').css({
@@ -772,6 +771,8 @@ function getLightboxDimensions(videoHeight, videoWidth) {
         adjustmentRatio = heightAdjustmentRatio;
     }
 
+    adjustmentRatio *= 0.95;
+
     return {
         "adjustedOn": adjustedOn,
         "width": videoWidth * adjustmentRatio,
@@ -815,7 +816,7 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
                 if (video.played.length > 0 && viewedAmount < video.currentTime) {
                     for (var i = 0; i < childrenData.length; i++) {
                         if (Math.abs(childrenData[i].appearsAt - video.currentTime) <= NODE_UNLOCK_TIMEFRAME && video.paused === false && !dataset.nodes[childrenData[i].nodeIndex].typeData.unlocked) {
-                            setUnlocked();
+                            setUnlocked(childrenData[i].nodeIndex);
                             filterLinks();
                             filterNodes();
                             rebuildNodeContents();
@@ -1401,14 +1402,20 @@ function setLinkTypes(rootId) {
     }
 }
 
-/* For setting the "unlocked" field of nodes.typeData in dataset */
-function setUnlocked() {
-    for (var i = 0; i < dataset.links.length; i++) {
-        var parentIndex = findNodeIndex(dataset.links[i].source.id);
-        var childIndex = findNodeIndex(dataset.links[i].target.id);
-        if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
-            dataset.nodes[childIndex].typeData.unlocked = true;
+/* For setting the "unlocked" field of nodes.typeData in dataset or a specific node (if a parameter is passed in) */
+function setUnlocked(childIndex) {
+    if (typeof childIndex === 'undefined') {
+        var parentIndex;
+        for (var i = 0; i < dataset.links.length; i++) {
+            childIndex = findNodeIndex(dataset.links[i].target.id);
+            parentIndex = findNodeIndex(dataset.links[i].source.id);
+            if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
+                dataset.nodes[childIndex].typeData.unlocked = true;
+            }
         }
+    }
+    else {
+        dataset.nodes[childIndex].typeData.unlocked = true;
     }
 }
 
