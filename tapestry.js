@@ -67,6 +67,9 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
                     cookieProgress = JSON.parse( result );
                     setDatasetProgress(cookieProgress);
                 }
+            }).fail(function(e) {
+                console.log("Error with retrieving node progress");
+                console.log(e);
             });
 
             var getH5PData = {
@@ -77,7 +80,10 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
                     cookieH5PVideoSettings = JSON.parse( result );
                     h5pVideoSettings = cookieH5PVideoSettings;
                 }
-            });  
+            }).fail(function(e) {
+                console.log("Error with retrieving h5p video settings");
+                console.log(e);
+            });
 
         } else { 
 
@@ -1080,6 +1086,9 @@ function updateViewedValue(id, amountViewedTime, duration) {
                     "progress_value": amountViewed
                 };
                 jQuery.post(TAPESTRY_PROGRESS_URL, progData, function(result) {
+                }).fail(function(e) {
+                    console.log("Error with adding progress data");
+                    console.log(e);
                 });
             }
 
@@ -1089,6 +1098,9 @@ function updateViewedValue(id, amountViewedTime, duration) {
                     "json": JSON.stringify(h5pVideoSettings)
                 };
                 jQuery.post(TAPESTRY_H5P_SETTINGS_URL, h5pData, function(result) {
+                }).fail(function(e) {
+                    console.log("Error with adding h5p video settings");
+                    console.log(e);
                 });
             }
 
