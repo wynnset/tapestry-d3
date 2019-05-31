@@ -125,6 +125,9 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
+}).fail(function(e) {
+    console.log("Error with loading tapestries");
+    console.log(e);
 });
 
 /****************************************************
@@ -201,6 +204,9 @@ $(function() {
 
         jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
             console.log(result);
+        }).fail(function(e) {
+            console.log("Error with adding new node");
+            console.log(e);
         });
         // Add the new data to the dataset
         dataset["nodes"].push(newNodeEntry);
