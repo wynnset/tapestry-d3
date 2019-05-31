@@ -52,8 +52,7 @@ var
  ****************************************************/
 
 /* Import data from json file, then start D3 */
-$.getJSON( jsonUrl, function(result){
-// jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
+jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
     originalDataset = result;
     saveCoordinates();
@@ -200,13 +199,16 @@ $(function() {
             }
         }
 
+        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", newNodeEntry,function(result){
+            console.log(result);
+        });
         // Add the new data to the dataset
         dataset["nodes"].push(newNodeEntry);
         dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
 
         // Remove the values from form
-        $("#createNewNodeModalBody input[type='text']").val("");
-        $("#createNewNodeModalBody input[type='url']").val("");
+        // $("#createNewNodeModalBody input[type='text']").val("");
+        // $("#createNewNodeModalBody input[type='url']").val("");
         $("#createNewNodeModal").modal("hide");
 
         // Rebuild the nodes and links
