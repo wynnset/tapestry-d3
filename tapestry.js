@@ -138,7 +138,7 @@ $(function() {
 
         // Add the node data first
         var newNodeEntry = {
-            "id": dataset["nodes"].length + 1,
+            // "id": dataset["nodes"].length + 1,
             "nodeType": "",
             "title": "",
             "imageURL": "",
@@ -199,12 +199,12 @@ $(function() {
             }
         }
 
-        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", newNodeEntry,function(result){
+        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
             console.log(result);
         });
         // Add the new data to the dataset
         dataset["nodes"].push(newNodeEntry);
-        dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
+        // dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
 
         // Remove the values from form
         // $("#createNewNodeModalBody input[type='text']").val("");
