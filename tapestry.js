@@ -8,7 +8,7 @@
 
 const // declared
     TAPESTRY_CONTAINER_ID = "tapestry",
-    PROGRESS_THICKNESS = (20/1.5),  // RM /100 - ford
+    PROGRESS_THICKNESS = (20/1.5),  // RM /1.5 - ford
     LINK_THICKNESS = 6,
     NORMAL_RADIUS = (140/1.5),  //140 originally
     ROOT_RADIUS_DIFF = (70/1.5), //70 originally
@@ -23,8 +23,8 @@ const // declared
 
 const // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
-    INNER_RADIUS = NORMAL_RADIUS - (PROGRESS_THICKNESS / 2),
-    OUTER_RADIUS = NORMAL_RADIUS + (PROGRESS_THICKNESS / 2);
+    INNER_RADIUS = NORMAL_RADIUS - (PROGRESS_THICKNESS / 3),
+    OUTER_RADIUS = NORMAL_RADIUS + (PROGRESS_THICKNESS / 3);
 
 var dataset, root, svg, links, nodes,               // Basics
     path, pieGenerator, arcGenerator,               // Donut
@@ -84,24 +84,25 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     }
 
     function updateTapestrySize() {
+        console.log("helo!!!1");
 
         var nodeDimensions = getNodesDimensions(dataset);
     
         // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
         // For example, vertically long tapestries should be transposed so they are horizontally long on desktop,
         // but kept the same way on mobile phones where the browser is vertically longer
+        console.log(getTapestryDimensions());
         var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
         var windowAspectRatio = getAspectRatio();
         if (tapestryAspectRatio >= 1 && windowAspectRatio <= 1 || tapestryAspectRatio <= 1 && windowAspectRatio >= 1) {  /// ORIGINAL VALUE = 1 - ford
-            transposeNodes();
+            console.log("hi!");
+            // transposeNodes();
         }
         
         // Update svg dimensions to the new dimensions of the browser
         updateSvgDimensions(TAPESTRY_CONTAINER_ID);
-        console.log(getTapestryDimensions());
     }
 
-    // do it now - ford
     updateTapestrySize();
     // also do it whenever window is resized
     $(window).resize(function(){
@@ -129,6 +130,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     links = createLinks();
     nodes = createNodes();
     
+    
     filterLinks();
 
     buildNodeContents();
@@ -139,6 +141,8 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     // 4. START THE FORCED GRAPH
     //---------------------------------------------------
 
+    console.log(getTapestryDimensions());
+
     startForce();
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
@@ -148,19 +152,18 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
  * D3 SLIDER FUNCTIONALITY
  ****************************************************/
 
+// select slider from index.html
 var slider = document.getElementById("myRange");
 
 slider.onchange = function() {
+    // locn is now the altered slider value
     locn = this.value;
 
-    getChildrenRec(root,locn);
 
     setNodeTypes(root);
     setLinkTypes(root);
     filterLinks();
-
     rebuildNodeContents();
-
 };
 
 /****************************************************
@@ -250,6 +253,9 @@ function ticked() {
         });
 }
 
+
+
+// D3 DRAGGING FUNCTIONS
 function dragstarted(d) {
     var tapestryDimensions = getTapestryDimensions();
     if (!d3.event.active) simulation.alphaTarget(0.2).restart();
@@ -275,6 +281,7 @@ function dragended(d) {
     recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
+// creates SVG that tapestry is displayed on 
 function createSvgContainer(containerId) {
     var tapestryDimensions = getTapestryDimensions();
     return d3.select("#"+containerId)
@@ -331,6 +338,7 @@ function createNodes() {
                     });
 }
 
+// selects which links to show
 // TODO: Get rid of this function (use buildNodeContents and rebuildNodeContents instead)
 function filterLinks() {
     var linksToHide = links.filter(function (d) {
@@ -500,16 +508,8 @@ function buildNodeContents() {
             if (root != d.id) {
                 root = d.id;
                 resizeNodes(d.id);
+                // slider's maximum depth is set to the longest path from the new root
                 slider.max = maxDepth(root);
-                // simulation
-                //     .force("collision", d3.forceCollide().radius(function (d) {
-                //         if (root === d.id) {
-                //             return MAX_RADIUS
-                //         }
-                //         else {
-                //             return (MAX_RADIUS - 25)
-                //         }
-                //     }));
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
         });
@@ -972,6 +972,7 @@ function getAspectRatio() {
     }
 }
 
+// return the highest x and y that a node is placed at
 function getNodesDimensions(dataset) {
  //   startForce();
     var maxPointX = 0;
@@ -979,10 +980,10 @@ function getNodesDimensions(dataset) {
     for (var index in dataset.nodes) {
         
         // save max point so we can calculate our tapestry width and height
-        if (dataset.nodes[index].x > maxPointX) {  // BACK TO fx - ford
+        if (dataset.nodes[index].x > maxPointX) { // was initially fx (possible merge issue)
             maxPointX = dataset.nodes[index].x;
         }
-        if (dataset.nodes[index].y > maxPointY) { /// BACK TO fy - ford
+        if (dataset.nodes[index].y > maxPointY) { // was initially fy (possible merge issue)
             maxPointY = dataset.nodes[index].y;
         }
     }
@@ -993,6 +994,7 @@ function getNodesDimensions(dataset) {
     };
 }
 
+// get tapestry SVG's height and width
 function getTapestryDimensions() {
 
     var nodeDimensions = getNodesDimensions(dataset);
@@ -1002,19 +1004,23 @@ function getTapestryDimensions() {
     var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
     var tapestryBrowserRatio = tapestryWidth / getBrowserWidth();
 
-    if (tapestryHeight > getBrowserHeight() && tapestryAspectRatio < 5) {  // this was originally 1 instead of 5 - ford
+    if (tapestryHeight > getBrowserHeight() && tapestryAspectRatio < 1) {  // this was originally 1 instead of 5 - ford
         tapestryWidth *= tapestryHeight/getBrowserHeight() / tapestryBrowserRatio;
     }
     
     // Work-around for an issue on iPhone that zooms in the tapestry too much
-    if (getBrowserWidth() < 600) {
-        tapestryHeight *= 1.2;
-        tapestryWidth *= 1.2;
-    }
+    // if (getBrowserWidth() < 600) {
+    //     tapestryHeight *= 1.2;
+    //     tapestryWidth *= 1.2;
+    // }
+
+    // console.log(tapestryWidth);
+    // console.log(tapestryHeight);
 
     return {
         'width': tapestryWidth,
         'height': tapestryHeight
+
     };
 }
 
@@ -1039,7 +1045,7 @@ function getBoundedCoord(coord, maxCoord) {
     return Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
 }
 
-// add 'depth' parameter recursively to each node
+// add 'depth' parameter recursively to each node, which refers to each step away from the root they are
 function addDepth(rootId, depth, visitlist) {
     var visited = visitlist;
     visited.push(rootId);
