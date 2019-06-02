@@ -167,6 +167,28 @@ text {
     box-shadow: 0 0 0 2px #666 inset;
 }
 
+/* EDIT NODE BUTTON */
+.editNodeButton {
+    transition: all 0.25s ease;
+    cursor: pointer;
+    color: #666666;
+    overflow: hidden;
+    border-radius: 100%;
+}
+
+.editNodeButton:hover,
+.editNodeButton:active {
+    transform: scale(1.15) translate(0, -21px);
+    color: #11a6d8;
+}
+
+.editNodeButton > i:not(.mediaButtonLoading) {
+    font-size: 55px;
+    background: #fff;
+    border: solid 1px #fff;
+    padding: 2px;
+}
+
 i {
     background-color: white;
     border-radius: 100%;

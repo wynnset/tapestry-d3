@@ -601,6 +601,38 @@ function buildPathAndButton() {
         setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
         recordAnalyticsEvent('user', 'open', 'lightbox', thisBtn.dataset.id);
     });
+
+    nodes
+        .filter(function (d) {
+            return d.nodeType !== "";
+        })
+        .append("svg:foreignObject")
+        .html(function (d) {
+            return '<i id="editNodeIcon' + d.id + '"' +
+                ' class=" fas fa-edit' + ' editNodeIcon"' +
+                ' data-id="' + d.id + '"><\/i>';
+        })
+        .attr("id", function (d) {
+            return "editNodeIcon" + d.id;
+        })
+        .attr("data-id", function (d) {
+            return d.id;
+        })
+        .attr("width", "60px")
+        .attr("height", "62px")
+        .attr("x", -27)
+        .attr("y", function (d) {
+            return NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30;
+        })
+        .attr("style", function (d) {
+            return d.nodeType === "grandchild" || d.nodeType === "child" ? "visibility: hidden" : "visibility: visible";
+        })
+        .attr("class", "editNodeButton");
+
+    $('.editNodeButton > i').click(function(){
+        // Show the modal
+        $("#createNewNodeModal").modal();
+    });
 }
 
 function updateViewedProgress() {
