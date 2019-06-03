@@ -30,7 +30,7 @@ const // calculated
 var dataset, root, svg, links, nodes,               // Basics
     path, pieGenerator, arcGenerator,               // Donut
     linkForce, collideForce, force,                 // Force
-    tapestrySlug, saveProgressToCookie = true,      // Cookie
+    tapestrySlug, saveProgress = true,      // Cookie
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
@@ -51,11 +51,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 
     tapestrySlug = dataset.settings.tapestrySlug;
     
-    if (saveProgressToCookie) {
-        // Update dataset with data from cookie (if any)
-        var cookieProgress; 
-        var cookieH5PVideoSettings;
-
+    if (saveProgress) {
         // If user is logged in, get progress from database database
         if (tapestryWpUserId) {
             var getProgData = {
@@ -64,8 +60,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 
             jQuery.get(TAPESTRY_PROGRESS_URL, getProgData, function(result) {
                 if (result && !isEmptyObject(result)) {
-                    cookieProgress = JSON.parse( result );
-                    setDatasetProgress(cookieProgress);
+                    setDatasetProgress(JSON.parse(result));
                 }
             }).fail(function(e) {
                 console.log("Error with retrieving node progress");
@@ -77,8 +72,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
             };
             jQuery.get(TAPESTRY_H5P_SETTINGS_URL, getH5PData, function(result) {
                 if (result && !isEmptyObject(result)) {
-                    cookieH5PVideoSettings = JSON.parse( result );
-                    h5pVideoSettings = cookieH5PVideoSettings;
+                    h5pVideoSettings = JSON.parse(result);
                 }
             }).fail(function(e) {
                 console.log("Error with retrieving h5p video settings");
@@ -86,15 +80,16 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
             });
 
         } else { 
+            // Update dataset with data from cookie (if any)
+            var cookieProgress = Cookies.get("progress-data-"+tapestrySlug);
 
-            cookieProgress = Cookies.get("progress-data-"+tapestrySlug);
             if (cookieProgress) {
                 cookieProgress = JSON.parse( cookieProgress );
                 setDatasetProgress(cookieProgress);	
             }
 
             // Update H5P Video Settings from cookie (if any)
-            cookieH5PVideoSettings = Cookies.get("h5p-video-settings");
+            var cookieH5PVideoSettings = Cookies.get("h5p-video-settings");
             if (cookieH5PVideoSettings) {
                 cookieH5PVideoSettings = JSON.parse( cookieH5PVideoSettings );
                 h5pVideoSettings = cookieH5PVideoSettings;
@@ -1074,7 +1069,7 @@ function updateViewedValue(id, amountViewedTime, duration) {
     dataset.nodes[index].typeData.progress[1].value = amountUnviewed;
 
     var progressObj = JSON.stringify(getDatasetProgress());
-    if (saveProgressToCookie) {
+    if (saveProgress) {
         
         // Save to database if logged in
         if (tapestryWpUserId) {
@@ -1085,8 +1080,8 @@ function updateViewedValue(id, amountViewedTime, duration) {
                     "node_id": id,
                     "progress_value": amountViewed
                 };
-                jQuery.post(TAPESTRY_PROGRESS_URL, progData, function(result) {
-                }).fail(function(e) {
+                jQuery.post(TAPESTRY_PROGRESS_URL, progData, function(result) {})
+                .fail(function(e) {
                     console.log("Error with adding progress data");
                     console.log(e);
                 });
@@ -1097,8 +1092,8 @@ function updateViewedValue(id, amountViewedTime, duration) {
                     "post_id": tapestryWpPostId,
                     "json": JSON.stringify(h5pVideoSettings)
                 };
-                jQuery.post(TAPESTRY_H5P_SETTINGS_URL, h5pData, function(result) {
-                }).fail(function(e) {
+                jQuery.post(TAPESTRY_H5P_SETTINGS_URL, h5pData, function(result) {})
+                .fail(function(e) {
                     console.log("Error with adding h5p video settings");
                     console.log(e);
                 });
