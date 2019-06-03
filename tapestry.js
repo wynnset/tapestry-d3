@@ -631,7 +631,7 @@ function buildPathAndButton() {
 
     $('.editNodeButton > i').click(function(){
         // Show the modal
-        $("#createNewNodeModal").modal();
+        $("#editNodeModal").modal();
     });
 }
 
