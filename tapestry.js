@@ -61,6 +61,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
             jQuery.get(TAPESTRY_PROGRESS_URL, getProgData, function(result) {
                 if (result && !isEmptyObject(result)) {
                     setDatasetProgress(JSON.parse(result));
+                    updateViewedProgress(); // update viewed progress because async fetch of dataset
                 }
             }).fail(function(e) {
                 console.log("Error with retrieving node progress");
@@ -1141,11 +1142,6 @@ function setDatasetProgress(progressObj) {
     
     }
     
-    // Update progress if fetched from database
-    if (tapestryWpUserId) {
-        updateViewedProgress();
-    }
-
     return true;
 }
 
