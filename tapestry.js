@@ -202,19 +202,19 @@ $(function() {
             }
         }
 
-        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
-            console.log(result);
-        }).fail(function(e) {
-            console.log("Error with adding new node");
-            console.log(e);
-        });
+        // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
+        //     console.log(result);
+        // }).fail(function(e) {
+        //     console.log("Error with adding new node");
+        //     console.log(e);
+        // });
         // Add the new data to the dataset
         dataset["nodes"].push(newNodeEntry);
-        // dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
+        dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
 
         // Remove the values from form
-        // $("#createNewNodeModalBody input[type='text']").val("");
-        // $("#createNewNodeModalBody input[type='url']").val("");
+        $("#createNewNodeModalBody input[type='text']").val("");
+        $("#createNewNodeModalBody input[type='url']").val("");
         $("#createNewNodeModal").modal("hide");
 
         // Rebuild the nodes and links
