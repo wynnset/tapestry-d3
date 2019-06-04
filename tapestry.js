@@ -201,13 +201,12 @@ $(function() {
                     break;
             }
         }
-
-        // Set up request data for sending new node for backend
-        var requestData = JSON.parse(JSON.stringify(newNodeEntry)); // clone object
-        requestData.links = {"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt };
-
-        // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", requestData, function(result){
-        //     console.log(result);
+        
+        // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", newNodeEntry, function(result){
+        //     var link = {"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt };
+        //     jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", link, function(result) {
+        //
+        //     });
         // }).fail(function(e) {
         //     console.log("Error with adding new node");
         //     console.log(e);
