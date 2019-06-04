@@ -81,6 +81,8 @@ $.getJSON( jsonUrl, function(result){
         var windowAspectRatio = getAspectRatio();
         if (tapestryAspectRatio > 1 && windowAspectRatio < 1 || tapestryAspectRatio < 1 && windowAspectRatio > 1) {
             transposeNodes();
+            d3.selectAll("slider")
+                .attr("color","#000000");
         }
         
         // Update svg dimensions to the new dimensions of the browser
