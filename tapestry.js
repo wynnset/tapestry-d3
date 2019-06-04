@@ -793,7 +793,7 @@ function buildPathAndButton() {
 
     $('.addNodeButton > i').click(function(){
         // Set up the title of the form
-        $('#formTitle').html("Add new sub-topic to " + dataset.nodes[findNodeIndex(root)].title);
+        $('#createNewNodeModalLabel').text("Add new sub-topic to " + dataset.nodes[findNodeIndex(root)].title);
 
         // Show the modal
         $("#createNewNodeModal").modal();

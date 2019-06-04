@@ -298,9 +298,9 @@ body {font-family: Arial, Helvetica, sans-serif;}
 
 /* Add styles to the form container */
 .form-container {
-    max-width: 300px;
-    padding: 10px;
+    padding: 6%;
     background-color: white;
+    margin: 0 auto;
 }
 
 /* Full-width input fields */
@@ -330,9 +330,13 @@ body {font-family: Arial, Helvetica, sans-serif;}
     opacity: 0.8;
 }
 
-/* Add a red background color to the cancel button */
-.form-container .cancel {
-    background-color: red;
+#submit-add-new-node {
+    color: white;
+}
+
+#cancel-add-new-node {
+    color: white;
+    background-color: #dc3545;
 }
 
 /* Add some hover effects to buttons */
