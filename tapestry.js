@@ -141,7 +141,7 @@ $(function() {
 
         // Add the node data first
         var newNodeEntry = {
-            // "id": dataset["nodes"].length + 1,
+            "id": dataset["nodes"].length + 1, // TODO remove
             "nodeType": "",
             "title": "",
             "imageURL": "",
@@ -202,14 +202,20 @@ $(function() {
             }
         }
 
-        // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
+        // Set up request data for sending new node for backend
+        var requestData = JSON.parse(JSON.stringify(newNodeEntry)); // clone object
+        requestData.links = {"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt };
+
+        // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", requestData, function(result){
         //     console.log(result);
         // }).fail(function(e) {
         //     console.log("Error with adding new node");
         //     console.log(e);
         // });
+
+        // TODO: Add the bottom stuff into the success callback
         // Add the new data to the dataset
-        dataset["nodes"].push(newNodeEntry);
+        dataset["nodes"].push(newNodeEntry); //TODO need to add the id returned in callback
         dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
 
         // Remove the values from form
