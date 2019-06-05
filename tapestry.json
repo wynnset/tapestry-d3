@@ -27,11 +27,6 @@
         "mediaHeight": 600,
         "unlocked": true
     },
-    "userTypes": {
-        "admin": "normal",
-        "consumer": "normal",
-        "editor": "optional"
-    },
     "fx": 800,
     "fy": 470
 },
@@ -54,11 +49,6 @@
                 "mediaWidth": 960,
                 "mediaHeight": 600,
                 "unlocked": false
-            },
-            "userTypes": {
-                "admin": "normal",
-                "consumer": "hidden",
-                "editor": "optional"
             },
             "fx": 450,
             "fy": 150
@@ -83,11 +73,6 @@
                 "mediaHeight": 600,
                 "unlocked": false
             },
-            "userTypes": {
-                "admin": "normal",
-                "consumer": "hidden",
-                "editor": "optional"
-            },
             "fx": 450,
             "fy": 700
         },
@@ -110,11 +95,6 @@
                 "mediaWidth": 960,
                 "mediaHeight": 600,
                 "unlocked": false
-            },
-            "userTypes": {
-                "admin": "normal",
-                "consumer": "hidden",
-                "editor": "optional"
             },
             "fx": 100,
             "fy": 470
@@ -139,11 +119,6 @@
                 "mediaHeight": 600,
                 "unlocked": false
             },
-            "userTypes": {
-                "admin": "normal",
-                "consumer": "hidden",
-                "editor": "optional"
-            },
             "fx": 1200,
             "fy": 470
         },
@@ -166,11 +141,6 @@
                 "mediaWidth": 960,
                 "mediaHeight": 600,
                 "unlocked": false
-            },
-            "userTypes": {
-                "admin": "normal",
-                "consumer": "hidden",
-                "editor": "optional"
             },
             "fx": 1550,
             "fy": 150
@@ -195,11 +165,6 @@
                 "mediaHeight": 600,
                 "unlocked": false
             },
-            "userTypes": {
-                "admin": "normal",
-                "consumer": "hidden",
-                "editor": "optional"
-            },
             "fx": 1880,
             "fy": 470
         },
@@ -222,11 +187,6 @@
                 "mediaWidth": 960,
                 "mediaHeight": 600,
                 "unlocked": false
-            },
-            "userTypes": {
-                "admin": "normal",
-                "consumer": "hidden",
-                "editor": "optional"
             },
             "fx": 1550,
             "fy": 700
@@ -251,11 +211,6 @@
                 "mediaHeight": 600,
                 "unlocked": false
             },
-            "userTypes": {
-                "admin": "normal",
-                "consumer": "hidden",
-                "editor": "optional"
-            },
             "fx": 2100,
             "fy": 700
         },
@@ -278,11 +233,6 @@
                 "mediaWidth": 960,
                 "mediaHeight": 600,
                 "unlocked": false
-            },
-            "userTypes": {
-                "admin": "normal",
-                "consumer": "hidden",
-                "editor": "optional"
             },
             "fx": 2100,
             "fy": 150
