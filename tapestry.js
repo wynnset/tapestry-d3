@@ -17,14 +17,7 @@ const // declared
     COLOR_LINK = "#999",
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
-    FONT_ADJUST = 1.25,
-    // Constants specifically for user types
-    USER_ADMIN = "admin",
-    USER_CONSUMER = "consumer",
-    USER_EDITOR = "optional",
-    FILTER_HIDDEN = "hidden",
-    FILTER_NORMAL = "normal",
-    FILTER_OPTIONAL = "optional";
+    FONT_ADJUST = 1.25;
 
 var dataset, root, svg, links, nodes,               // Basics
     originalDataset,                                // For saving the value of the original dataset pre-changes
@@ -160,11 +153,6 @@ $(function() {
                 "mediaHeight": 600,
                 "unlocked": true
             },
-            "userTypes": {
-                "admin": "normal",
-                "consumer": "normal",
-                "editor": "optional"
-            },
             // Just pit the node right under
             "fx": dataset.nodes[rootIndex].fx,
             "fy": dataset.nodes[rootIndex].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50
@@ -191,16 +179,13 @@ $(function() {
                 case "appearsAt":
                     appearsAt = fieldValue;
                     break;
-                case "admin":
-                case "consumer":
-                case "editor":
-                    newNodeEntry["userTypes"][fieldName] = fieldValue;
-                    break;
                 default:
                     newNodeEntry[fieldName] = fieldValue;
                     break;
             }
         }
+        
+        // TODO: Uncomment this request call and test
         
         // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", newNodeEntry, function(result){
         //     var link = {"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt };
@@ -817,7 +802,7 @@ function updateViewedProgress() {
                 e.extra = {
                     "nodeType": d.nodeType,
                     "unlocked": d.typeData.unlocked,
-                    "userTypes": d.userTypes }
+                    }
             });
             return pieGenerator(data, i);
         });
@@ -830,18 +815,12 @@ function updateViewedProgress() {
             if (d.data.group !== "viewed") return "transparent";
 
             var viewableByUser = true;
-            if (d.data.extra.userTypes != undefined) {
-                d.data.extra.userTypes[dataset.userType] === FILTER_HIDDEN ? viewableByUser = false : viewableByUser = true;
-            }
             if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "" || !d.data.extra.unlocked || !viewableByUser)
                 return "#cad7dc";
             else return "#11a6d8";
         })
         .attr("class", function (d) {
             var viewableByUser = true;
-            if (d.data.extra.userTypes != undefined) {
-                d.data.extra.userTypes[dataset.userType] === FILTER_HIDDEN ? viewableByUser = false : viewableByUser = true;
-            }
             if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "" || !d.data.extra.unlocked || !viewableByUser)
                 return "expandGrandchildren";
         })
@@ -1627,10 +1606,7 @@ function setUnlocked() {
 
 // ALL the checks for whether a certain node is viewable
 function getViewable(node) {
-    // CHECK 1: If user is authorized to view it
-    if (node.userTypes !== undefined) {
-        if (node.userTypes[dataset.userType] === FILTER_HIDDEN) return false;
-    }
+    // TODO: CHECK 1: If user is authorized to view it
 
     // CHECK 2: If it is a new node that needs the position to be set (ie: incomplete), show it so that the user can place the node
     // if (node.completedNode !== undefined && !node.completedNode) return true;
