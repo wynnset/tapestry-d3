@@ -41,7 +41,7 @@ var dataset, root, svg, links, nodes,               // Basics
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
-
+    console.log(tapestryWpPostId);
     //---------------------------------------------------
     // 1. GET PROGRESS FROM COOKIE (IF ENABLED)
     //---------------------------------------------------
@@ -133,7 +133,53 @@ $(function() {
         $("#editTapestrySettingModal").modal();
     });
 
+    $("#submit-edit-node").on("click", function(e) {
+        e.preventDefault();
+        var title = "";
+        var settingFormData = $("form").serializeArray();
+        // TODO: Validate title here
 
+        for (var i = 0; i < settingFormData.length; i++) {
+            var fieldName = settingFormData[i]["name"];
+            var fieldValue = settingFormData[i]["value"];
+
+            switch (fieldName) {
+                case "title":
+                    title = fieldValue;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        var settings = {
+            "tapestrySlug": "intercultural-understanding",
+            "saveProgressToCookie": false,
+            "zoom": 1,
+            "type": "tapestry",
+            "title": title,
+            "status": "publish"
+        };
+        var settingsData = {
+            "settings": JSON.stringify(settings)
+        }
+
+        $.ajax({
+            url: apiUrl + "/tapestries/" + tapestryWpPostId + "/settings",
+            method: 'PUT',
+            data: settingsData,
+            success: function(result) {
+                // TODO: maybe successs TOAST
+                console.log(result);
+                $("#editTapestrySettingModal").modal("hide");
+            },
+            error: function(e) {
+                console.log("Error with updating tapestry setting:");
+                console.log(e);
+            }
+        });
+        
+    });
 });
 
 /****************************************************
