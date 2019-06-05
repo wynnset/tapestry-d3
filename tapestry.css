@@ -344,11 +344,18 @@ body {font-family: Arial, Helvetica, sans-serif;}
     opacity: 1;
 }
 
-.dropdown {
+.dropdown #mediaType {
     margin-top: 10px;
     margin-bottom: 10px;
-    /* padding: 0.65em 2.5em 0.55em 0.75em; */
+    font-size: 15px;
+    width: 50%;
+    height: 30px;
 }
 
-#mediaType {
+.dropdown #mediaFormat {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 15px;
+    width: 50%;
+    height: 30px;
 }
