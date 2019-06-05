@@ -186,7 +186,7 @@ $(function() {
         }
         
         // TODO: Uncomment this request call and test
-        
+
         // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", newNodeEntry, function(result){
         //     var link = {"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt };
         //     jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", link, function(result) {
@@ -802,7 +802,7 @@ function updateViewedProgress() {
                 e.extra = {
                     "nodeType": d.nodeType,
                     "unlocked": d.typeData.unlocked,
-                    }
+                    };
             });
             return pieGenerator(data, i);
         });
