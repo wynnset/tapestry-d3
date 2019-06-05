@@ -126,6 +126,17 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 });
 
 /****************************************************
+ * FUNCTIONS FOR EDIT TAPESTRY SETTINGS
+ ****************************************************/
+$(function() {
+    $("#tapestry-setting-btn").on("click", function() {
+        $("#editTapestrySettingModal").modal();
+    });
+
+
+});
+
+/****************************************************
  * D3 RELATED FUNCTIONS
  ****************************************************/
 

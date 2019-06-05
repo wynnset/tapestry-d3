@@ -254,3 +254,16 @@ i {
         right: 45px;
     }
 }
+
+/* Tapestry Settings button */
+#tapestry-setting-btn {
+    float: right;
+    margin-right: 5%;
+    cursor: pointer;
+}
+
+#tapestry-setting-btn:hover,
+#tapestry-setting-btn:active {
+    transform: scale(1.1);
+    color: #11a6d8;
+}
