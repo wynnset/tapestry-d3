@@ -630,6 +630,8 @@ function buildPathAndButton() {
         .attr("class", "editNodeButton");
 
     $('.editNodeButton > i').click(function(){
+        // Add in the title for the modal
+        $('#editNodeModalLabel').text("Edit node: " + dataset.nodes[findNodeIndex(root)].title);
         // Show the modal
         $("#editNodeModal").modal();
     });
