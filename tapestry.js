@@ -34,7 +34,7 @@ var dataset, root, svg, links, nodes,               // Basics
     nodeImageWidth = (780/1.5),
     rootNodeImageHeightDiff = (70/1.5),
     h5pVideoSettings = {},
-    locn = 2                                       // default slider input
+    locn = 2;                                       // default slider input
 
 /****************************************************
  * INITIALIZATION
@@ -45,6 +45,7 @@ var dataset, root, svg, links, nodes,               // Basics
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
+//    console.log(dataset)
 
     //---------------------------------------------------
     // 1. GET PROGRESS FROM COOKIE (IF ENABLED)
@@ -84,18 +85,18 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     }
 
     function updateTapestrySize() {
-        console.log("helo!!!1");
+    //    console.log("helo!!!1");
 
         var nodeDimensions = getNodesDimensions(dataset);
     
         // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
         // For example, vertically long tapestries should be transposed so they are horizontally long on desktop,
         // but kept the same way on mobile phones where the browser is vertically longer
-        console.log(getTapestryDimensions());
+    //    console.log(getTapestryDimensions());
         var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
         var windowAspectRatio = getAspectRatio();
         if (tapestryAspectRatio >= 1 && windowAspectRatio <= 1 || tapestryAspectRatio <= 1 && windowAspectRatio >= 1) {  /// ORIGINAL VALUE = 1 - ford
-            console.log("hi!");
+    //        console.log("hi!");
             // transposeNodes();
         }
         
@@ -141,7 +142,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     // 4. START THE FORCED GRAPH
     //---------------------------------------------------
 
-    console.log(getTapestryDimensions());
+    //console.log(getTapestryDimensions());
 
     startForce();
 
@@ -153,9 +154,9 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
  ****************************************************/
 
 // select slider from index.html
-var slider = document.getElementById("myRange");
+var tapestryDepthSlider = document.getElementById("myRange");
 
-slider.onchange = function() {
+tapestryDepthSlider.onchange = function() {
     // locn is now the altered slider value
     locn = this.value;
 
@@ -202,10 +203,10 @@ function startForce() {
         // determines the minimum distance that nodes are allowed to be positioned at
         .force("collision", d3.forceCollide().radius(function (d) {
             if (root === d.id) {
-                return MAX_RADIUS
+                return MAX_RADIUS;
             }
             else {
-                return (MAX_RADIUS - 25)
+                return (MAX_RADIUS - 25);
             }
         }));
 
@@ -400,7 +401,7 @@ function filterLinks() {
 
 /* Draws the components that make up node */
 function buildNodeContents() {
-    slider.max = maxDepth(root);
+    tapestryDepthSlider.max = maxDepth(root);
     
     /* Draws the circle that defines how large the node is */
     nodes.append("rect")
@@ -509,7 +510,7 @@ function buildNodeContents() {
                 root = d.id;
                 resizeNodes(d.id);
                 // slider's maximum depth is set to the longest path from the new root
-                slider.max = maxDepth(root);
+                tapestryDepthSlider.max = maxDepth(root);
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
         });
@@ -1087,13 +1088,20 @@ function addDepth(rootId, depth, visitlist) {
 function maxDepth(rootId) {
     addDepth(rootId,0,[]);
     var nodes = dataset.nodes;
-    var deep = 0;
+    var idList = [];
     var count;
-    for (count = 1; count <= nodes.length; count++) {
-        if (dataset.nodes[findNodeIndex(count)].depth > deep) {
-            deep = dataset.nodes[findNodeIndex(count)].depth;
-        }
+    for (count = 0; count < nodes.length; count++) {
+        idList = idList.concat(nodes[count].id);
     }
+
+    var deep = 0;
+
+    idList.forEach(function(id) {
+        if (dataset.nodes[findNodeIndex(id)].depth > deep) {
+                 deep = dataset.nodes[findNodeIndex(id)].depth;
+            }
+    });
+
     return deep;
 }
 
