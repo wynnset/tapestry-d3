@@ -8,11 +8,11 @@
 
 const // declared
     TAPESTRY_CONTAINER_ID = "tapestry",
-    PROGRESS_THICKNESS = (20/1.5),  // RM /1.5 - ford
+    PROGRESS_THICKNESS = 13,  
     LINK_THICKNESS = 6,
-    NORMAL_RADIUS = (140/1.5),  //140 originally
-    ROOT_RADIUS_DIFF = (70/1.5), //70 originally
-    GRANDCHILD_RADIUS_DIFF = (-100/1.5), //-100 originally
+    NORMAL_RADIUS = 93,  
+    ROOT_RADIUS_DIFF = 46, 
+    GRANDCHILD_RADIUS_DIFF = -66, 
     TRANSITION_DURATION = 800,
     COLOR_STROKE = "#072d42",
     COLOR_GRANDCHILD = "#CCC",
