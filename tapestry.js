@@ -174,11 +174,6 @@ function startForce() {
     var nodes = dataset.nodes
     var tapestryDimensions = getTapestryDimensions();
 
-    collideForce = d3.forceCollide(
-        function (d) {
-            return getRadius(d) * 1.5;
-        });
-
     simulation = d3.forceSimulation(nodes)
 
         // "charge" and forceManyBody determine the the repulsion/attraction strength
