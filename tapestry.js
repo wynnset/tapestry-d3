@@ -85,19 +85,16 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     }
 
     function updateTapestrySize() {
-    //    console.log("helo!!!1");
 
         var nodeDimensions = getNodesDimensions(dataset);
     
         // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
         // For example, vertically long tapestries should be transposed so they are horizontally long on desktop,
         // but kept the same way on mobile phones where the browser is vertically longer
-    //    console.log(getTapestryDimensions());
         var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
         var windowAspectRatio = getAspectRatio();
         if (tapestryAspectRatio >= 1 && windowAspectRatio <= 1 || tapestryAspectRatio <= 1 && windowAspectRatio >= 1) {  /// ORIGINAL VALUE = 1 - ford
-    //        console.log("hi!");
-            // transposeNodes();
+             transposeNodes();
         }
         
         // Update svg dimensions to the new dimensions of the browser
@@ -981,10 +978,10 @@ function getNodesDimensions(dataset) {
     for (var index in dataset.nodes) {
         
         // save max point so we can calculate our tapestry width and height
-        if (dataset.nodes[index].x > maxPointX) { // was initially fx (possible merge issue)
+        if (dataset.nodes[index].x > maxPointX) {
             maxPointX = dataset.nodes[index].x;
         }
-        if (dataset.nodes[index].y > maxPointY) { // was initially fy (possible merge issue)
+        if (dataset.nodes[index].y > maxPointY) { 
             maxPointY = dataset.nodes[index].y;
         }
     }
