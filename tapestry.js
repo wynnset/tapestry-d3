@@ -81,8 +81,6 @@ $.getJSON(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
         var windowAspectRatio = getAspectRatio();
         if (tapestryAspectRatio > 1 && windowAspectRatio < 1 || tapestryAspectRatio < 1 && windowAspectRatio > 1) {
             transposeNodes();
-            d3.selectAll("slider")
-                .attr("color","#000000");
         }
         
         // Update svg dimensions to the new dimensions of the browser
@@ -132,12 +130,10 @@ $.getJSON(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 
 // slider functionality
 
-var slider = document.getElementById("myRange");
+var tapestrydDepthslider = document.getElementById("myRange");
 
-slider.onchange = function() {
+tapestrydDepthslider.onchange = function() {
     locn = this.value;
-    console.log(console.log(getChildrenRec(root,locn)));
-
     getChildrenRec(root,locn);
 
     setNodeTypes(root);
@@ -369,7 +365,7 @@ function filterLinks() {
 
 /* Draws the components that make up node */
 function buildNodeContents() {
-    slider.max = maxDepth(root);
+    tapestrydDepthslider.max = maxDepth(root);
     
     /* Draws the circle that defines how large the node is */
     nodes.append("rect")
@@ -476,7 +472,7 @@ function buildNodeContents() {
             if (root != d.id) {
                 root = d.id;
                 resizeNodes(d.id);
-                slider.max = maxDepth(root);
+                tapestrydDepthslider.max = maxDepth(root);
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
         });
@@ -1031,7 +1027,6 @@ function addDepth(rootId, depth, visitlist) {
             else {
                 acc = depth + 1;
                 dataset.nodes[findNodeIndex(children[childId])].depth = acc;
-//                console.log('id: ' + dataset.nodes[findNodeIndex(children[childId])].id + ' depth: ' + dataset.nodes[findNodeIndex(children[childId])].depth)
                 visited.push(children[childId]);
 
                 addDepth(children[childId],acc,visited);
@@ -1048,13 +1043,20 @@ function addDepth(rootId, depth, visitlist) {
 function maxDepth(rootId) {
     addDepth(rootId,0,[]);
     var nodes = dataset.nodes;
-    var deep = 0;
+    var idList = [];
     var count;
-    for (count = 1; count <= nodes.length; count++) {
-        if (dataset.nodes[findNodeIndex(count)].depth > deep) {
-            deep = dataset.nodes[findNodeIndex(count)].depth;
-        }
+    for (count = 0; count < nodes.length; count++) {
+        idList = idList.concat(nodes[count].id);
     }
+
+    var deep = 0;
+
+    idList.forEach(function(id) {
+        if (dataset.nodes[findNodeIndex(id)].depth > deep) {
+                 deep = dataset.nodes[findNodeIndex(id)].depth;
+            }
+    });
+
     return deep;
 }
 
