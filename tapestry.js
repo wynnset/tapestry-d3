@@ -45,7 +45,6 @@ var dataset, root, svg, links, nodes,               // Basics
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
-//    console.log(dataset)
 
     //---------------------------------------------------
     // 1. GET PROGRESS FROM COOKIE (IF ENABLED)
