@@ -132,16 +132,12 @@ var tapestryDepthSlider = document.getElementById("tapestry-depth-slider");
 
 tapestryDepthSlider.onchange = function() {
     tapestryDepth = this.value;
-    getChildren(root, tapestryDepth);
 
     setNodeTypes(root);
     setLinkTypes(root);
     filterLinks();
 
     rebuildNodeContents();
-
-    /* Restart force */
-    startForce();
 };
 
 /****************************************************
