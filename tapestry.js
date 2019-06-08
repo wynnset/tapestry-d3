@@ -4,8 +4,6 @@
  * CONSTANTS AND GLOBAL VARIABLES
  ****************************************************/
 
-
-
 const // declared
     TAPESTRY_CONTAINER_ID = "tapestry",
     PROGRESS_THICKNESS = 20,
@@ -34,7 +32,7 @@ var dataset, root, svg, links, nodes,               // Basics
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {};
-    locn = 2;                                       // default slider input
+    tapestryDepth = 2;                              // Default depth of Tapestry
 
 /****************************************************
  * INITIALIZATION
@@ -128,13 +126,13 @@ $.getJSON(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
 });
 
-// slider functionality
+/* assign tapestryDepthSlider and establish its functionality*/ 
 
-var tapestrydDepthslider = document.getElementById("myRange");
+var tapestryDepthSlider = document.getElementById("tapestry-depth-slider");
 
-tapestrydDepthslider.onchange = function() {
-    locn = this.value;
-    getChildrenRec(root,locn);
+tapestryDepthSlider.onchange = function() {
+    tapestryDepth = this.value;
+    getChildren(root, tapestryDepth);
 
     setNodeTypes(root);
     setLinkTypes(root);
@@ -182,7 +180,7 @@ function startForce() {
 
 //Resize all nodes, where id is now the root
 function resizeNodes(id) {
-    getChildrenRec(id,locn);
+    getChildren(id, tapestryDepth);
 
     setNodeTypes(id);
     setLinkTypes(id);
@@ -193,8 +191,6 @@ function resizeNodes(id) {
     /* Restart force */
     startForce();
 }
-
-
 
 function ticked() {
     var tapestryDimensions = getTapestryDimensions();
@@ -319,7 +315,7 @@ function filterLinks() {
         var shouldRender = false;
         if (sourceId === root || targetId === root) {
             shouldRender = true;
-        } else if (getChildrenRec(root,locn-1).indexOf(sourceId) > -1 || getChildrenRec(root,locn-1).indexOf(targetId) > -1) {
+        } else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
             shouldRender = true;
         }
         return !shouldRender;
@@ -338,7 +334,7 @@ function filterLinks() {
         var shouldRender = false;
         if (sourceId === root || targetId === root) {
             shouldRender = true;
-        } else if (getChildrenRec(root,locn-1).indexOf(sourceId) > -1 || getChildrenRec(root,locn-1).indexOf(targetId) > -1) {
+        } else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
             shouldRender = true;
         }
         return shouldRender;
@@ -365,7 +361,7 @@ function filterLinks() {
 
 /* Draws the components that make up node */
 function buildNodeContents() {
-    tapestrydDepthslider.max = maxDepth(root);
+    tapestryDepthSlider.max = findMaxDepth(root);
     
     /* Draws the circle that defines how large the node is */
     nodes.append("rect")
@@ -472,7 +468,7 @@ function buildNodeContents() {
             if (root != d.id) {
                 root = d.id;
                 resizeNodes(d.id);
-                tapestrydDepthslider.max = maxDepth(root);
+                tapestryDepthSlider.max = findMaxDepth(root);
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
         });
@@ -916,7 +912,6 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
  * HELPER FUNCTIONS
  ****************************************************/
 
-
 // Get width, height, and aspect ratio of viewable region
 function getBrowserWidth() {
     return Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
@@ -1002,34 +997,34 @@ function getBoundedCoord(coord, maxCoord) {
 }
 
 // add 'depth' parameter recursively to each node
-function addDepth(rootId, depth, visitlist) {
-    var visited = visitlist;
+function addDepthToNodes(rootId, depth, visited) {
+    var visited = visited;
     visited.push(rootId);
 
     var depthAt = 0;
 
     dataset.nodes[findNodeIndex(rootId)].depth = depth;
-    var children = getChildrenRec(rootId,1);
+    var children = getChildren(rootId, 1);
 
-    var acc;
+    var childLevel;
 
     while (depthAt < children.length) {
         for (var childId in children) {
             if (visited.includes(children[childId])) {
-                acc = depth;
-                if (dataset.nodes[findNodeIndex(children[childId])].depth > acc) {
-                    dataset.nodes[findNodeIndex(children[childId])].depth = acc;
+                childLevel = depth;
+                if (dataset.nodes[findNodeIndex(children[childId])].depth > childLevel) {
+                    dataset.nodes[findNodeIndex(children[childId])].depth = childLevel;
                 }
                 else {
                     depthAt++;
                 }
             }
             else {
-                acc = depth + 1;
-                dataset.nodes[findNodeIndex(children[childId])].depth = acc;
+                childLevel = depth + 1;
+                dataset.nodes[findNodeIndex(children[childId])].depth = childLevel;
                 visited.push(children[childId]);
 
-                addDepth(children[childId],acc,visited);
+                addDepthToNodes(children[childId], childLevel, visited);
                 depthAt++;
             }
         }
@@ -1037,11 +1032,10 @@ function addDepth(rootId, depth, visitlist) {
     
 }
 
-// return the maximum depth from a given rootId
-// return the distance between the rootId and its farthest descendant node
+/* return the distance between the rootId and its farthest descendant node */
 
-function maxDepth(rootId) {
-    addDepth(rootId,0,[]);
+function findMaxDepth(rootId) {
+    addDepthToNodes(rootId, 0, []);
     var nodes = dataset.nodes;
     var idList = [];
     var count;
@@ -1053,16 +1047,21 @@ function maxDepth(rootId) {
 
     idList.forEach(function(id) {
         if (dataset.nodes[findNodeIndex(id)].depth > deep) {
-                 deep = dataset.nodes[findNodeIndex(id)].depth;
+                deep = dataset.nodes[findNodeIndex(id)].depth;
             }
     });
 
     return deep;
 }
 
-// find children based on depth: 
-// depth = 0 returns node + children, depth = 1 returns node + children + children's children, etc.
-function getChildrenRec(id,depth) {
+/* find children based on depth. 
+   depth = 0 returns node + children, depth = 1 returns node + children + children's children, etc. */
+
+function getChildren(id, depth) {
+    if (typeof depth === 'undefined') {
+        depth = tapestryDepth - 1;
+    }
+    
     var children = [];
     var dataLinks = dataset.links;
     for (step = 0; step < depth; step++) {
@@ -1070,38 +1069,36 @@ function getChildrenRec(id,depth) {
             var link = dataLinks[linkId];
             if (typeof link.source === 'number' && link.source === id) {
                 children.push(link.target);
-                children = children.concat(getChildrenRec(link.target,depth-1));
+                children = children.concat(getChildren(link.target, depth-1));
             }
             else if (typeof link.source === 'object' && link.source.id === id) {
                 children.push(link.target.id);
-                children = children.concat(getChildrenRec(link.target.id,depth-1));
+                children = children.concat(getChildren(link.target.id, depth-1));
             }
 
             if (typeof link.target === 'number' && link.target === id) {
                 children.push(link.source);
-                children = children.concat(getChildrenRec(link.source,depth-1));
+                children = children.concat(getChildren(link.source, depth-1));
             }
             else if (typeof link.target === 'object' && link.target.id === id) {
                 children.push(link.source.id);
-                children = children.concat(getChildrenRec(link.source.id,depth-1));
+                children = children.concat(getChildren(link.source.id, depth-1));
             }
         }
     }
-    var rchildren = arrayRemove(children,id);
+    var rchildren = arrayRemove(children, id);
     return rchildren;
 }
 
 
 
 
-// remove any duplicates in an array
+/* remove any duplicates in an array. */
 function arrayRemove(arr, value) {
-
     return arr.filter(function(ele){
         return ele != value;
     });
- 
- }
+}
 
 function getRadius(d) {
     var nodeDiff;
@@ -1174,8 +1171,8 @@ function setDatasetProgress(progressObj) {
 function setNodeTypes(rootId) {
 
     root = rootId;
-    var children = getChildrenRec(root,locn-1),
-        grandchildren = getChildrenRec(root,locn);
+    var children = getChildren(root),
+        grandchildren = getChildren(root, tapestryDepth);
 
     for (var i in dataset.nodes) {
         var node = dataset.nodes[i];
@@ -1198,8 +1195,8 @@ function setNodeTypes(rootId) {
 /* For setting the "type" field of links in dataset */
 function setLinkTypes(rootId) {
     root = rootId;
-    var children = getChildrenRec(root,locn-1),
-        grandchildren = getChildrenRec(root,locn);
+    var children = getChildren(root),
+        grandchildren = getChildren(root, tapestryDepth);
 
     for (var i in dataset.links) {
         var link = dataset.links[i];
