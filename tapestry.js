@@ -4,8 +4,6 @@
  * CONSTANTS AND GLOBAL VARIABLES
  ****************************************************/
 
-
-
 const // declared
     TAPESTRY_CONTAINER_ID = "tapestry",
     PROGRESS_THICKNESS = 13,  
@@ -30,16 +28,15 @@ var dataset, root, svg, links, nodes,               // Basics
     path, pieGenerator, arcGenerator,               // Donut
     simulation,                                     // Force
     tapestrySlug, saveProgressToCookie = true,      // Cookie
-    nodeImageHeight = (420/1.5),
-    nodeImageWidth = (780/1.5),
-    rootNodeImageHeightDiff = (70/1.5),
+    nodeImageHeight = 280,
+    nodeImageWidth = 520,
+    rootNodeImageHeightDiff = 46,
     h5pVideoSettings = {},
-    locn = 2;                                       // default slider input
+    tapestryDepth = 2;                              // default slider input
 
 /****************************************************
  * INITIALIZATION
  ****************************************************/
-
 
 /* Import data from json file, then start D3 */
 
@@ -149,13 +146,12 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
  * D3 SLIDER FUNCTIONALITY
  ****************************************************/
 
-// select slider from index.html
+/* assign tapestryDepthSlider and establish its functionality*/ 
+
 var tapestryDepthSlider = document.getElementById("tapestry-depth-slider");
 
 tapestryDepthSlider.onchange = function() {
-    // locn is now the altered slider value
-    locn = this.value;
-
+    tapestryDepth = this.value;
 
     setNodeTypes(root);
     setLinkTypes(root);
@@ -209,7 +205,7 @@ function startForce() {
 
 //Resize all nodes, where id is now the root
 function resizeNodes(id) {
-    getChildren(id,locn);
+    getChildren(id,tapestryDepth);
 
     setNodeTypes(id);
     setLinkTypes(id);
@@ -346,7 +342,7 @@ function filterLinks() {
         var shouldRender = false;
         if (sourceId === root || targetId === root) {
             shouldRender = true;
-        } else if (getChildren(root,locn-1).indexOf(sourceId) > -1 || getChildren(root,locn-1).indexOf(targetId) > -1) {
+        } else if (getChildren(root,tapestryDepth-1).indexOf(sourceId) > -1 || getChildren(root,tapestryDepth-1).indexOf(targetId) > -1) {
             shouldRender = true;
         }
         return !shouldRender;
@@ -365,7 +361,7 @@ function filterLinks() {
         var shouldRender = false;
         if (sourceId === root || targetId === root) {
             shouldRender = true;
-        } else if (getChildren(root,locn-1).indexOf(sourceId) > -1 || getChildren(root,locn-1).indexOf(targetId) > -1) {
+        } else if (getChildren(root,tapestryDepth-1).indexOf(sourceId) > -1 || getChildren(root,tapestryDepth-1).indexOf(targetId) > -1) {
             shouldRender = true;
         }
         return shouldRender;
@@ -1221,8 +1217,8 @@ function setDatasetProgress(progressObj) {
 function setNodeTypes(rootId) {
 
     root = rootId;
-    var children = getChildren(root,locn-1),
-        grandchildren = getChildren(root,locn);
+    var children = getChildren(root,tapestryDepth-1),
+        grandchildren = getChildren(root,tapestryDepth);
 
     for (var i in dataset.nodes) {
         var node = dataset.nodes[i];
@@ -1245,8 +1241,8 @@ function setNodeTypes(rootId) {
 /* For setting the "type" field of links in dataset */
 function setLinkTypes(rootId) {
     root = rootId;
-    var children = getChildren(root,locn-1),
-        grandchildren = getChildren(root,locn);
+    var children = getChildren(root,tapestryDepth-1),
+        grandchildren = getChildren(root,tapestryDepth);
 
     for (var i in dataset.links) {
         var link = dataset.links[i];
