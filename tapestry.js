@@ -994,7 +994,6 @@ function getBoundedCoord(coord, maxCoord) {
 
 // add 'depth' parameter recursively to each node
 function addDepthToNodes(rootId, depth, visited) {
-    var visited = visited;
     visited.push(rootId);
 
     var depthAt = 0;
