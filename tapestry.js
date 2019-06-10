@@ -162,8 +162,8 @@ $(function() {
 
         var appearsAt = 0;
         for (var i = 0; i < formData.length; i++) {
-            var fieldName = formData[i]["name"];
-            var fieldValue = formData[i]["value"];
+            var fieldName = formData[i].name;
+            var fieldValue = formData[i].value;
 
             switch (fieldName) {
                 case "mp4-mediaURL":
@@ -333,15 +333,15 @@ function ticked() {
             return getBoundedCoord(d.y, tapestryDimensions['height']);
         })
         .attr("transform", function (d) {
-            return "translate(" + getBoundedCoord(d.x, tapestryDimensions['width']) + "," + getBoundedCoord(d.y, tapestryDimensions['height']) + ")";
+            return "translate(" + getBoundedCoord(d.x, tapestryDimensions.width) + "," + getBoundedCoord(d.y, tapestryDimensions.height) + ")";
         });
 }
 
 function dragstarted(d) {
     var tapestryDimensions = getTapestryDimensions();
     if (!d3.event.active) force.alphaTarget(0.2).restart();
-    d.fx = getBoundedCoord(d.x, tapestryDimensions['width']);
-    d.fy = getBoundedCoord(d.y, tapestryDimensions['height']);
+    d.fx = getBoundedCoord(d.x, tapestryDimensions.width);
+    d.fy = getBoundedCoord(d.y, tapestryDimensions.height);
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
@@ -368,7 +368,7 @@ function createSvgContainer(containerId) {
     return d3.select("#"+containerId)
                 .append("svg:svg")
                 .attr("id", containerId+"-svg")
-                .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
+                .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height)
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g")
                 .attr("transform", "translate(-20, -20)");
@@ -377,7 +377,7 @@ function createSvgContainer(containerId) {
 function updateSvgDimensions(containerId) {
     var tapestryDimensions = getTapestryDimensions();
     d3.select("#"+containerId+"-svg")
-        .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height']);
+        .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height);
     startForce();
 }
 
@@ -1164,8 +1164,8 @@ function changeToViewMode(lightboxDimensions) {
                 d.fy = screenToSVG(0, $("#header").height() + NORMAL_RADIUS + ($("#spotlight-content").height() / 2)).y
             }
         } else if (d.nodeType === "child") {
-            d.fx = coordinates[d.id]["fx"];
-            d.fy = coordinates[d.id]["fy"];
+            d.fx = coordinates[d.id].fx;
+            d.fy = coordinates[d.id].fy;
         }
     });
 
@@ -1367,7 +1367,7 @@ function getTapestryDimensions() {
     var tapestryWidth = nodeDimensions['x'];
     var tapestryHeight = nodeDimensions['y'];
 
-    var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
+    var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
     var tapestryBrowserRatio = tapestryWidth / getBrowserWidth();
 
     if (tapestryHeight > getBrowserHeight() && tapestryAspectRatio < 1) {
