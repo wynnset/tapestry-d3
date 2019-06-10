@@ -152,7 +152,7 @@ $(function() {
                 "mediaURL": "",
                 "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
                 "mediaHeight": 600,
-                "unlocked": true
+                "unlocked": false
             },
             "permissions": [],
             // Just put the node right under the current node
@@ -173,6 +173,10 @@ $(function() {
                     }
                     break;
                 case "mp4-mediaDuration":
+                        if (fieldValue !== "") {
+                            newNodeEntry.mediaDuration = parseInt(fieldValue);
+                        }
+                    break;
                 case "h5p-mediaDuration":
                     if (fieldValue !== "") {
                         newNodeEntry["typeData"]["mediaDuration"] = parseInt(fieldValue);
