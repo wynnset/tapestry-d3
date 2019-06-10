@@ -152,7 +152,7 @@ $(function() {
                 "mediaURL": "",
                 "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
                 "mediaHeight": 600,
-                "unlocked": false
+                "unlocked": true
             },
             // Just put the node right under the current node
             "fx": dataset.nodes[rootIndex].fx,
@@ -166,6 +166,10 @@ $(function() {
 
             switch (fieldName) {
                 case "mp4-mediaURL":
+                    if (fieldValue !== "") {
+                        newNodeEntry.typeData.mediaURL = fieldValue;
+                    }
+                    break;
                 case "h5p-mediaURL":
                     if (fieldValue !== "") {
                         newNodeEntry.typeData.mediaURL = fieldValue;
