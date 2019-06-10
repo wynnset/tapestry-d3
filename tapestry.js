@@ -1002,9 +1002,6 @@ function getTapestryDimensions() {
     //     tapestryWidth *= 1.2;
     // }
 
-    // console.log(tapestryWidth);
-    // console.log(tapestryHeight);
-
     return {
         'width': tapestryWidth,
         'height': tapestryHeight
@@ -1034,8 +1031,7 @@ function getBoundedCoord(coord, maxCoord) {
 }
 
 // add 'depth' parameter recursively to each node, which refers to each step away from the root they are
-function addDepthToNodes(rootId, depth, visitlist) {
-    var visited = visitlist;
+function addDepthToNodes(rootId, depth, visited) {
     visited.push(rootId);
 
     var depthAt = 0;
