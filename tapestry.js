@@ -1057,7 +1057,7 @@ function addDepthToNodes(rootId, depth, visited) {
                 dataset.nodes[findNodeIndex(children[childId])].depth = acc;
                 visited.push(children[childId]);
 
-                addDepthToNodes(children[childId],acc,visited);
+                addDepthToNodes(children[childId], acc, visited);
                 depthAt++;
             }
         }
@@ -1213,8 +1213,8 @@ function setDatasetProgress(progressObj) {
 function setNodeTypes(rootId) {
 
     root = rootId;
-    var children = getChildren(root,tapestryDepth-1),
-        grandchildren = getChildren(root,tapestryDepth);
+    var children = getChildren(root),
+        grandchildren = getChildren(root, tapestryDepth);
 
     for (var i in dataset.nodes) {
         var node = dataset.nodes[i];
