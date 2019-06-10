@@ -185,44 +185,44 @@ $(function() {
             }
         }
         
-        // TODO: Uncomment this request call and test
+        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", newNodeEntry, function(result){
+            // Get ID from callback and set it as target's id
+            var link = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
+            jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", link, function(result) {
+                // TODO: Add the bottom stuff into the success callback
+                // Add the new data to the dataset
+                dataset["nodes"].push(newNodeEntry); //TODO need to add the id returned in callback
+                dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
 
-        // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", newNodeEntry, function(result){
-        //     var link = {"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt };
-        //     jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", link, function(result) {
-        //
-        //     });
-        // }).fail(function(e) {
-        //     console.log("Error with adding new node");
-        //     console.log(e);
-        // });
+                // Remove the values from form
+                $("#createNewNodeModalBody input[type='text']").val("");
+                $("#createNewNodeModalBody input[type='url']").val("");
+                $("#createNewNodeModal").modal("hide");
 
-        // TODO: Add the bottom stuff into the success callback
-        // Add the new data to the dataset
-        dataset["nodes"].push(newNodeEntry); //TODO need to add the id returned in callback
-        dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
+                // Rebuild the nodes and links
+                links = createLinks();  // Recreate the links
+                nodes = createNodes();
+                saveCoordinates();
+                updateTapestrySize();
 
-        // Remove the values from form
-        $("#createNewNodeModalBody input[type='text']").val("");
-        $("#createNewNodeModalBody input[type='url']").val("");
-        $("#createNewNodeModal").modal("hide");
+                setLinkTypes(root);
+                setNodeTypes(root);
 
-        // Rebuild the nodes and links
-        links = createLinks();  // Recreate the links
-        nodes = createNodes();
-        saveCoordinates();
-        updateTapestrySize();
+                filterLinks();
+                filterNodes();
 
-        setLinkTypes(root);
-        setNodeTypes(root);
-
-        filterLinks();
-        filterNodes();
-
-        // Rebuild everything to include the new node
-        buildNodeContents();
-        rebuildNodeContents();
-        startForce();
+                // Rebuild everything to include the new node
+                buildNodeContents();
+                rebuildNodeContents();
+                startForce();
+            }).fail(function(e) {
+                console.error("Error with adding new link");
+                console.error(e);
+            });
+        }).fail(function(e) {
+            console.error("Error with adding new node");
+            console.error(e);
+        });
     });
 
     $("#mediaFormat").on("change", function(){
