@@ -46,6 +46,7 @@ var
 
 /* Import data from json file, then start D3 */
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
+    console.log(result);
     dataset = result;
     originalDataset = result;
     saveCoordinates();
@@ -168,7 +169,7 @@ $(function() {
                 case "mp4-mediaURL":
                 case "h5p-mediaURL":
                     if (fieldValue !== "") {
-                        newNodeEntry.typeData.mediaUrl = fieldValue;
+                        newNodeEntry.typeData.mediaURL = fieldValue;
                     }
                     break;
                 case "mp4-mediaDuration":
