@@ -54,11 +54,8 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     if (saveProgress) {
         // If user is logged in, get progress from database database
         if (tapestryWpUserId) {
-            var getProgData = {
-                "post_id": tapestryWpPostId,
-            };
 
-            jQuery.get(TAPESTRY_PROGRESS_URL, getProgData, function(result) {
+            jQuery.get(TAPESTRY_PROGRESS_URL, { "post_id": tapestryWpPostId }, function(result) {
                 if (result && !isEmptyObject(result)) {
                     setDatasetProgress(JSON.parse(result));
                     updateViewedProgress(); // update viewed progress because async fetch of dataset
@@ -68,10 +65,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
                 console.error(e);
             });
 
-            var getH5PData = {
-                "post_id": tapestryWpPostId
-            };
-            jQuery.get(TAPESTRY_H5P_SETTINGS_URL, getH5PData, function(result) {
+            jQuery.get(TAPESTRY_H5P_SETTINGS_URL, { "post_id": tapestryWpPostId }, function(result) {
                 if (result && !isEmptyObject(result)) {
                     h5pVideoSettings = JSON.parse(result);
                 }
