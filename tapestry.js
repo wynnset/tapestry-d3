@@ -169,7 +169,7 @@ $(function() {
                 case "mp4-mediaURL":
                 case "h5p-mediaURL":
                     if (fieldValue !== "") {
-                        newNodeEntry["typeData"]["mediaURL"] = fieldValue;
+                        newNodeEntry.typeData.mediaUrl = fieldValue;
                     }
                     break;
                 case "mp4-mediaDuration":
@@ -179,7 +179,7 @@ $(function() {
                     break;
                 case "h5p-mediaDuration":
                     if (fieldValue !== "") {
-                        newNodeEntry["typeData"]["mediaDuration"] = parseInt(fieldValue);
+                        newNodeEntry.typeData.mediaDuration = parseInt(fieldValue);
                     }
                     break;
                 case "appearsAt":
@@ -197,8 +197,8 @@ $(function() {
             jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(link), function(result) {
 
                 // Add the new data to the dataset
-                dataset["nodes"].push(newNodeEntry); //TODO need to add the id returned in callback
-                dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
+                dataset.nodes.push(newNodeEntry); //TODO need to add the id returned in callback
+                dataset.links.push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
 
                 // Remove the values from form
                 $("#createNewNodeModalBody input[type='text']").val("");
