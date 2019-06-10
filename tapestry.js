@@ -134,7 +134,8 @@ $(function() {
 
         // Add the node data first
         var newNodeEntry = {
-            "id": dataset["nodes"].length + 1, // TODO remove
+            "type": "tapestry_node",
+            "status": "publish",
             "nodeType": "",
             "title": "",
             "imageURL": "",
@@ -153,7 +154,8 @@ $(function() {
                 "mediaHeight": 600,
                 "unlocked": true
             },
-            // Just pit the node right under
+            "permissions": [],
+            // Just put the node right under the current node
             "fx": dataset.nodes[rootIndex].fx,
             "fy": dataset.nodes[rootIndex].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50
         };
@@ -173,23 +175,23 @@ $(function() {
                 case "mp4-mediaDuration":
                 case "h5p-mediaDuration":
                     if (fieldValue !== "") {
-                        newNodeEntry["typeData"]["mediaDuration"] = fieldValue;
+                        newNodeEntry["typeData"]["mediaDuration"] = parseInt(fieldValue);
                     }
                     break;
                 case "appearsAt":
-                    appearsAt = fieldValue;
+                    appearsAt = parseInt(fieldValue);
                     break;
                 default:
                     newNodeEntry[fieldName] = fieldValue;
                     break;
             }
         }
-        
-        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", newNodeEntry, function(result){
+
+        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
             // Get ID from callback and set it as target's id
             var link = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
-            jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", link, function(result) {
-                // TODO: Add the bottom stuff into the success callback
+            jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(link), function(result) {
+
                 // Add the new data to the dataset
                 dataset["nodes"].push(newNodeEntry); //TODO need to add the id returned in callback
                 dataset["links"].push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
