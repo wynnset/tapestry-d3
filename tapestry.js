@@ -154,7 +154,6 @@ $(function() {
                 "mediaHeight": 600,
                 "unlocked": false
             },
-            "permissions": [],
             // Just put the node right under the current node
             "fx": dataset.nodes[rootIndex].fx,
             "fy": dataset.nodes[rootIndex].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50
