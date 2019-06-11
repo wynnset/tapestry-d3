@@ -130,17 +130,64 @@ $(function() {
     // Adding Root node
     $("#root-node-btn").on("click", function(e) {
         $('#createNewNodeModalLabel').text("Add root node");
-
+        $("#submit-add-new-node").hide();
+        $("#submit-add-root-node").show();
         // Show the modal
         $("#createNewNodeModal").modal();
     });
 
+    // Adding Root Node
+    $("#submit-add-root-node").on("click", function(e) {
+        e.preventDefault(); // cancel the actual submit
+        var formData = $("form").serializeArray();
+        // TODO: validation here
+        addNewNode(formData, "root");
+    });
 
     // Adding New Nodes
     $("#submit-add-new-node").on("click", function(e) {
         e.preventDefault(); // cancel the actual submit
         var formData = $("form").serializeArray();
-        var rootIndex = findNodeIndex(root);
+        // TODO: validation here
+        addNewNode(formData, "new");
+    });
+
+    $("#mediaFormat").on("change", function(){
+        var selectedType = $(this).val();
+        switch(selectedType)
+        {
+            case "mp4":
+                $("#contents-details").show();
+                $("#mp4-content").show();
+                $("#h5p-content").hide();
+                break;
+            case "h5p":
+                $("#contents-details").show();
+                $("#mp4-content").hide();
+                $("#h5p-content").show();
+                break;
+            default:
+                $("#contents-details").hide();
+                $("#mp4-content").hide();
+                $("#h5p-content").hide();
+                break;
+        }
+    });
+
+    $("#cancel-add-new-node").on("click", function() {
+        $("#createNewNodeModal input[type='text']").val("");
+        $("#createNewNodeModal input[type='url']").val("");
+        $("#createNewNodeModal").modal("hide");
+    });
+
+    // Function for adding a new node
+    // type is either "root" or "new" node
+    function addNewNode(formData, type) {
+        var isAddNewNode = (type == "new") ? true : false;
+
+        if (isAddNewNode) {
+            var rootIndex = findNodeIndex(root);
+        }
 
         // Add the node data first
         var newNodeEntry = {
@@ -162,12 +209,17 @@ $(function() {
                 "mediaURL": "",
                 "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
                 "mediaHeight": 600,
-                "unlocked": false        //TODO might need to change based on edit mode or view mode
+                "unlocked": true        //TODO might need to change based on edit mode or view mode
             },
-            // Just put the node right under the current node
-            "fx": dataset.nodes[rootIndex].fx,
-            "fy": dataset.nodes[rootIndex].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50
+            "fx": 800,
+            "fy": 470
         };
+
+        if (isAddNewNode) {
+            // Just put the node right under the current node
+            newNodeEntry.fx = dataset.nodes[rootIndex].fx;
+            newNodeEntry.fy = dataset.nodes[rootIndex].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
+        }
 
         var appearsAt = 0;
         for (var i = 0; i < formData.length; i++) {
@@ -204,76 +256,78 @@ $(function() {
             }
         }
 
+        // Save to database, first save node then the link
         jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
-            // Get ID from callback and set it as target's id
-            var link = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
+            // only add link if it's for adding new node and not root node
             // Add new node to dataset after getting the id
             newNodeEntry.id = result.id;
-            dataset.nodes.push(newNodeEntry); 
+            dataset.nodes.push(newNodeEntry);
 
-            jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(link), function(result) {
+            if (isAddNewNode) {
+                // Get ID from callback and set it as target's id
+                var link = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
 
-                // Add the new link to the dataset
-                dataset.links.push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
+                jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(link), function(result) {
 
-                // Remove the values from form
+                    // Add the new link to the dataset
+                    dataset.links.push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
+
+                    // Remove the values from form
+                    $("#createNewNodeModalBody input[type='text']").val("");
+                    $("#createNewNodeModalBody input[type='url']").val("");
+                    $("#createNewNodeModal").modal("hide");
+
+                    // Rebuild the nodes and links
+                    links = createLinks();  // Recreate the links
+                    nodes = createNodes();
+                    saveCoordinates();
+                    updateTapestrySize();
+
+                    setLinkTypes(root);
+                    setNodeTypes(root);
+
+                    filterLinks();
+                    filterNodes();
+
+                    // Rebuild everything to include the new node
+                    buildNodeContents();
+                    rebuildNodeContents();
+                    startForce();
+                }).fail(function(e) {
+                    console.error("Error with adding new link");
+                    console.error(e);
+                });
+            } else {
+                // Redraw root node
+                dataset.rootId = result.id;
+
                 $("#createNewNodeModalBody input[type='text']").val("");
                 $("#createNewNodeModalBody input[type='url']").val("");
                 $("#createNewNodeModal").modal("hide");
 
-                // Rebuild the nodes and links
-                links = createLinks();  // Recreate the links
-                nodes = createNodes();
                 saveCoordinates();
                 updateTapestrySize();
 
-                setLinkTypes(root);
+                root = dataset.rootId;
                 setNodeTypes(root);
+                setLinkTypes(root);
+                setUnlocked();
+
+                svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
+                links = createLinks();
+                nodes = createNodes();
 
                 filterLinks();
-                filterNodes();
 
-                // Rebuild everything to include the new node
                 buildNodeContents();
-                rebuildNodeContents();
-                startForce();
-            }).fail(function(e) {
-                console.error("Error with adding new link");
-                console.error(e);
-            });
+
+                updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+            }
         }).fail(function(e) {
             console.error("Error with adding new node");
             console.error(e);
         });
-    });
-
-    $("#mediaFormat").on("change", function(){
-        var selectedType = $(this).val();
-        switch(selectedType)
-        {
-            case "mp4":
-                $("#contents-details").show();
-                $("#mp4-content").show();
-                $("#h5p-content").hide();
-                break;
-            case "h5p":
-                $("#contents-details").show();
-                $("#mp4-content").hide();
-                $("#h5p-content").show();
-                break;
-            default:
-                $("#contents-details").hide();
-                $("#mp4-content").hide();
-                $("#h5p-content").hide();
-                break;
-        }
-    });
-
-    $("#cancel-add-new-node").on("click", function() {
-        $("#createNewNodeModal input[type='text']").val("");
-        $("#createNewNodeModal input[type='url']").val("");
-        $("#createNewNodeModal").modal("hide");
-    });
+    }
 });
 
 /****************************************************
@@ -806,7 +860,8 @@ function buildPathAndButton() {
     $('.addNodeButton > i').click(function(){
         // Set up the title of the form
         $('#createNewNodeModalLabel').text("Add new sub-topic to " + dataset.nodes[findNodeIndex(root)].title);
-
+        $("#submit-add-root-node").hide();
+        $("#submit-add-new-node").show();
         // Show the modal
         $("#createNewNodeModal").modal();
     });
