@@ -127,6 +127,16 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
  * FUNCTIONS FOR ADD NEW NODE FORM
  ****************************************************/
 $(function() {
+    // Adding Root node
+    $("#root-node-btn").on("click", function(e) {
+        $('#createNewNodeModalLabel').text("Add root node");
+
+        // Show the modal
+        $("#createNewNodeModal").modal();
+    });
+
+
+    // Adding New Nodes
     $("#submit-add-new-node").on("click", function(e) {
         e.preventDefault(); // cancel the actual submit
         var formData = $("form").serializeArray();
@@ -152,7 +162,7 @@ $(function() {
                 "mediaURL": "",
                 "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
                 "mediaHeight": 600,
-                "unlocked": true        //TODO might need to change based on edit mode or view mode
+                "unlocked": false        //TODO might need to change based on edit mode or view mode
             },
             // Just put the node right under the current node
             "fx": dataset.nodes[rootIndex].fx,
