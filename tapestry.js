@@ -152,7 +152,7 @@ $(function() {
                 "mediaURL": "",
                 "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
                 "mediaHeight": 600,
-                "unlocked": true
+                "unlocked": true        //TODO might need to change based on edit mode or view mode
             },
             // Just put the node right under the current node
             "fx": dataset.nodes[rootIndex].fx,
@@ -197,10 +197,13 @@ $(function() {
         jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
             // Get ID from callback and set it as target's id
             var link = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
+            // Add new node to dataset after getting the id
+            newNodeEntry.id = result.id;
+            dataset.nodes.push(newNodeEntry); 
+
             jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(link), function(result) {
 
-                // Add the new data to the dataset
-                dataset.nodes.push(newNodeEntry); //TODO need to add the id returned in callback
+                // Add the new link to the dataset
                 dataset.links.push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
 
                 // Remove the values from form
@@ -602,8 +605,10 @@ function buildNodeContents() {
         .on("end", dragended))
         .on("click", function (d) {
             // prevent multiple clicks
+            console.log("resizing");
             if (root != d.id) {
                 root = d.id;
+                console.log(root);
                 resizeNodes(d.id);
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
