@@ -119,8 +119,8 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
 }).fail(function(e) {
-    console.log("Error with loading tapestries");
-    console.log(e);
+    console.error("Error with loading tapestries");
+    console.error(e);
 });
 
 /****************************************************
@@ -605,10 +605,8 @@ function buildNodeContents() {
         .on("end", dragended))
         .on("click", function (d) {
             // prevent multiple clicks
-            console.log("resizing");
             if (root != d.id) {
                 root = d.id;
-                console.log(root);
                 resizeNodes(d.id);
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
