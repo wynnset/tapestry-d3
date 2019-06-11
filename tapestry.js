@@ -73,10 +73,10 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     // this so 'getNodeDimensions' is operational at this stage
     for (var index in dataset.nodes) {
         if (dataset.nodes[index].x == null) {
-            dataset.nodes[index].x = getBrowserWidth();
+            dataset.nodes[index].x = getBrowserWidth()*0.9;
         }
         if (dataset.nodes[index].y == null) {
-            dataset.nodes[index].y = getBrowserHeight();
+            dataset.nodes[index].y = getBrowserHeight()*0.9;
         }
     }
 
@@ -97,7 +97,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
         updateSvgDimensions(TAPESTRY_CONTAINER_ID);
     }
 
-    updateTapestrySize();
+    //updateTapestrySize();
     // also do it whenever window is resized
     $(window).resize(function(){
         updateTapestrySize();
@@ -1002,9 +1002,11 @@ function getTapestryDimensions() {
     //     tapestryWidth *= 1.2;
     // }
 
+    console.log("width: " + tapestryWidth);
+    console.log("height: " + tapestryHeight);
     return {
-        'width': tapestryWidth,
-        'height': tapestryHeight
+        'width': tapestryWidth*1.2,
+        'height': tapestryHeight*1.2
 
     };
 }
