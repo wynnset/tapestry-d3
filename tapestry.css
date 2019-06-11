@@ -70,6 +70,8 @@ body {
     opacity: 0.7;
     transition: opacity .2s;
 }
+
+/* webkit support */
 .slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
@@ -78,6 +80,24 @@ body {
     border-radius: 50%; 
     background: #ed7565;
     cursor: pointer;
+}
+
+/* mozilla support */
+.slider::-moz-range-thumb {
+    border: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%; 
+    background: #ed7565;
+}
+
+/* internet explorer support */
+.slider::-ms-thumb {
+    border: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%; 
+    background: #ed7565;
 }
 
 .slider:hover {
