@@ -204,9 +204,7 @@ $(function() {
     });
 
     $("#cancel-add-new-node").on("click", function() {
-        $("#createNewNodeModal input[type='text']").val("");
-        $("#createNewNodeModal input[type='url']").val("");
-        $("#createNewNodeModal").modal("hide");
+        hideNewNodeModal();
     });
 
     // Function for adding a new node
@@ -304,6 +302,7 @@ $(function() {
                     hideNewNodeModal();
                     redrawTapestryWithNewNode("new");
                 }).fail(function(e) {
+                    $("#add-node-error-msg").text(e.responseJSON.message);
                     console.error("Error with adding new link");
                     console.error(e);
                 });
@@ -316,6 +315,7 @@ $(function() {
                 redrawTapestryWithNewNode("root");
             }
         }).fail(function(e) {
+            $("#add-node-error-msg").text(e.responseJSON.message);
             console.error("Error with adding new node");
             console.error(e);
         });
