@@ -4,7 +4,7 @@
  * CONSTANTS AND GLOBAL VARIABLES
  ****************************************************/
 
-const // declared
+var // declared
     TAPESTRY_CONTAINER_ID = "tapestry",
     PROGRESS_THICKNESS = 20,
     LINK_THICKNESS = 6,
@@ -37,7 +37,7 @@ var dataset, root, svg, links, nodes,               // Basics
 // FLAGS
 var inViewMode = false;                             // Flag for when we're in view mode
 
-const // calculated
+var // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30;     // 30 is to count for the icon
 var
     innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
@@ -213,10 +213,6 @@ $(function() {
     function addNewNode(formData, type) {
         var isAddNewNode = (type == "new") ? true : false;
 
-        if (isAddNewNode) {
-            var rootIndex = findNodeIndex(root);
-        }
-
         // Add the node data first
         var newNodeEntry = {
             "type": "tapestry_node",
@@ -245,8 +241,8 @@ $(function() {
 
         if (isAddNewNode) {
             // Just put the node right under the current node
-            newNodeEntry.fx = dataset.nodes[rootIndex].fx;
-            newNodeEntry.fy = dataset.nodes[rootIndex].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
+            newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx;
+            newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
         }
 
         var appearsAt = 0;
@@ -383,7 +379,7 @@ function startForce() {
         .force("link", linkForce)
         .force("collide", collideForce)
         .force("charge", d3.forceManyBody().strength(-5000))
-        .force("center", d3.forceCenter(tapestryDimensions['width'] / 2, tapestryDimensions['height'] / 2));
+        .force("center", d3.forceCenter(tapestryDimensions.width/ 2, tapestryDimensions.height / 2));
 
     force
         .nodes(dataset.nodes)
@@ -1262,7 +1258,7 @@ function changeToViewMode(lightboxDimensions) {
             if (lightboxDimensions.adjustedOn === "width") {
                 d.fy = getTapestryDimensions().height / 2;
             } else {
-                d.fy = screenToSVG(0, $("#header").height() + NORMAL_RADIUS + ($("#spotlight-content").height() / 2)).y
+                d.fy = screenToSVG(0, $("#header").height() + NORMAL_RADIUS + ($("#spotlight-content").height() / 2)).y;
             }
         } else if (d.nodeType === "child") {
             d.fx = coordinates[d.id].fx;
@@ -1508,7 +1504,7 @@ function updateTapestrySize() {
         // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
         // For example, vertically long tapestries should be transposed so they are horizontally long on desktop,
         // but kept the same way on mobile phones where the browser is vertically longer
-        var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
+        var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
         var windowAspectRatio = getAspectRatio();
         if (tapestryAspectRatio > 1 && windowAspectRatio < 1 || tapestryAspectRatio < 1 && windowAspectRatio > 1) {
             transposeNodes();
