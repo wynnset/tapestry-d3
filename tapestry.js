@@ -126,7 +126,7 @@ $.getJSON(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
 });
 
-/* assign tapestryDepthSlider and establish its functionality*/ 
+/* Assign tapestryDepthSlider and establish its functionality. */ 
 
 var tapestryDepthSlider = document.getElementById("tapestry-depth-slider");
 
