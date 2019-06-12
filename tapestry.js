@@ -161,6 +161,7 @@ $(function() {
         $('#createNewNodeModalLabel').text("Add root node");
         $("#submit-add-new-node").hide();
         $("#submit-add-root-node").show();
+        $("#appearsat-section").hide();
         // Show the modal
         $("#createNewNodeModal").modal();
     });
@@ -313,6 +314,7 @@ $(function() {
                 root = dataset.rootId; // need to set root to newly created node
 
                 redrawTapestryWithNewNode("root");
+                $("#root-node-btn").hide(); // hide the root node button after creating it.
             }
         }).fail(function(e) {
             $("#add-node-error-msg").text(e.responseJSON.message);
