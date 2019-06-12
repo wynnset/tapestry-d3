@@ -1736,6 +1736,13 @@ function setUnlocked() {
         var childIndex = findNodeIndex(dataset.links[i].target.id);
         if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
             dataset.nodes[childIndex].typeData.unlocked = true;
+            // Save to database 
+            // TODO: test for integration with database
+            // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/unlocked", JSON.stringify({"unlocked" : true}), function(result) {})
+            // .fail(function(e) {
+            //     console.error("Error with update node's unlock property");
+            //     console.error(e);
+            // });
         }
     }
 }
