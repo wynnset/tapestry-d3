@@ -146,7 +146,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
  * D3 SLIDER FUNCTIONALITY
  ****************************************************/
 
-/* assign tapestryDepthSlider and establish its functionality*/ 
+/* Assign tapestryDepthSlider and establish its functionality. */ 
 
 var tapestryDepthSlider = document.getElementById("tapestry-depth-slider");
 
@@ -1031,7 +1031,9 @@ function getBoundedCoord(coord, maxCoord) {
     return Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
 }
 
-// add 'depth' parameter recursively to each node, which refers to each step away from the root they are
+/* Add 'depth' parameter to each node recursively. 
+   The depth is determined by the number of levels from the root each node is. */
+
 function addDepthToNodes(rootId, depth, visited) {
     visited.push(rootId);
 
@@ -1066,7 +1068,7 @@ function addDepthToNodes(rootId, depth, visited) {
     
 }
 
-/* return the distance between the rootId and its farthest descendant node */
+/* Return the distance between the rootId and its farthest descendant node. */
 
 function findMaxDepth(rootId) {
     addDepthToNodes(rootId, 0, []);
@@ -1088,7 +1090,7 @@ function findMaxDepth(rootId) {
     return deep;
 }
 
-/* find children based on depth. 
+/* Find children based on depth. 
    depth = 0 returns node + children, depth = 1 returns node + children + children's children, etc. */
 
 function getChildren(id, depth) {
@@ -1127,20 +1129,12 @@ function getChildren(id, depth) {
 
 
 
-/* remove any duplicates in an array. */
+/* Remove any duplicates in an array. */
 function arrayRemove(arr, value) {
     return arr.filter(function(ele){
         return ele != value;
     });
 }
-// remove any duplicates in an array
-function arrayRemove(arr, value) {
-
-    return arr.filter(function(ele){
-        return ele != value;
-    });
- 
- }
 
 function getRadius(d) {
     var nodeDiff;
