@@ -294,34 +294,15 @@ $(function() {
 
             if (isAddNewNode) {
                 // Get ID from callback and set it as target's id
-                var link = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
+                var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
 
-                jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(link), function(result) {
+                jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
 
                     // Add the new link to the dataset
-                    dataset.links.push({"source": root, "target": newNodeEntry.id, "value": 1, "type": "", "appearsAt": appearsAt });
+                    dataset.links.push(newLink);
 
-                    // Remove the values from form
-                    $("#createNewNodeModalBody input[type='text']").val("");
-                    $("#createNewNodeModalBody input[type='url']").val("");
-                    $("#createNewNodeModal").modal("hide");
-
-                    // Rebuild the nodes and links
-                    links = createLinks();  // Recreate the links
-                    nodes = createNodes();
-                    saveCoordinates();
-                    updateTapestrySize();
-
-                    setLinkTypes(root);
-                    setNodeTypes(root);
-
-                    filterLinks();
-                    filterNodes();
-
-                    // Rebuild everything to include the new node
-                    buildNodeContents();
-                    rebuildNodeContents();
-                    startForce();
+                    hideNewNodeModal();
+                    redrawTapestryWithNewNode("new");
                 }).fail(function(e) {
                     console.error("Error with adding new link");
                     console.error(e);
@@ -329,34 +310,51 @@ $(function() {
             } else {
                 // Redraw root node
                 dataset.rootId = result.id;
+                hideNewNodeModal();
+                root = dataset.rootId; // need to set root to newly created node
 
-                $("#createNewNodeModalBody input[type='text']").val("");
-                $("#createNewNodeModalBody input[type='url']").val("");
-                $("#createNewNodeModal").modal("hide");
-
-                saveCoordinates();
-                updateTapestrySize();
-
-                root = dataset.rootId;
-                setNodeTypes(root);
-                setLinkTypes(root);
-                setUnlocked();
-
-                svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
-                links = createLinks();
-                nodes = createNodes();
-
-                filterLinks();
-
-                buildNodeContents();
-
-                updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+                redrawTapestryWithNewNode("root");
             }
         }).fail(function(e) {
             console.error("Error with adding new node");
             console.error(e);
         });
     }
+
+    function hideNewNodeModal() {
+        $("#createNewNodeModalBody input[type='text']").val("");
+        $("#createNewNodeModalBody input[type='url']").val("");
+        $("#createNewNodeModal").modal("hide");
+    }
+
+    function redrawTapestryWithNewNode(type) {
+
+        saveCoordinates();
+        updateTapestrySize();
+
+        setNodeTypes(root);
+        setLinkTypes(root);
+        setUnlocked();
+
+        if (type === "root") {
+            svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
+        }
+        // Rebuild the nodes and links
+        links = createLinks();
+        nodes = createNodes();
+
+        filterLinks();
+        if (type === "new") {
+            filterNodes();
+        }
+        // Rebuild everything to include the new node
+        buildNodeContents();
+        if (type === "new") {
+            rebuildNodeContents();
+        }
+        updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+    }
+
 });
 
 /****************************************************
