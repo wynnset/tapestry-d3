@@ -199,13 +199,12 @@ function startForce() {
 
     simulation
         .nodes(dataset.nodes)
-        .on("tick",ticked)
+        .on("tick", ticked);
     
 }
 
 //Resize all nodes, where id is now the root
 function resizeNodes(id) {
-    getChildren(id,tapestryDepth);
 
     setNodeTypes(id);
     setLinkTypes(id);
@@ -342,7 +341,7 @@ function filterLinks() {
         var shouldRender = false;
         if (sourceId === root || targetId === root) {
             shouldRender = true;
-        } else if (getChildren(root,tapestryDepth-1).indexOf(sourceId) > -1 || getChildren(root,tapestryDepth-1).indexOf(targetId) > -1) {
+        } else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
             shouldRender = true;
         }
         return !shouldRender;
@@ -361,7 +360,7 @@ function filterLinks() {
         var shouldRender = false;
         if (sourceId === root || targetId === root) {
             shouldRender = true;
-        } else if (getChildren(root,tapestryDepth-1).indexOf(sourceId) > -1 || getChildren(root,tapestryDepth-1).indexOf(targetId) > -1) {
+        } else if (getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) {
             shouldRender = true;
         }
         return shouldRender;
@@ -635,8 +634,8 @@ function buildPathAndButton() {
         .attr("data-id", function (d) {
             return d.id;
         })
-        .attr("width", "60px") // 60px
-        .attr("height", "62px") //62px - originals
+        .attr("width", "60px")
+        .attr("height", "62px") 
         .attr("x", -27)
         .attr("y", function (d) {
             return -NORMAL_RADIUS - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);
@@ -1239,8 +1238,8 @@ function setNodeTypes(rootId) {
 /* For setting the "type" field of links in dataset */
 function setLinkTypes(rootId) {
     root = rootId;
-    var children = getChildren(root,tapestryDepth-1),
-        grandchildren = getChildren(root,tapestryDepth);
+    var children = getChildren(root),
+        grandchildren = getChildren(root, tapestryDepth);
 
     for (var i in dataset.links) {
         var link = dataset.links[i];
