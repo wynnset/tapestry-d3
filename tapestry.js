@@ -159,6 +159,9 @@ $(function() {
     // Adding Root node
     $("#root-node-btn").on("click", function(e) {
         $('#createNewNodeModalLabel').text("Add root node");
+        $("#submit-add-new-node").hide();	
+        $("#submit-add-root-node").show();	
+        $("#appearsat-section").hide();
         // Show the modal
         $("#createNewNodeModal").modal();
     });
@@ -324,6 +327,7 @@ $(function() {
         $("#createNewNodeModalBody input[type='text']").val("");
         $("#createNewNodeModalBody input[type='url']").val("");
         $("#createNewNodeModal").modal("hide");
+        $("#appearsat-section").show();
     }
 
     function redrawTapestryWithNewNode(type) {
@@ -886,6 +890,8 @@ function buildPathAndButton() {
     $('.addNodeButton > i').click(function(){
         // Set up the title of the form
         $('#createNewNodeModalLabel').text("Add new sub-topic to " + dataset.nodes[findNodeIndex(root)].title);
+        $("#submit-add-root-node").hide();	
+        $("#submit-add-new-node").show();
         // Show the modal
         $("#createNewNodeModal").modal();
     });
