@@ -44,7 +44,9 @@ var dataset, root, svg, links, nodes,               // Basics
 
 jQuery.ajaxSetup({
     beforeSend: function (xhr) {
-        xhr.setRequestHeader( 'X-WP-Nonce', wpApiSettings.nonce );
+        if (wpApiSettings && wpApiSettings.nonce) {
+            xhr.setRequestHeader( 'X-WP-Nonce', wpApiSettings.nonce );
+        }
     }
 });
 
