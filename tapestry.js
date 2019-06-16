@@ -39,6 +39,12 @@ var dataset, root, svg, links, nodes,               // Basics
 
 /* Import data from json file, then start D3 */
 
+jQuery.ajaxSetup({
+    beforeSend: function (xhr) {
+        xhr.setRequestHeader( 'X-WP-Nonce', wpApiSettings.nonce );
+    }
+});
+
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
 
