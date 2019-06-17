@@ -554,6 +554,7 @@ function rebuildNodeContents() {
     // Remove elements and add them back in
     nodes.selectAll("text").remove();
     nodes.selectAll(".mediaButton").remove();
+    nodes.selectAll(".editNodeButton").remove();
     nodes.selectAll("path").remove();
     setTimeout(function(){
         buildPathAndButton();
