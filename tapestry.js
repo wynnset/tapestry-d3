@@ -155,6 +155,48 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 });
 
 /****************************************************
+ * FUNCTIONS FOR EDIT NODE
+ ****************************************************/
+$(function() {
+    // Edit Node
+    $("#submit-edit-node").on("click", function(e) {
+        e.preventDefault(); // cancel the actual submit
+        var formData = $("form").serializeArray();
+        var nodeIndex = findNodeIndex(root);
+        // TODO: validation here
+
+        for (var i = 0; i < formData.length; i++) {
+            var fieldName = formData[i].name;
+            var fieldValue = formData[i].value;
+
+            switch (fieldName) {
+                case "edit-node-title":
+                    if (fieldValue !== "") {
+                        dataset.nodes[nodeIndex].title = fieldValue;
+                        console.log(dataset);
+                    }
+                    break;
+                case "edit-node-imageURL":
+                        if (fieldValue !== "") {
+                            dataset.nodes[nodeIndex].imageURL = fieldValue;
+                        }
+                    break;
+                default:
+                    break;
+            }
+        }
+        // Add Request for DB
+        hideEditNodeModal();
+    });
+
+    function hideEditNodeModal() {
+        $("#editNodeModalBody input[type='text']").val("");
+        $("#editNodeModalBody input[type='url']").val("");
+        $("#editNodeModal").modal("hide");
+    }
+});
+
+/****************************************************
  * D3 RELATED FUNCTIONS
  ****************************************************/
 
