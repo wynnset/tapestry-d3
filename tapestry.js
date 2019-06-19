@@ -996,16 +996,17 @@ function getBoundedCoord(coord, maxCoord) {
 /* Add 'depth' parameter to each node recursively. 
    The depth is determined by the number of levels from the root each node is. */
 
-function addDepthToNodes(rootId, depth, visited) {
-    visited.push(rootId);
+function addDepthToNodes(id, depth, visited) {
+    visited.push(id);
 
     var depthAt = 0;
 
-    dataset.nodes[findNodeIndex(rootId)].depth = depth;
-    var children = getChildren(rootId, 1);
+    dataset.nodes[findNodeIndex(id)].depth = depth;
+    var children = getChildren(id, 1);
 
     var childLevel;
 
+    // progress through every child at a given node one at a time:
     while (depthAt < children.length) {
         for (var childId in children) {
             if (visited.includes(children[childId])) {
@@ -1030,10 +1031,10 @@ function addDepthToNodes(rootId, depth, visited) {
     
 }
 
-/* Return the distance between the rootId and its farthest descendant node. */
+/* Return the distance between a node and its farthest descendant node. */
 
-function findMaxDepth(rootId) {
-    addDepthToNodes(rootId, 0, []);
+function findMaxDepth(id) {
+    addDepthToNodes(id, 0, []);
     var nodes = dataset.nodes;
     var idList = [];
     var count;
