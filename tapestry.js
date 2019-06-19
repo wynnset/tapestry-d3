@@ -212,7 +212,7 @@ $(function() {
     // type is either "root" or "new" node
     function addNewNode(formData, type) {
         var isAddNewNode = (type == "new") ? true : false;
-        console.log(formData);
+
         // Add the node data first
         var newNodeEntry = {
             "type": "tapestry_node",
@@ -254,6 +254,18 @@ $(function() {
             var fieldValue = formData[i].value;
 
             switch (fieldName) {
+                case "title":
+                    newNodeEntry[fieldName] = fieldValue;
+                    break;
+                case "imageURL":
+                    newNodeEntry[fieldName] = fieldValue;
+                    break;
+                case "mediaType":
+                    newNodeEntry[fieldName] = fieldValue;
+                    break;
+                case "mediaFormat":
+                    newNodeEntry[fieldName] = fieldValue;
+                    break;
                 case "mp4-mediaURL":
                     if (fieldValue !== "") {
                         newNodeEntry.typeData.mediaURL = fieldValue;
@@ -277,43 +289,12 @@ $(function() {
                 case "appearsAt":
                     appearsAt = parseInt(fieldValue);
                     break;
-                case "public-read":
-                    if (fieldValue === "on") {
-                        permissionData.public.push("read");
-                    }
-                    break;
-                case "public-add":
-                    if (fieldValue === "on") {
-                        permissionData.public.push("add");
-                    }
-                    break;
-                case "public-edit":
-                    if (fieldValue === "on") {
-                        permissionData.public.push("edit");
-                    }
-                    break;
-                case "public-add-submit":
-                    if (fieldValue === "on") {
-                        permissionData.public.push("add_submit");
-                    }
-                    break;
-                case "public-edit-submit":
-                    if (fieldValue === "on") {
-                        permissionData.public.push("edit_submit");
-                    }
-                    break;
-                case "public-approve":
-                    if (fieldValue === "on") {
-                        permissionData.public.push("approve");
-                    }
-                    break;
                 default:
-                    newNodeEntry[fieldName] = fieldValue;
                     break;
             }
         }
         // TODO ADD request for permissions
-        
+
         // Save to database, first save node then the link
         jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
             // only add link if it's for adding new node and not root node
@@ -389,6 +370,7 @@ $(function() {
     }
 
     // Permissions Options
+
     // Enable others when read is on, disable when read is off
     $("#public-read-checkbox").change(function() {
         if ($(this).is(":checked")) {
@@ -405,6 +387,10 @@ $(function() {
                 }
             });
         }
+    });
+
+    $("#user-permissions-btn").click(function() {
+
     });
 });
 
