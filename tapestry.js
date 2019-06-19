@@ -212,7 +212,7 @@ $(function() {
     // type is either "root" or "new" node
     function addNewNode(formData, type) {
         var isAddNewNode = (type == "new") ? true : false;
-
+        console.log(formData);
         // Add the node data first
         var newNodeEntry = {
             "type": "tapestry_node",
@@ -246,6 +246,9 @@ $(function() {
         }
 
         var appearsAt = 0;
+        var permissionData = {
+            "public": []
+        };
         for (var i = 0; i < formData.length; i++) {
             var fieldName = formData[i].name;
             var fieldValue = formData[i].value;
@@ -274,12 +277,43 @@ $(function() {
                 case "appearsAt":
                     appearsAt = parseInt(fieldValue);
                     break;
+                case "public-read":
+                    if (fieldValue === "on") {
+                        permissionData.public.push("read");
+                    }
+                    break;
+                case "public-add":
+                    if (fieldValue === "on") {
+                        permissionData.public.push("add");
+                    }
+                    break;
+                case "public-edit":
+                    if (fieldValue === "on") {
+                        permissionData.public.push("edit");
+                    }
+                    break;
+                case "public-add-submit":
+                    if (fieldValue === "on") {
+                        permissionData.public.push("add_submit");
+                    }
+                    break;
+                case "public-edit-submit":
+                    if (fieldValue === "on") {
+                        permissionData.public.push("edit_submit");
+                    }
+                    break;
+                case "public-approve":
+                    if (fieldValue === "on") {
+                        permissionData.public.push("approve");
+                    }
+                    break;
                 default:
                     newNodeEntry[fieldName] = fieldValue;
                     break;
             }
         }
-
+        // TODO ADD request for permissions
+        
         // Save to database, first save node then the link
         jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
             // only add link if it's for adding new node and not root node
@@ -372,7 +406,6 @@ $(function() {
             });
         }
     });
-    // Cannot uncheck read with other options on
 });
 
 /****************************************************
