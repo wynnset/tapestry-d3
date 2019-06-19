@@ -300,46 +300,68 @@ $(function() {
                 permissionData.public.push(this.name);
             }
         });
-        console.log(permissionData);
+
+        $('.user-checkbox').each(function() {
+            if ($(this).is(":checked")) {
+                var userId = extractDigitsFromString(this.id);
+                if (permissionData["user-" + userId]) {
+                    permissionData["user-" + userId].push(this.name);
+                } else {
+                    permissionData["user-" + userId] = [this.name];
+                }
+            }
+        });
+
+        $('.group-checkbox').each(function() {
+            if ($(this).is(":checked")) {
+                var groupId = extractDigitsFromString(this.id);
+                if (permissionData["group-" + groupId]) {
+                    permissionData["group-" + groupId].push(this.name);
+                } else {
+                    permissionData["group-" + groupId] = [this.name];
+                }
+            }
+        });
+
         // TODO ADD request for permissions
 
-        // // Save to database, first save node then the link
-        // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
-        //     // only add link if it's for adding new node and not root node
-        //     // Add new node to dataset after getting the id
-        //     newNodeEntry.id = result.id;
-        //     dataset.nodes.push(newNodeEntry);
+        // Save to database, first save node then the link
+        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
+            // only add link if it's for adding new node and not root node
+            // Add new node to dataset after getting the id
+            newNodeEntry.id = result.id;
+            dataset.nodes.push(newNodeEntry);
 
-        //     if (isAddNewNode) {
-        //         // Get ID from callback and set it as target's id
-        //         var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
+            if (isAddNewNode) {
+                // Get ID from callback and set it as target's id
+                var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
 
-        //         jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
+                jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
 
-        //             // Add the new link to the dataset
-        //             dataset.links.push(newLink);
+                    // Add the new link to the dataset
+                    dataset.links.push(newLink);
 
-        //             hideNewNodeModal();
-        //             redrawTapestryWithNewNode("new");
-        //         }).fail(function(e) {
-        //             $("#add-node-error-msg").text(e.responseJSON.message);
-        //             console.error("Error with adding new link");
-        //             console.error(e);
-        //         });
-        //     } else {
-        //         // Redraw root node
-        //         dataset.rootId = result.id;
-        //         hideNewNodeModal();
-        //         root = dataset.rootId; // need to set root to newly created node
+                    hideNewNodeModal();
+                    redrawTapestryWithNewNode("new");
+                }).fail(function(e) {
+                    $("#add-node-error-msg").text(e.responseJSON.message);
+                    console.error("Error with adding new link");
+                    console.error(e);
+                });
+            } else {
+                // Redraw root node
+                dataset.rootId = result.id;
+                hideNewNodeModal();
+                root = dataset.rootId; // need to set root to newly created node
 
-        //         redrawTapestryWithNewNode("root");
-        //         $("#root-node-btn").hide(); // hide the root node button after creating it.
-        //     }
-        // }).fail(function(e) {
-        //     $("#add-node-error-msg").text(e.responseJSON.message);
-        //     console.error("Error with adding new node");
-        //     console.error(e);
-        // });
+                redrawTapestryWithNewNode("root");
+                $("#root-node-btn").hide(); // hide the root node button after creating it.
+            }
+        }).fail(function(e) {
+            $("#add-node-error-msg").text(e.responseJSON.message);
+            console.error("Error with adding new node");
+            console.error(e);
+        });
     }
 
     function hideNewNodeModal() {
@@ -425,14 +447,14 @@ $(function() {
             '<tr>' +
             '<td>' + capitalizeFirstLetter(type) + " " + id + '</td>' +
             '<td id="' + type + "-" + id + "-editcell" + '"' + '></td>' +
-            '<td><input class="' + type + "-" + id + "-checkbox" + '"' + 'id="user-' + id +'-add-checkbox" name="add" type="checkbox" disabled></td>' +
-            '<td><input class="' + type + "-" + id + "-checkbox" + '"' + 'id="user-' + id +'-edit-checkbox" name="edit" type="checkbox" disabled></td>' +
-            '<td><input class="' + type + "-" + id + "-checkbox" + '"' + 'id="user-' + id +'-add-submit-checkbox" name="add_submit" type="checkbox" disabled></td>' +
-            '<td><input class="' + type + "-" + id + "-checkbox" + '"' + 'id="user-' + id +'-edit-submit-checkbox" name="edit_submit" type="checkbox" disabled"></td>' +
-            '<td><input class="' + type + "-" + id + "-checkbox" + '"' + 'id="user-' + id +'-approve-checkbox" name="approve" type="checkbox" disabled></td>' +
+            '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-checkbox" name="add" type="checkbox" disabled></td>' +
+            '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-edit-checkbox" name="edit" type="checkbox" disabled></td>' +
+            '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-submit-checkbox" name="add_submit" type="checkbox" disabled></td>' +
+            '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox"+ '"' + 'id="user-' + id +'-edit-submit-checkbox" name="edit_submit" type="checkbox" disabled"></td>' +
+            '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-approve-checkbox" name="approve" type="checkbox" disabled></td>' +
             '</tr>'
         );
-        $('<input class="' + type + "-" + id + "-checkbox" + '"' + 'id="user-' + id +'-read-checkbox" name="read" type="checkbox">').on("change", function() {
+        $('<input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-read-checkbox" name="read" type="checkbox">').on("change", function() {
             if ($(this).is(":checked")) {
                 $("." + type + "-" + id + "-checkbox").each(function() {
                     if($(this).prop('disabled')) {
@@ -2094,6 +2116,10 @@ function capitalizeFirstLetter(string) {
 function onlyContainsDigits(string) {
     var regex = new RegExp(/^\d+$/); 
     return regex.test(string);
+}
+
+function extractDigitsFromString(string) {
+    return string.replace(/[^0-9]/g,'');
 }
 
 // Capture click events anywhere inside or outside tapestry
