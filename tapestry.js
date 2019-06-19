@@ -354,6 +354,25 @@ $(function() {
         updateSvgDimensions(TAPESTRY_CONTAINER_ID);
     }
 
+    // Permissions Options
+    // Enable others when read is on, disable when read is off
+    $("#public-read-checkbox").change(function() {
+        if ($(this).is(":checked")) {
+            $('.public-checkbox').each(function() {
+                if($(this).prop('disabled')) {
+                    $(this).prop('disabled', false);
+                }
+            });
+        } else {
+            $('.public-checkbox').each(function() {
+                if (this.id !== "public-read-checkbox") {
+                    $(this).prop('checked', false);
+                    $(this).prop('disabled', true);
+                }
+            });
+        }
+    });
+    // Cannot uncheck read with other options on
 });
 
 /****************************************************
