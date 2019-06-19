@@ -174,7 +174,7 @@ tapestryDepthSlider.onchange = function() {
  * D3 RELATED FUNCTIONS
  ****************************************************/
 
-/* Define forces that will determine the layout of the graph */
+/* Define forces that will determine the layout of the graph. */
 function startForce() {
 
     var tapestryDimensions = getTapestryDimensions();
@@ -947,7 +947,7 @@ function setAttributes(elem, obj) {
     }
 }
 
-// Get width, height, and aspect ratio of viewable region
+// Get width, height, and aspect ratio of viewable region.
 function getBrowserWidth() {
     return Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
 }
@@ -1140,9 +1140,6 @@ function getChildren(id, depth) {
     var rchildren = arrayRemove(children, id);
     return rchildren;
 }
-
-
-
 
 /* Remove any duplicates in an array. */
 function arrayRemove(arr, value) {
