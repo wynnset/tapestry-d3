@@ -246,9 +246,6 @@ $(function() {
         }
 
         var appearsAt = 0;
-        var permissionData = {
-            "public": []
-        };
         for (var i = 0; i < formData.length; i++) {
             var fieldName = formData[i].name;
             var fieldValue = formData[i].value;
@@ -293,45 +290,56 @@ $(function() {
                     break;
             }
         }
+        
+        var permissionData = {
+            "public": []
+        };
+
+        $('.public-checkbox').each(function() {
+            if ($(this).is(":checked")) {
+                permissionData.public.push(this.name);
+            }
+        });
+        console.log(permissionData);
         // TODO ADD request for permissions
 
-        // Save to database, first save node then the link
-        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
-            // only add link if it's for adding new node and not root node
-            // Add new node to dataset after getting the id
-            newNodeEntry.id = result.id;
-            dataset.nodes.push(newNodeEntry);
+        // // Save to database, first save node then the link
+        // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
+        //     // only add link if it's for adding new node and not root node
+        //     // Add new node to dataset after getting the id
+        //     newNodeEntry.id = result.id;
+        //     dataset.nodes.push(newNodeEntry);
 
-            if (isAddNewNode) {
-                // Get ID from callback and set it as target's id
-                var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
+        //     if (isAddNewNode) {
+        //         // Get ID from callback and set it as target's id
+        //         var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
 
-                jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
+        //         jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
 
-                    // Add the new link to the dataset
-                    dataset.links.push(newLink);
+        //             // Add the new link to the dataset
+        //             dataset.links.push(newLink);
 
-                    hideNewNodeModal();
-                    redrawTapestryWithNewNode("new");
-                }).fail(function(e) {
-                    $("#add-node-error-msg").text(e.responseJSON.message);
-                    console.error("Error with adding new link");
-                    console.error(e);
-                });
-            } else {
-                // Redraw root node
-                dataset.rootId = result.id;
-                hideNewNodeModal();
-                root = dataset.rootId; // need to set root to newly created node
+        //             hideNewNodeModal();
+        //             redrawTapestryWithNewNode("new");
+        //         }).fail(function(e) {
+        //             $("#add-node-error-msg").text(e.responseJSON.message);
+        //             console.error("Error with adding new link");
+        //             console.error(e);
+        //         });
+        //     } else {
+        //         // Redraw root node
+        //         dataset.rootId = result.id;
+        //         hideNewNodeModal();
+        //         root = dataset.rootId; // need to set root to newly created node
 
-                redrawTapestryWithNewNode("root");
-                $("#root-node-btn").hide(); // hide the root node button after creating it.
-            }
-        }).fail(function(e) {
-            $("#add-node-error-msg").text(e.responseJSON.message);
-            console.error("Error with adding new node");
-            console.error(e);
-        });
+        //         redrawTapestryWithNewNode("root");
+        //         $("#root-node-btn").hide(); // hide the root node button after creating it.
+        //     }
+        // }).fail(function(e) {
+        //     $("#add-node-error-msg").text(e.responseJSON.message);
+        //     console.error("Error with adding new node");
+        //     console.error(e);
+        // });
     }
 
     function hideNewNodeModal() {
@@ -390,8 +398,32 @@ $(function() {
     });
 
     $("#user-permissions-btn").click(function() {
-
+        var userId = $("#user-number-input").val();
+        // TODO CHECK IF VALID userid
+        appendPermissionsRow(userId, "user");
+        $("#user-number-input").val("");
     });
+
+    $("#group-permissions-btn").click(function() {
+        var groupId = $("#group-number-input").val();
+        appendPermissionsRow(groupId, "group");
+        $("#group-number-input").val("");
+    });
+
+    // Type is either "user" or "group"  
+    function appendPermissionsRow(id, type) {
+        $('#permissions-table').append(
+            '<tr>' +
+            '<td>' + capitalizeFirstLetter(type) + " " + id + '</td>' +
+            '<td><input class=' + type +' id="user-"' + id +'-read-checkbox" name="read" type="checkbox"></td>' +
+            '<td><input class=' + type +' id="user-"' + id +'-read-checkbox" name="add" type="checkbox" disabled></td>' +
+            '<td><input class=' + type +' id="user-"' + id +'-read-checkbox" name="edit" type="checkbox" disabled></td>' +
+            '<td><input class=' + type +' id="user-"' + id +'-read-checkbox" name="add_submit" type="checkbox" disabled></td>' +
+            '<td><input class=' + type +' id="user-"' + id +'-read-checkbox" name="edit_submit" type="checkbox" disabled"></td>' +
+            '<td><input class=' + type +' id="user-"' + id +'-read-checkbox" name="approve" type="checkbox" disabled></td>' +
+            '</tr>'
+        );
+    }
 });
 
 /****************************************************
@@ -2028,6 +2060,10 @@ function isEmptyObject(obj) {
             return false;
     }
     return true;
+}
+
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 // Capture click events anywhere inside or outside tapestry
