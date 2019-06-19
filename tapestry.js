@@ -1071,33 +1071,40 @@ function getBoundedCoord(coord, maxCoord) {
 /* Add 'depth' parameter to each node recursively. 
    The depth is determined by the number of levels from the root each node is. */
 
-function addDepthToNodes(rootId, depth, visited) {
-    visited.push(rootId);
+   function addDepthToNodes(id, depth, visited) {
+    visited.push(id);
 
     var depthAt = 0;
 
-    dataset.nodes[findNodeIndex(rootId)].depth = depth;
-    var children = getChildren(rootId,1);
+    dataset.nodes[findNodeIndex(id)].depth = depth;
+    var children = getChildren(id, 1);
 
-    var acc;
+    var childLevel;
 
+    // progress through every child at a given node one at a time:
     while (depthAt < children.length) {
         for (var childId in children) {
+            // if the child has been visited, check to make sure the calculated depth
+            // is as low as it can be (via childLevel) to correct for shorter paths
+            // to the same node.
             if (visited.includes(children[childId])) {
-                acc = depth;
-                if (dataset.nodes[findNodeIndex(children[childId])].depth > acc) {
-                    dataset.nodes[findNodeIndex(children[childId])].depth = acc;
+                childLevel = depth;
+                if (dataset.nodes[findNodeIndex(children[childId])].depth > childLevel) {
+                    dataset.nodes[findNodeIndex(children[childId])].depth = childLevel;
                 }
                 else {
                     depthAt++;
                 }
             }
+            // if the child has not been visited, record its depth (one away from the
+            // current node's childLevel), and recursively add depth to all of the 
+            // child's children.
             else {
-                acc = depth + 1;
-                dataset.nodes[findNodeIndex(children[childId])].depth = acc;
+                childLevel = depth + 1;
+                dataset.nodes[findNodeIndex(children[childId])].depth = childLevel;
                 visited.push(children[childId]);
 
-                addDepthToNodes(children[childId], acc, visited);
+                addDepthToNodes(children[childId], childLevel, visited);
                 depthAt++;
             }
         }
@@ -1105,32 +1112,36 @@ function addDepthToNodes(rootId, depth, visited) {
     
 }
 
-/* Return the distance between the rootId and its farthest descendant node. */
+/* Return the distance between a node and its farthest descendant node. */
 
-function findMaxDepth(rootId) {
-    addDepthToNodes(rootId, 0, []);
+function findMaxDepth(id) {
+
+    // create the .depth parameter for every node
+    addDepthToNodes(id, 0, []);
     var nodes = dataset.nodes;
+
+    // idList: collect node IDs since they're numbered dynamically
     var idList = [];
     var count;
     for (count = 0; count < nodes.length; count++) {
         idList = idList.concat(nodes[count].id);
     }
 
-    var deep = 0;
-
+    // cycle through the idList and find the greatest depth. that's the maxDepth
+    var maxDepth = 0;
     idList.forEach(function(id) {
-        if (dataset.nodes[findNodeIndex(id)].depth > deep) {
-                deep = dataset.nodes[findNodeIndex(id)].depth;
+        if (dataset.nodes[findNodeIndex(id)].depth > maxDepth) {
+                maxDepth = dataset.nodes[findNodeIndex(id)].depth;
             }
     });
 
-    return deep;
+    return maxDepth;
 }
 
 /* Find children based on depth. 
    depth = 0 returns node + children, depth = 1 returns node + children + children's children, etc. */
 
-function getChildren(id, depth) {
+   function getChildren(id, depth) {
     if (typeof depth === 'undefined') {
         depth = tapestryDepth - 1;
     }
@@ -1140,6 +1151,8 @@ function getChildren(id, depth) {
     for (step = 0; step < depth; step++) {
         for (var linkId in dataLinks) {
             var link = dataLinks[linkId];
+
+            // search for links
             if (typeof link.source === 'number' && link.source === id) {
                 children.push(link.target);
                 children = children.concat(getChildren(link.target, depth-1));
@@ -1149,6 +1162,7 @@ function getChildren(id, depth) {
                 children = children.concat(getChildren(link.target.id, depth-1));
             }
 
+            // account for links where the ID is the target.
             if (typeof link.target === 'number' && link.target === id) {
                 children.push(link.source);
                 children = children.concat(getChildren(link.source, depth-1));
@@ -1159,12 +1173,10 @@ function getChildren(id, depth) {
             }
         }
     }
+    // clear out duplicate IDs
     var rchildren = arrayRemove(children, id);
     return rchildren;
 }
-
-
-
 
 /* Remove any duplicates in an array. */
 function arrayRemove(arr, value) {
@@ -1185,7 +1197,6 @@ function getRadius(d) {
 
     return ((NORMAL_RADIUS + nodeDiff));
 }
-
 
 //Updates the data in the node for how much the video has been viewed
 function updateViewedValue(id, amountViewedTime, duration) {
