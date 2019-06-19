@@ -400,14 +400,23 @@ $(function() {
     $("#user-permissions-btn").click(function() {
         var userId = $("#user-number-input").val();
         // TODO CHECK IF VALID userid
-        appendPermissionsRow(userId, "user");
-        $("#user-number-input").val("");
+        if (userId && onlyContainsDigits(userId)) {
+            appendPermissionsRow(userId, "user");
+            $("#user-number-input").val("");
+        } else {
+            alert("Enter valid user id");
+        }
     });
 
     $("#group-permissions-btn").click(function() {
         var groupId = $("#group-number-input").val();
-        appendPermissionsRow(groupId, "group");
-        $("#group-number-input").val("");
+        // TODO CHECK IF VALID groupid
+        if (groupId && onlyContainsDigits(groupId)) {
+            appendPermissionsRow(groupId, "group");
+            $("#group-number-input").val("");
+        } else {
+            alert("Enter valid group id");
+        }
     });
 
     // Type is either "user" or "group"  
@@ -415,14 +424,30 @@ $(function() {
         $('#permissions-table').append(
             '<tr>' +
             '<td>' + capitalizeFirstLetter(type) + " " + id + '</td>' +
-            '<td><input class=' + type +' id="user-"' + id +'-read-checkbox" name="read" type="checkbox"></td>' +
-            '<td><input class=' + type +' id="user-"' + id +'-read-checkbox" name="add" type="checkbox" disabled></td>' +
-            '<td><input class=' + type +' id="user-"' + id +'-read-checkbox" name="edit" type="checkbox" disabled></td>' +
-            '<td><input class=' + type +' id="user-"' + id +'-read-checkbox" name="add_submit" type="checkbox" disabled></td>' +
-            '<td><input class=' + type +' id="user-"' + id +'-read-checkbox" name="edit_submit" type="checkbox" disabled"></td>' +
-            '<td><input class=' + type +' id="user-"' + id +'-read-checkbox" name="approve" type="checkbox" disabled></td>' +
+            '<td id="' + type + "-" + id + "-editcell" + '"' + '></td>' +
+            '<td><input class="' + type + "-" + id + "-checkbox" + '"' + 'id="user-' + id +'-add-checkbox" name="add" type="checkbox" disabled></td>' +
+            '<td><input class="' + type + "-" + id + "-checkbox" + '"' + 'id="user-' + id +'-edit-checkbox" name="edit" type="checkbox" disabled></td>' +
+            '<td><input class="' + type + "-" + id + "-checkbox" + '"' + 'id="user-' + id +'-add-submit-checkbox" name="add_submit" type="checkbox" disabled></td>' +
+            '<td><input class="' + type + "-" + id + "-checkbox" + '"' + 'id="user-' + id +'-edit-submit-checkbox" name="edit_submit" type="checkbox" disabled"></td>' +
+            '<td><input class="' + type + "-" + id + "-checkbox" + '"' + 'id="user-' + id +'-approve-checkbox" name="approve" type="checkbox" disabled></td>' +
             '</tr>'
         );
+        $('<input class="' + type + "-" + id + "-checkbox" + '"' + 'id="user-' + id +'-read-checkbox" name="read" type="checkbox">').on("change", function() {
+            if ($(this).is(":checked")) {
+                $("." + type + "-" + id + "-checkbox").each(function() {
+                    if($(this).prop('disabled')) {
+                        $(this).prop('disabled', false);
+                    }
+                });
+            } else {
+                $("." + type + "-" + id + "-checkbox").each(function() {
+                    if (this.id !== "user-" + id + "-read-checkbox") {
+                        $(this).prop('checked', false);
+                        $(this).prop('disabled', true);
+                    }
+                });
+            }
+        }).appendTo("#" + type + "-" + id + "-editcell");
     }
 });
 
@@ -2064,6 +2089,11 @@ function isEmptyObject(obj) {
 
 function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+function onlyContainsDigits(string) {
+    var regex = new RegExp(/^\d+$/); 
+    return regex.test(string);
 }
 
 // Capture click events anywhere inside or outside tapestry
