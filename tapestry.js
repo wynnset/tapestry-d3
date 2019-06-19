@@ -40,7 +40,8 @@ var dataset, root, svg, links, nodes,               // Basics
 
 /* Import data from json file, then start D3 */
 
-jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
+$.getJSON(jsonUrl,function(result){
+//jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
 
     //---------------------------------------------------
@@ -143,19 +144,46 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 });
 
 /****************************************************
- * D3 SLIDER FUNCTIONALITY
+ * SLIDER RELATED FUNCTIONS
  ****************************************************/
 
-/* Assign tapestryDepthSlider and establish its functionality. */ 
+function createDepthSlider() {
+    // Instantiate input element, set its attributes and class.
+    var depthSlider = document.createElement("input");
+    setAttributes(depthSlider,{
+        type:"range",
+        min:"1",
+        max:"3",
+        value:"2",
+        id:"tapestry-depth-slider"
+    });
+    depthSlider.className="slider";
+
+    // Create div for slider to fit in.
+    var sliderWrapper = document.createElement("div");
+    sliderWrapper.id = "slider-wrapper";
+
+    // Establish div hierarchy.
+    // *  tapestry           *
+    // *  - sliderWrapper    *
+    // *  -- depthSlider     *
+    document.getElementById("tapestry").appendChild(sliderWrapper);
+    document.getElementById("slider-wrapper").appendChild(depthSlider);
+}
+
+// call it now
+createDepthSlider();
 
 var tapestryDepthSlider = document.getElementById("tapestry-depth-slider");
 
+// Every time the slider's value is changed, do the following.
 tapestryDepthSlider.onchange = function() {
     tapestryDepth = this.value;
 
     setNodeTypes(root);
     setLinkTypes(root);
     filterLinks();
+
     rebuildNodeContents();
 };
 
@@ -940,8 +968,17 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
  * HELPER FUNCTIONS
  ****************************************************/
 
+ // Set multiple attributes for an HTML element at once.
+function setAttributes(elem, obj) {
+    for (var prop in obj) {
+        if (obj.hasOwnProperty(prop)) {
+            elem[prop] = obj[prop];
+        }
+    }
+}
 
-// Get width, height, and aspect ratio of viewable region
+
+// Get width, height, and aspect ratio of viewable region.
 function getBrowserWidth() {
     return Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
 }
