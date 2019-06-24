@@ -193,7 +193,7 @@ tapestryDepthSlider.onchange = function() {
 /* Define forces that will determine the layout of the graph */
 function startForce() {
 
-    var nodes = dataset.nodes
+    var nodes = dataset.nodes;
     var tapestryDimensions = getTapestryDimensions();
 
     simulation = d3.forceSimulation(nodes)
@@ -203,7 +203,7 @@ function startForce() {
 
         // establish links, the function sets IDs as endpoints, rather than indexes
         .force("link", d3.forceLink(dataset.links).id(function(d) {
-            return d.id
+            return d.id;
         }))
 
         // slow down the nodes from spinning
