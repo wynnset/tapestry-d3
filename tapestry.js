@@ -1034,7 +1034,7 @@ function buildPathAndButton() {
     nodes
         .filter(function (d) {
             // return d.nodeType === "root";
-            return filterAddPermission(d);
+            return checkPermission(d, "add");
         })
         .append("svg:foreignObject")
         .html(function (d) {
@@ -2031,15 +2031,17 @@ function getViewable(node) {
     return true;
 }
 
-function filterAddPermission(node) {
-    console.log(node.permissions);
+function checkPermission(node, permissionType) {
+    // TODO if user is author or admin, have access to add/edit node automatically
+    
     if (tapestryWpUserId) {
         const userIndex = "user-" + tapestryWpUserId;
-        console.log(node.permissions[userIndex]);
-        if (node.permissions[userIndex] && node.permissions[userIndex].includes("add")) {
+        if (node.permissions[userIndex] && node.permissions[userIndex].includes(permissionType)) {
             return node.nodeType === "root";
         }
     }
+
+    // TODO Check user's group id
 
     return false;
 }
