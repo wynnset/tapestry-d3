@@ -4,7 +4,7 @@
  * CONSTANTS AND GLOBAL VARIABLES
  ****************************************************/
 
-const // declared
+var // declared constants
     TAPESTRY_CONTAINER_ID = "tapestry",
     PROGRESS_THICKNESS = 20,
     LINK_THICKNESS = 6,
@@ -22,23 +22,23 @@ const // declared
     TAPESTRY_PROGRESS_URL = apiUrl + "/users/progress",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings";
 
-var dataset, root, svg, links, nodes,               // Basics
+var // declared variables
+    dataset, root, svg, links, nodes,               // Basics
     originalDataset,                                // For saving the value of the original dataset pre-changes
     path, pieGenerator, arcGenerator,               // Donut
     linkForce, collideForce, force,                 // Force
     nodeCoordinates = [],                           // For saving the coordinates of the Tapestry pre transition to play mode
     inViewMode = false,                             // Flag for when we're in view mode
     adjustedRadiusRatio = 1,                        // Radius adjusted for view mode
-    tapestrySlug, saveProgress = true,      // Cookie
+    tapestrySlug, saveProgress = true,              // Cookie
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {};
     tapestryDepth = 2;                              // Default depth of Tapestry
 
-const // calculated
-    MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30;     // 30 is to count for the icon
-var
+var // calculated
+    MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
     innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
     outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2);
 
@@ -223,7 +223,7 @@ function startForce() {
         .force("link", linkForce)
         .force("collide", collideForce)
         .force("charge", d3.forceManyBody().strength(-5000))
-        .force("center", d3.forceCenter(tapestryDimensions['width'] / 2, tapestryDimensions['height'] / 2));
+        .force("center", d3.forceCenter(tapestryDimensions.width / 2, tapestryDimensions.height / 2));
 
     force
         .nodes(dataset.nodes)
@@ -254,34 +254,34 @@ function ticked() {
     var tapestryDimensions = getTapestryDimensions();
     links
         .attr("x1", function (d) {
-            return getBoundedCoord(d.source.x, tapestryDimensions['width']);
+            return getBoundedCoord(d.source.x, tapestryDimensions.width);
         })
         .attr("y1", function (d) {
-            return getBoundedCoord(d.source.y, tapestryDimensions['height']);
+            return getBoundedCoord(d.source.y, tapestryDimensions.height);
         })
         .attr("x2", function (d) {
-            return getBoundedCoord(d.target.x, tapestryDimensions['width']);
+            return getBoundedCoord(d.target.x, tapestryDimensions.width);
         })
         .attr("y2", function (d) {
-            return getBoundedCoord(d.target.y, tapestryDimensions['height']);
+            return getBoundedCoord(d.target.y, tapestryDimensions.height);
         });
     nodes
         .attr("cx", function (d) {
-            return getBoundedCoord(d.x, tapestryDimensions['width']);
+            return getBoundedCoord(d.x, tapestryDimensions.width);
         })
         .attr("cy", function (d) {
-            return getBoundedCoord(d.y, tapestryDimensions['height']);
+            return getBoundedCoord(d.y, tapestryDimensions.height);
         })
         .attr("transform", function (d) {
-            return "translate(" + getBoundedCoord(d.x, tapestryDimensions['width']) + "," + getBoundedCoord(d.y, tapestryDimensions['height']) + ")";
+            return "translate(" + getBoundedCoord(d.x, tapestryDimensions.width) + "," + getBoundedCoord(d.y, tapestryDimensions.height) + ")";
         });
 }
 
 function dragstarted(d) {
     var tapestryDimensions = getTapestryDimensions();
     if (!d3.event.active) force.alphaTarget(0.2).restart();
-    d.fx = getBoundedCoord(d.x, tapestryDimensions['width']);
-    d.fy = getBoundedCoord(d.y, tapestryDimensions['height']);
+    d.fx = getBoundedCoord(d.x, tapestryDimensions.width);
+    d.fy = getBoundedCoord(d.y, tapestryDimensions.height);
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
@@ -308,7 +308,7 @@ function createSvgContainer(containerId) {
     return d3.select("#"+containerId)
                 .append("svg:svg")
                 .attr("id", containerId+"-svg")
-                .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height'])
+                .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height)
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g");
 }
@@ -316,7 +316,7 @@ function createSvgContainer(containerId) {
 function updateSvgDimensions(containerId) {
     var tapestryDimensions = getTapestryDimensions();
     d3.select("#"+containerId+"-svg")
-        .attr("viewBox", "0 0 " + tapestryDimensions['width'] + " " + tapestryDimensions['height']);
+        .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height);
     startForce();
 }
 
@@ -373,7 +373,7 @@ function filterLinks() {
         var targetIndex = findNodeIndex(targetId);
         if ((sourceId === root || targetId === root) && dataset.nodes[targetIndex].typeData.unlocked) {
             shouldRender = true;
-        } else if ((getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) && !inViewMode && dataset.nodes[targetIndex].typeData.unlocked) {
+        } else if ((getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) && !inViewMode && dataset.nodes[targetIndex].typeData.unlocked) {
             shouldRender = true;
         }
         return !shouldRender;
@@ -393,7 +393,7 @@ function filterLinks() {
         var targetIndex = findNodeIndex(targetId);
         if ((sourceId === root || targetId === root) && dataset.nodes[targetIndex].typeData.unlocked) {
             shouldRender = true;
-        } else if ((getChildren(root).indexOf(sourceId) > -1 || getChildren(root).indexOf(targetId) > -1) && !inViewMode && dataset.nodes[targetIndex].typeData.unlocked) {
+        } else if ((getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) && !inViewMode && dataset.nodes[targetIndex].typeData.unlocked) {
             shouldRender = true;
         }
         return shouldRender;
@@ -688,13 +688,13 @@ function buildPathAndButton() {
 function updateViewedProgress() {
     path = nodes
         .filter(function (d) {
-            return d.nodeType !== "" && d.typeData.unlocked
+            return d.nodeType !== "" && d.typeData.unlocked;
         })
         .selectAll("path")
         .data(function (d, i) {
             var data = d.typeData.progress;
             data.forEach(function (e) {
-                e.extra = {'nodeType': d.nodeType, 'unlocked': d.typeData.unlocked }
+                e.extra = {'nodeType': d.nodeType, 'unlocked': d.typeData.unlocked };
             })
             return pieGenerator(data, i);
         });
@@ -719,7 +719,7 @@ function updateViewedProgress() {
 }
 
 function arcTween(a) {
-    const i = d3.interpolate(this._current, a);
+    var i = d3.interpolate(this._current, a);
     this._current = i(1);
     return (t) => {
         return arcGenerator(adjustProgressBarRadii(i(t)))
@@ -1046,11 +1046,11 @@ function changeToViewMode(lightboxDimensions) {
             if (lightboxDimensions.adjustedOn === "width") {
                 d.fy = getTapestryDimensions().height / 2;
             } else {
-                d.fy = screenToSVG(0, $("#header").height() + NORMAL_RADIUS + ($("#spotlight-content").height() / 2)).y
+                d.fy = screenToSVG(0, $("#header").height() + NORMAL_RADIUS + ($("#spotlight-content").height() / 2)).y;
             }
         } else if (d.nodeType === "child") {
-            d.fx = coordinates[d.id]["fx"];
-            d.fy = coordinates[d.id]["fy"];
+            d.fx = coordinates[d.id].fx;
+            d.fy = coordinates[d.id].fy;
         }
     });
 
@@ -1263,10 +1263,10 @@ function getNodesDimensions(dataset) {
 function getTapestryDimensions() {
 
     var nodeDimensions = getNodesDimensions(originalDataset);
-    var tapestryWidth = nodeDimensions['x'];
-    var tapestryHeight = nodeDimensions['y'];
+    var tapestryWidth = nodeDimensions.x;
+    var tapestryHeight = nodeDimensions.y;
 
-    var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
+    var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
     var tapestryBrowserRatio = tapestryWidth / getBrowserWidth();
 
     if (tapestryHeight > getBrowserHeight() && tapestryAspectRatio < 1) {
@@ -1303,7 +1303,7 @@ function updateTapestrySize() {
         // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
         // For example, vertically long tapestries should be transposed so they are horizontally long on desktop,
         // but kept the same way on mobile phones where the browser is vertically longer
-        var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
+        var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
         var windowAspectRatio = getAspectRatio();
         if (tapestryAspectRatio > 1 && windowAspectRatio < 1 || tapestryAspectRatio < 1 && windowAspectRatio > 1) {
             transposeNodes();
