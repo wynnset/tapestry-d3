@@ -125,18 +125,12 @@ $.getJSON(jsonUrl,function(result){
     links = createLinks();
     nodes = createNodes();
     
-    
     filterLinks();
-
     buildNodeContents();
-    resizeNodes(root);
-
     
     //---------------------------------------------------
     // 4. START THE FORCED GRAPH
     //---------------------------------------------------
-
-    //console.log(getTapestryDimensions());
 
     startForce();
 
@@ -1036,12 +1030,9 @@ function getTapestryDimensions() {
     //     tapestryWidth *= 1.2;
     // }
 
-    console.log("width: " + tapestryWidth);
-    console.log("height: " + tapestryHeight);
     return {
         'width': tapestryWidth*1.2,
         'height': tapestryHeight*1.2
-
     };
 }
 
