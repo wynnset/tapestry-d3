@@ -1033,7 +1033,8 @@ function buildPathAndButton() {
     // Append addNodeButton
     nodes
         .filter(function (d) {
-            return d.nodeType === "root";
+            // return d.nodeType === "root";
+            return filterAddPermission(d);
         })
         .append("svg:foreignObject")
         .html(function (d) {
@@ -2028,6 +2029,19 @@ function getViewable(node) {
 
     // If it passes all the checks, return true!
     return true;
+}
+
+function filterAddPermission(node) {
+    console.log(node.permissions);
+    if (tapestryWpUserId) {
+        const userIndex = "user-" + tapestryWpUserId;
+        console.log(node.permissions[userIndex]);
+        if (node.permissions[userIndex] && node.permissions[userIndex].includes("add")) {
+            return node.nodeType === "root";
+        }
+    }
+
+    return false;
 }
 
 // Wrap function specifically for SVG text
