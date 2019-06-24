@@ -324,7 +324,6 @@ $(function() {
             }
         });
 
-        // TODO ADD request for permissions
 
         // Save to database, first save node then the link
         jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
@@ -342,8 +341,20 @@ $(function() {
                     // Add the new link to the dataset
                     dataset.links.push(newLink);
 
-                    hideNewNodeModal();
-                    redrawTapestryWithNewNode("new");
+                    $.ajax({
+                        url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + newNodeEntry.id + "/permissions",
+                        method: 'PUT',
+                        data: JSON.stringify(permissionData),
+                        success: function(result) {
+                            hideNewNodeModal();
+                            redrawTapestryWithNewNode("new");
+                        },
+                        error: function(e) {
+                            $("#add-node-error-msg").text(e.responseJSON.message);
+                            console.error("Error with adding permission");
+                            console.error(e);
+                        }
+                    });
                 }).fail(function(e) {
                     $("#add-node-error-msg").text(e.responseJSON.message);
                     console.error("Error with adding new link");
