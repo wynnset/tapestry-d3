@@ -2033,17 +2033,18 @@ function getViewable(node) {
 
 function checkPermission(node, permissionType) {
     // TODO if user is author or admin, have access to add/edit node automatically
-    
-    if (tapestryWpUserId) {
-        const userIndex = "user-" + tapestryWpUserId;
-        if (node.permissions[userIndex] && node.permissions[userIndex].includes(permissionType)) {
-            return node.nodeType === "root";
-        }
-    }
 
-    // TODO Check user's group id
+    // if (tapestryWpUserId) {
+    //     const userIndex = "user-" + tapestryWpUserId;
+    //     if (node.permissions[userIndex] && node.permissions[userIndex].includes(permissionType)) {
+    //         return node.nodeType === "root";
+    //     }
+    // }
 
-    return false;
+    // // TODO Check user's group id
+
+    // return false;
+    return node.nodeType === "root";
 }
 
 // Wrap function specifically for SVG text
