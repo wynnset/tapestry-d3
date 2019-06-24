@@ -1069,7 +1069,7 @@ function getBoundedCoord(coord, maxCoord) {
 /* Add 'depth' parameter to each node recursively. 
    The depth is determined by the number of levels from the root each node is. */
 
-   function addDepthToNodes(id, depth, visited) {
+function addDepthToNodes(id, depth, visited) {
     visited.push(id);
 
     var depthAt = 0;
@@ -1138,7 +1138,7 @@ function findMaxDepth(id) {
 /* Find children based on depth. 
    depth = 0 returns node + children, depth = 1 returns node + children + children's children, etc. */
 
-   function getChildren(id, depth) {
+function getChildren(id, depth) {
     if (typeof depth === 'undefined') {
         depth = tapestryDepth;
     }
