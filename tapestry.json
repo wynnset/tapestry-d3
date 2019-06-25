@@ -32,6 +32,7 @@
                 "mediaHeight": 600,
                 "unlocked": true
             },
+            "permissions": [],
             "fx": 800,
             "fy": 470
         },
@@ -57,6 +58,7 @@
                 "mediaHeight": 600,
                 "unlocked": false
             },
+            "permissions": [],
             "fx": 450,
             "fy": 150
         },
@@ -82,6 +84,7 @@
                 "mediaHeight": 600,
                 "unlocked": false
             },
+            "permissions": [],
             "fx": 450,
             "fy": 700
         },
@@ -107,6 +110,7 @@
                 "mediaHeight": 600,
                 "unlocked": false
             },
+            "permissions": [],
             "fx": 100,
             "fy": 470
         },
@@ -132,6 +136,7 @@
                 "mediaHeight": 600,
                 "unlocked": false
             },
+            "permissions": [],
             "fx": 1200,
             "fy": 470
         },
@@ -157,6 +162,7 @@
                 "mediaHeight": 600,
                 "unlocked": false
             },
+            "permissions": [],
             "fx": 1550,
             "fy": 150
         },
@@ -182,6 +188,7 @@
                 "mediaHeight": 600,
                 "unlocked": false
             },
+            "permissions": [],
             "fx": 1880,
             "fy": 470
         },
@@ -207,6 +214,7 @@
                 "mediaHeight": 600,
                 "unlocked": false
             },
+            "permissions": [],
             "fx": 1550,
             "fy": 700
         },
@@ -232,6 +240,7 @@
                 "mediaHeight": 600,
                 "unlocked": false
             },
+            "permissions": [],
             "fx": 2100,
             "fy": 700
         },
@@ -257,6 +266,7 @@
                 "mediaHeight": 600,
                 "unlocked": false
             },
+            "permissions": [],
             "fx": 2100,
             "fy": 150
         }
