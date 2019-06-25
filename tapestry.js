@@ -90,7 +90,7 @@ $.getJSON(jsonUrl,function(result){
         // but kept the same way on mobile phones where the browser is vertically longer
         var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
         var windowAspectRatio = getAspectRatio();
-        if (tapestryAspectRatio >= 1 && windowAspectRatio <= 1 || tapestryAspectRatio <= 1 && windowAspectRatio >= 1) {  /// ORIGINAL VALUE = 1 - ford
+        if (tapestryAspectRatio >= 1 && windowAspectRatio <= 1 || tapestryAspectRatio <= 1 && windowAspectRatio >= 1) {
              transposeNodes();
         }
         
@@ -98,8 +98,7 @@ $.getJSON(jsonUrl,function(result){
         updateSvgDimensions(TAPESTRY_CONTAINER_ID);
     }
 
-    //updateTapestrySize();
-    // also do it whenever window is resized
+    // do it whenever window is resized
     $(window).resize(function(){
         updateTapestrySize();
     });
@@ -121,7 +120,7 @@ $.getJSON(jsonUrl,function(result){
         rootNodeImageHeightDiff += dataset.settings.thumbRootDiff;
     }
     
-    svg = createSvgContainer(TAPESTRY_CONTAINER_ID); 
+    svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
     links = createLinks();
     nodes = createNodes();
     
@@ -295,7 +294,7 @@ function createSvgContainer(containerId) {
     return d3.select("#"+containerId)
                 .append("svg:svg")
                 .attr("id", containerId+"-svg")
-                .attr("viewBox", "-20 -20 " + (tapestryDimensions['width']+MAX_RADIUS) + " " + (tapestryDimensions['height']+MAX_RADIUS)) // rm +20 - ford
+                .attr("viewBox", "-20 -20 " + (tapestryDimensions['width']+MAX_RADIUS) + " " + (tapestryDimensions['height']+MAX_RADIUS))
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g")
                 .attr("transform", "translate(-20, -20)");
@@ -305,7 +304,7 @@ function createSvgContainer(containerId) {
 function updateSvgDimensions(containerId) {
     var tapestryDimensions = getTapestryDimensions();
     d3.select("#"+containerId+"-svg")
-        .attr("viewBox", "0 0 " + (tapestryDimensions['width']+MAX_RADIUS) + " " + (tapestryDimensions['height']+MAX_RADIUS)); // rm +20 - ford
+        .attr("viewBox", "0 0 " + (tapestryDimensions['width']+MAX_RADIUS) + " " + (tapestryDimensions['height']+MAX_RADIUS));
     startForce();
 }
 
@@ -1020,7 +1019,7 @@ function getTapestryDimensions() {
     var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
     var tapestryBrowserRatio = tapestryWidth / getBrowserWidth();
 
-    if (tapestryHeight > getBrowserHeight() && tapestryAspectRatio < 1) {  // this was originally 1 instead of 5 - ford
+    if (tapestryHeight > getBrowserHeight() && tapestryAspectRatio < 1) {
         tapestryWidth *= tapestryHeight/getBrowserHeight() / tapestryBrowserRatio;
     }
     
@@ -1183,7 +1182,7 @@ function getRadius(d) {
         nodeDiff = GRANDCHILD_RADIUS_DIFF;
     } else nodeDiff = 0
 
-    return ((NORMAL_RADIUS + nodeDiff));
+    return (NORMAL_RADIUS + nodeDiff);
 }
 
 //Updates the data in the node for how much the video has been viewed
