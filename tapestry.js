@@ -171,7 +171,6 @@ $(function() {
     $("#submit-add-root-node").on("click", function(e) {
         e.preventDefault(); // cancel the actual submit
         var formData = $("form").serializeArray();
-        // TODO: validation here
         addNewNode(formData, "root");
     });
 
@@ -179,7 +178,6 @@ $(function() {
     $("#submit-add-new-node").on("click", function(e) {
         e.preventDefault(); // cancel the actual submit
         var formData = $("form").serializeArray();
-        // TODO: validation here
         addNewNode(formData, "new");
     });
 
@@ -212,6 +210,12 @@ $(function() {
     // Function for adding a new node
     // type is either "root" or "new" node
     function addNewNode(formData, type) {
+        var errorMsg = validateNewNode(formData, type);
+        if (errorMsg) {
+            alert(errorMsg);
+            return;
+        }
+
         var isAddNewNode = (type == "new") ? true : false;
 
         // Add the node data first
@@ -480,6 +484,69 @@ $(function() {
                 });
             }
         }).appendTo("#" + type + "-" + id + "-editcell");
+    }
+
+    function validateNewNode(formData, type) {
+        var errMsg = "";
+
+        for (var i = 0; i < formData.length; i++) {
+            var fieldName = formData[i].name;
+            var fieldValue = formData[i].value;
+
+            switch (fieldName) {
+                case "title":
+                    if (fieldValue === "") {
+                        errMsg += "Please enter a title \n";
+                    }
+                    break;
+                case "imageURL":
+                    if (fieldValue === "") {
+                        errMsg += "Please enter a thumbnail URL \n";
+                    }
+                    break;
+                case "appearsAt":
+                    if (!onlyContainsDigits(fieldValue) && type === "new") {
+                        errMsg += "Please enter numeric value for Appears At \n";
+                    }
+                    break;
+                default:
+                    break;
+            }
+            if ($("#mediaFormat").val() === "mp4") {
+                switch (fieldName) {
+                    case "mp4-mediaURL":
+                        if (fieldValue === "") {
+                            errMsg += "Please enter a MP4 video URL \n";
+                        }
+                        break;
+                    case "mp4-mediaDuration":
+                        if (!onlyContainsDigits(fieldValue)) {
+                            errMsg += "Please enter numeric value for media duration \n";
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            } else if ($("#mediaFormat").val() === "h5p") {
+                switch (fieldName) {
+                    case "h5p-mediaURL":
+                        if (fieldValue === "") {
+                            errMsg += "Please enter a H5P URL \n";
+                        }
+                        break;
+                    case "h5p-mediaDuration":
+                        if (!onlyContainsDigits(fieldValue)) {
+                            errMsg += "Please enter numeric value for media duration \n";
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                errMsg += "Please enter correct media format \n";
+            }
+        }
+        return errMsg;
     }
 });
 
