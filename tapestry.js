@@ -199,6 +199,21 @@ tapestryDepthSlider.onchange = function() {
 };
 
 /****************************************************
+ * LINK AND UNLINK NODES
+ ****************************************************/
+function addLink(source, target, value, appearsAt) {
+    jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt }), function(result) {
+        // Add the new link to the dataset
+        dataset.links.push({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt });
+        // redraw tapestry
+    }).fail(function(e) {
+        console.error("Error with adding new link");
+        console.error(e);
+    });
+}
+
+
+/****************************************************
  * D3 RELATED FUNCTIONS
  ****************************************************/
 
