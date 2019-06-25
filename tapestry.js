@@ -45,7 +45,7 @@ var dataset, root, svg, links, nodes,               // Basics
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
-
+    console.log(dataset);
     //---------------------------------------------------
     // 1. GET PROGRESS FROM COOKIE (IF ENABLED)
     //---------------------------------------------------
@@ -201,16 +201,38 @@ tapestryDepthSlider.onchange = function() {
 /****************************************************
  * LINK AND UNLINK NODES
  ****************************************************/
-function addLink(source, target, value, appearsAt) {
-    jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt }), function(result) {
-        // Add the new link to the dataset
-        dataset.links.push({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt });
-        // redraw tapestry
-    }).fail(function(e) {
-        console.error("Error with adding new link");
-        console.error(e);
+$(function() {
+    $("#tapestry-link-btn").on("click", function() {
+        $("#addLinkModal").modal();
     });
-}
+
+    $("#submit-add-link").on("click", function() {
+        var sourceId = parseInt($("#add-link-source").val());
+        var targetId = parseInt($("#add-link-target").val());
+        addLink(sourceId, targetId, "1", 100);
+    });
+
+    function addLink(source, target, value, appearsAt) {
+        // Check if link in dataset exists
+        for (link in dataset.links) {
+            if (link.source === source && link.target === target) {
+                alert("Link already exists");
+                return;
+            }
+        }
+
+        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt }), function(result) {
+            // Add the new link to the dataset
+            dataset.links.push({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt });
+            // redraw tapestry
+            $("#addLinkModal").modal("hide");
+        }).fail(function(e) {
+            console.error("Error with adding new link");
+            console.error(e);
+        });
+    };
+});
+
 
 
 /****************************************************

@@ -315,3 +315,9 @@ i {
         right: 45px;
     }
 }
+
+#tapestry-link-btn {
+    float: right;
+    margin-right: 5%;
+    cursor: pointer;
+}
