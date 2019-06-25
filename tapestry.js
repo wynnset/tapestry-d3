@@ -433,8 +433,7 @@ $(function() {
 
     $("#user-permissions-btn").click(function() {
         var userId = $("#user-number-input").val();
-        // TODO CHECK IF VALID userid
-        if (userId && onlyContainsDigits(userId)) {
+        if (userId && onlyContainsDigits(userId) && $("#user-" + userId + "-editcell").val() != "") {
             appendPermissionsRow(userId, "user");
             $("#user-number-input").val("");
         } else {
@@ -444,8 +443,7 @@ $(function() {
 
     $("#group-permissions-btn").click(function() {
         var groupId = $("#group-number-input").val();
-        // TODO CHECK IF VALID groupid
-        if (groupId && onlyContainsDigits(groupId)) {
+        if (groupId && onlyContainsDigits(groupId) && $("#group-" + groupId + "-editcell").val() != "") {
             appendPermissionsRow(groupId, "group");
             $("#group-number-input").val("");
         } else {
