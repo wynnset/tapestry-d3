@@ -343,7 +343,7 @@ function createSvgContainer(containerId) {
 function updateSvgDimensions(containerId) {
     var tapestryDimensions = getTapestryDimensions();
     d3.select("#"+containerId+"-svg")
-        .attr("viewBox", "0 0 " + (tapestryDimensions.width + MAX_RADIUS) + " " + (tapestryDimensions.height + MAX_RADIUS)); // rm +20 - ford
+        .attr("viewBox", "0 0 " + (tapestryDimensions.width + MAX_RADIUS) + " " + (tapestryDimensions.height + MAX_RADIUS));
     startForce();
 }
 
