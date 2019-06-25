@@ -30,12 +30,12 @@ const // calculated
 var dataset, root, svg, links, nodes,               // Basics
     path, pieGenerator, arcGenerator,               // Donut
     simulation,                                     // Force
-    tapestrySlug, saveProgress = true,      // Cookie
+    tapestrySlug, saveProgress = true,              // Cookie
     nodeImageHeight = 280,
     nodeImageWidth = 520,
     rootNodeImageHeightDiff = 46,
     h5pVideoSettings = {},
-    tapestryDepth = 2;                              // default slider input
+    tapestryDepth = 2;                              // Default depth of Tapestry
 
 /****************************************************
  * INITIALIZATION
@@ -124,9 +124,9 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
         // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
         // For example, vertically long tapestries should be transposed so they are horizontally long on desktop,
         // but kept the same way on mobile phones where the browser is vertically longer
-        var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
+        var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
         var windowAspectRatio = getAspectRatio();
-        if (tapestryAspectRatio >= 1 && windowAspectRatio <= 1 || tapestryAspectRatio <= 1 && windowAspectRatio >= 1) {  /// ORIGINAL VALUE = 1 - ford
+        if (tapestryAspectRatio >= 1 && windowAspectRatio <= 1 || tapestryAspectRatio <= 1 && windowAspectRatio >= 1) {
              transposeNodes();
         }
         
@@ -243,8 +243,8 @@ function startForce() {
 
         // "center" determines where the center of gravity is
         .force("center", d3.forceCenter()
-            .x(tapestryDimensions['width'] / 2)
-            .y(tapestryDimensions['height'] / 2))
+            .x(tapestryDimensions.width / 2)
+            .y(tapestryDimensions.height / 2))
 
         // determines the minimum distance that nodes are allowed to be positioned at
         .force("collision", d3.forceCollide().radius(function (d) {
@@ -277,26 +277,26 @@ function ticked() {
     var tapestryDimensions = getTapestryDimensions();
     links
         .attr("x1", function (d) {
-            return getBoundedCoord(d.source.x, tapestryDimensions['width']);
+            return getBoundedCoord(d.source.x, tapestryDimensions.width);
         })
         .attr("y1", function (d) {
-            return getBoundedCoord(d.source.y, tapestryDimensions['height']);
+            return getBoundedCoord(d.source.y, tapestryDimensions.height);
         })
         .attr("x2", function (d) {
-            return getBoundedCoord(d.target.x, tapestryDimensions['width']);
+            return getBoundedCoord(d.target.x, tapestryDimensions.width);
         })
         .attr("y2", function (d) {
-            return getBoundedCoord(d.target.y, tapestryDimensions['height']);
+            return getBoundedCoord(d.target.y, tapestryDimensions.height);
         });
     nodes
         .attr("cx", function (d) {
-            return getBoundedCoord(d.x, tapestryDimensions['width']);
+            return getBoundedCoord(d.x, tapestryDimensions.width);
         })
         .attr("cy", function (d) {
-            return getBoundedCoord(d.y, tapestryDimensions['height']);
+            return getBoundedCoord(d.y, tapestryDimensions.height);
         })
         .attr("transform", function (d) {
-            return "translate(" + getBoundedCoord(d.x, tapestryDimensions['width']) + "," + getBoundedCoord(d.y, tapestryDimensions['height']) + ")";
+            return "translate(" + getBoundedCoord(d.x, tapestryDimensions.width) + "," + getBoundedCoord(d.y, tapestryDimensions.height) + ")";
         });
 }
 
@@ -307,8 +307,8 @@ function dragstarted(d) {
     var tapestryDimensions = getTapestryDimensions();
     if (!d3.event.active) simulation.alphaTarget(0.2).restart();
     
-    d.x = getBoundedCoord(d.x, tapestryDimensions['width']);
-    d.y = getBoundedCoord(d.y, tapestryDimensions['height']);
+    d.x = getBoundedCoord(d.x, tapestryDimensions.width);
+    d.y = getBoundedCoord(d.y, tapestryDimensions.height);
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
@@ -334,7 +334,7 @@ function createSvgContainer(containerId) {
     return d3.select("#"+containerId)
                 .append("svg:svg")
                 .attr("id", containerId+"-svg")
-                .attr("viewBox", "-20 -20 " + (tapestryDimensions['width']+MAX_RADIUS) + " " + (tapestryDimensions['height']+MAX_RADIUS)) // rm +20 - ford
+                .attr("viewBox", "-20 -20 " + (tapestryDimensions.width + MAX_RADIUS) + " " + (tapestryDimensions.height + MAX_RADIUS)) // rm +20 - ford
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g")
                 .attr("transform", "translate(-20, -20)");
@@ -344,7 +344,7 @@ function createSvgContainer(containerId) {
 function updateSvgDimensions(containerId) {
     var tapestryDimensions = getTapestryDimensions();
     d3.select("#"+containerId+"-svg")
-        .attr("viewBox", "0 0 " + (tapestryDimensions['width']+MAX_RADIUS) + " " + (tapestryDimensions['height']+MAX_RADIUS)); // rm +20 - ford
+        .attr("viewBox", "0 0 " + (tapestryDimensions.width + MAX_RADIUS) + " " + (tapestryDimensions.height + MAX_RADIUS)); // rm +20 - ford
     startForce();
 }
 
@@ -1053,10 +1053,10 @@ function getNodesDimensions(dataset) {
 function getTapestryDimensions() {
 
     var nodeDimensions = getNodesDimensions(dataset);
-    var tapestryWidth = nodeDimensions['x'];
-    var tapestryHeight = nodeDimensions['y'];
+    var tapestryWidth = nodeDimensions.x;
+    var tapestryHeight = nodeDimensions.y;
 
-    var tapestryAspectRatio = nodeDimensions['x'] / nodeDimensions['y'];
+    var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
     var tapestryBrowserRatio = tapestryWidth / getBrowserWidth();
 
     if (tapestryHeight > getBrowserHeight() && tapestryAspectRatio < 1) {  // this was originally 1 instead of 5 - ford
