@@ -212,6 +212,7 @@ $(function() {
         addLink(sourceId, targetId, "1", 100);
     });
 
+    // To establish two way connections
     function addLink(source, target, value, appearsAt) {
         // Check if link in dataset exists
         for (link in dataset.links) {
@@ -231,6 +232,21 @@ $(function() {
             console.error(e);
         });
     };
+
+    // function removeLink(source, target) {
+    //     jQuery.delete(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify({"source": source, "target": target }), function(result) {
+    //         for (var i = 0; i < dataset.links.length; i++) {
+    //             if (dataset.links[i].source === source && dataset.links[i].target === target) {
+    //                 dataset.links.splice(i, 1);
+    //                 break;
+    //             }
+    //         }
+    //         //redraw tapestry
+    //     }).fail(function(e) {
+    //         console.error("Error with removing link");
+    //         console.error(e);
+    //     });
+    // }
 });
 
 
