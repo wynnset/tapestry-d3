@@ -1116,7 +1116,12 @@ function addDepthToNodes(id, depth, visited) {
 function findMaxDepth(id) {
 
     // create the .depth parameter for every node
-    addDepthToNodes(id, 0, []);
+    if (dataset.nodes && dataset.nodes.length === 0) {
+        return 0;
+    } else {
+        addDepthToNodes(id, 0, []);
+    }
+
     var nodes = dataset.nodes;
 
     // idList: collect node IDs since they're numbered dynamically
@@ -1497,7 +1502,7 @@ $(document).ready(function(){
         var y = event.clientY + $(window).scrollTop();
         recordAnalyticsEvent('user', 'click', 'screen', null, {'x': x, 'y': y});
     }, true);
-    
+
     document.getElementById('tapestry').addEventListener('click', function(event) {
         var x = event.clientX + $(window).scrollLeft();
         var y = event.clientY + $(window).scrollTop();
