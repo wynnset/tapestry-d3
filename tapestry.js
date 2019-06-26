@@ -56,9 +56,12 @@ jQuery.ajaxSetup({
     }
 });
 
-jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
+$.getJSON(jsonUrl, function(result){
+//jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
+    dataset.nodes[0].typeData.unlocked = true;
     originalDataset = result;
+    console.log(dataset);
     saveCoordinates();
 
     //---------------------------------------------------
