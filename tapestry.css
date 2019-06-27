@@ -56,6 +56,12 @@ body {
     margin-top: 100px;
 }
 
+#tapestry-svg > g {
+    transform: translate(-8.5px, 0);
+}
+
+/* depth slider */
+
 #header slider-wrapper {
     position: absolute;
     padding-top: 100px;
@@ -132,16 +138,17 @@ body {
     opacity: 1;
     transition: all 1s;
     transition-timing-function: ease-in;
+    border: solid 1px #999;
+    border-radius: 40px;
+    overflow: hidden;
+}
+#spotlight-content > * {
+    background: #000;
+    outline: none;
 }
 #spotlight-content[data-media-format=mp4] > * {
-    box-shadow: 0 0 800px #000;
-    background: #000;
     width: 100%;
     height: auto;
-}
-#spotlight-content[data-media-format=h5p] {
-    box-shadow: 0 0 800px #000;
-    background: #000;
 }
 
 #spotlight-overlay {
