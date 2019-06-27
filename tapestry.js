@@ -60,7 +60,9 @@ jQuery.ajaxSetup({
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
-    dataset.nodes[0].typeData.unlocked = true;
+    if (dataset && dataset.nodes && dataset.nodes.length > 0) {
+        dataset.nodes[0].typeData.unlocked = true;
+    }
     originalDataset = result;
     saveCoordinates();
 
@@ -581,12 +583,17 @@ function dragged(d) {
 
 function dragended(d) {
     if (!d3.event.active) force.alphaTarget(0);
+    // move the assignment to after the request resolve
     d.fx = d.x;
     d.fy = d.y;
-    
-    // Uncomment the line below to get the node positions saved into the container
-    // and then copy over to json file to have updated coordinates
-    // $('#h5p-log').text(JSON.stringify(dataset.nodes));
+
+    // TODO Uncomment to save coordinates to database
+    // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/coordinates", JSON.stringify({fx: d.x, fy: d.y}), function(result) {
+
+    // }).fail(function(e) {
+    //     console.error("Error saving coordinates of nodes");
+    //     console.error(e);
+    // });
 
     recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
 }
