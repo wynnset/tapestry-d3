@@ -449,6 +449,17 @@ $(function() {
 /****************************************************
  * SLIDER RELATED FUNCTIONS
  ****************************************************/
+function hideAndUnhideDepthSlider(root) {
+    if (findMaxDepth(root) >= 3) {
+        if ($("#slider-wrapper")) {
+            $("#slider-wrapper").show();
+        }
+    } else {
+        if ($("#slider-wrapper")) {
+            $("#slider-wrapper").hide();
+        }
+    }
+}
 
 function createDepthSlider() {
     // Instantiate input element, set its attributes and class.
@@ -475,6 +486,7 @@ function createDepthSlider() {
 
 // call it now
 createDepthSlider();
+hideAndUnhideDepthSlider(root);
 
 var tapestryDepthSlider = document.getElementById("tapestry-depth-slider");
 
@@ -730,7 +742,7 @@ function filterLinks() {
 /* Draws the components that make up node */
 function buildNodeContents() {
     tapestryDepthSlider.max = findMaxDepth(root);
-    
+    hideAndUnhideDepthSlider(root);
     /* Draws the circle that defines how large the node is */
     nodes.append("rect")
         .attr("class", function (d) {
@@ -1738,8 +1750,13 @@ function addDepthToNodes(id, depth, visited) {
 
 function findMaxDepth(id) {
 
-    // create the .depth parameter for every node
-    addDepthToNodes(id, 0, []);
+    if ((dataset && dataset.nodes.length === 0) || !id)  {
+        return 0;
+    } else {
+        // create the .depth parameter for every node
+        addDepthToNodes(id, 0, []);
+    }
+
     var nodes = dataset.nodes;
 
     // idList: collect node IDs since they're numbered dynamically
