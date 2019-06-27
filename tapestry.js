@@ -592,17 +592,21 @@ function dragged(d) {
 
 function dragended(d) {
     if (!d3.event.active) force.alphaTarget(0);
-    // move the assignment to after the request resolve
-    d.fx = d.x;
-    d.fy = d.y;
 
-    // TODO Uncomment to save coordinates to database
-    // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/coordinates", JSON.stringify({fx: d.x, fy: d.y}), function(result) {
+    $.ajax({
+        url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + d.id + "/coordinates",
+        method: 'PUT',
+        data: JSON.stringify({x: d.x, y: d.y}),
+        success: function(result) {
+            d.fx = d.x;
+            d.fy = d.y;
+        },
+        error: function(e) {
+            console.error("Error saving coordinates of nodes");
+            console.error(e);
+        }
+    });
 
-    // }).fail(function(e) {
-    //     console.error("Error saving coordinates of nodes");
-    //     console.error(e);
-    // });
 
     recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
 }
