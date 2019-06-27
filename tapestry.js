@@ -363,9 +363,6 @@ $(function() {
         setLinkTypes(root);
         setUnlocked();
 
-        if (type === "root") {
-            svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
-        }
         // Rebuild the nodes and links
         links = createLinks();
         nodes = createNodes();
