@@ -18,6 +18,7 @@ var // declared constants
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
     FONT_ADJUST = 1.25,
+    TIME_BETWEEN_SAVE_PROGRESS = 5, // Means the number of seconds between each save progress call
     NODE_UNLOCK_TIMEFRAME = 2; // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
     TAPESTRY_PROGRESS_URL = apiUrl + "/users/progress",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings";
@@ -29,11 +30,12 @@ var // declared variables
     linkForce, collideForce, force,                 // Force
     nodeCoordinates = [],                           // For saving the coordinates of the Tapestry pre transition to play mode
     adjustedRadiusRatio = 1,                        // Radius adjusted for view mode
-    tapestrySlug, saveProgress = true,      // Cookie
+    tapestrySlug, 
+    saveProgress = true, progressLastSaved = new Date(), // Saving Progress
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
-    h5pVideoSettings = {};
+    h5pVideoSettings = {},
     tapestryDepth = 2;                              // Default depth of Tapestry
 
 
@@ -151,12 +153,10 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 
     
     //---------------------------------------------------
-    // 4. START THE FORCED GRAPH
+    // 4. UPDATE SVG DIMENSIONS AND START THE GRAPH
     //---------------------------------------------------
     
-    // startForce();
-    // No longer need the above call because updateSvgDimensions(containerId) already calls startForce();
-    // Calling the update here is necessary because we want the tapestry size to be at least the size of the browser
+    // Ensure tapestry size fits well into the browser and start force
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
@@ -2022,32 +2022,35 @@ function updateViewedValue(id, amountViewedTime, duration) {
         
         // Save to database if logged in
         if (tapestryWpUserId) {
-            
-            if (id) {
-                var progData = {
-                    "post_id": tapestryWpPostId,
-                    "node_id": id,
-                    "progress_value": amountViewed
-                };
-                jQuery.post(TAPESTRY_PROGRESS_URL, progData, function(result) {})
-                .fail(function(e) {
-                    console.error("Error with adding progress data");
-                    console.error(e);
-                });
-            }
+            // Send save progress requests 5 seconds after the last time saved
+            var secondsDiff = Math.abs((new Date().getTime() - progressLastSaved.getTime()) / 1000);
+            if (secondsDiff > TIME_BETWEEN_SAVE_PROGRESS) {
+                if (id) {
+                    var progData = {
+                        "post_id": tapestryWpPostId,
+                        "node_id": id,
+                        "progress_value": amountViewed
+                    };
+                    jQuery.post(TAPESTRY_PROGRESS_URL, progData, function(result) {})
+                    .fail(function(e) {
+                        console.error("Error with adding progress data");
+                        console.error(e);
+                    });
+                }
 
-            if (h5pVideoSettings && !isEmptyObject(h5pVideoSettings)) {
-                var h5pData = {
-                    "post_id": tapestryWpPostId,
-                    "json": JSON.stringify(h5pVideoSettings)
-                };
-                jQuery.post(TAPESTRY_H5P_SETTINGS_URL, h5pData, function(result) {})
-                .fail(function(e) {
-                    console.error("Error with adding h5p video settings");
-                    console.error(e);
-                });
+                if (h5pVideoSettings && !isEmptyObject(h5pVideoSettings)) {
+                    var h5pData = {
+                        "post_id": tapestryWpPostId,
+                        "json": JSON.stringify(h5pVideoSettings)
+                    };
+                    jQuery.post(TAPESTRY_H5P_SETTINGS_URL, h5pData, function(result) {})
+                    .fail(function(e) {
+                        console.error("Error with adding h5p video settings");
+                        console.error(e);
+                    });
+                }
+                progressLastSaved = new Date();
             }
-
         } else {
             // Set Cookies if not logged in
             Cookies.set("progress-data-"+tapestrySlug, progressObj);
