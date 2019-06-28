@@ -31,7 +31,7 @@ var // declared variables
     nodeCoordinates = [],                           // For saving the coordinates of the Tapestry pre transition to play mode
     adjustedRadiusRatio = 1,                        // Radius adjusted for view mode
     tapestrySlug, 
-    saveProgress = true, saveProgressCounter = 0,   // Saving Progress
+    saveProgress = true, progressLastSaved = new Date(), // Saving Progress
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
@@ -1907,9 +1907,9 @@ function updateViewedValue(id, amountViewedTime, duration) {
         
         // Save to database if logged in
         if (tapestryWpUserId) {
-            saveProgressCounter++;
-            // Send requests every 5 seconds
-            if (saveProgressCounter == TIME_BETWEEN_SAVE_PROGRESS) {
+            // Send save progress requests 5 seconds after the last time saved
+            var secondsDiff = Math.abs((new Date().getTime() - progressLastSaved.getTime()) / 1000);
+            if (secondsDiff > TIME_BETWEEN_SAVE_PROGRESS) {
                 if (id) {
                     var progData = {
                         "post_id": tapestryWpPostId,
@@ -1934,7 +1934,7 @@ function updateViewedValue(id, amountViewedTime, duration) {
                         console.error(e);
                     });
                 }
-                saveProgressCounter = 0;
+                progressLastSaved = new Date();
             }
         } else {
             // Set Cookies if not logged in
