@@ -449,6 +449,11 @@ body {font-family: Arial, Helvetica, sans-serif;}
     cursor: pointer;
 }
 
+#root-node-label {
+    text-align: center; 
+    font-size: 1.5em;
+}
+
 #root-node-btn:hover,
 #root-node-btn:active {
     transform: scale(1.1);

@@ -338,7 +338,7 @@ $(function() {
                 root = dataset.rootId; // need to set root to newly created node
 
                 redrawTapestryWithNewNode("root");
-                $("#root-node-btn").hide(); // hide the root node button after creating it.
+                $("#root-node-container").hide(); // hide the root node button after creating it.
             }
         }).fail(function(e) {
             $("#add-node-error-msg").text(e.responseJSON.message);
