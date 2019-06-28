@@ -1987,20 +1987,37 @@ function setUnlocked(childIndex) {
         for (var i = 0; i < dataset.links.length; i++) {
             childIndex = findNodeIndex(dataset.links[i].target.id);
             parentIndex = findNodeIndex(dataset.links[i].source.id);
+            // TODO move unlocked out of typeData
             if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
                 dataset.nodes[childIndex].typeData.unlocked = true;
-                // Save to database 
-                // TODO: test for integration with database
-                // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/unlocked", JSON.stringify({"unlocked" : true}), function(result) {})
-                // .fail(function(e) {
-                //     console.error("Error with update node's unlock property");
-                //     console.error(e);
-                // });
+                $.ajax({
+                    url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/typeData",
+                    method: 'PUT',
+                    data: JSON.stringify(dataset.nodes[childIndex].typeData),
+                    success: function(result) {
+                    },
+                    error: function(e) {
+                        console.error("Error with update node's unlock property");
+                        console.error(e);
+                    }
+                });
             }
         }
     }
     else {
+        // TODO move unlocked out of typeData
         dataset.nodes[childIndex].typeData.unlocked = true;
+        $.ajax({
+            url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/typeData",
+            method: 'PUT',
+            data: JSON.stringify(dataset.nodes[childIndex].typeData),
+            success: function(result) {
+            },
+            error: function(e) {
+                console.error("Error with update node's unlock property");
+                console.error(e);
+            }
+        });
     }
 }
 
