@@ -252,8 +252,8 @@ $(function() {
                 "mediaHeight": 600,
                 "unlocked": true        //TODO might need to change based on edit mode or view mode
             },
-            "fx": 800,
-            "fy": 470
+            "fx": getBrowserWidth(),
+            "fy": getBrowserHeight()
         };
 
         if (isAddNewNode) {
@@ -1630,27 +1630,40 @@ function getTapestryDimensions() {
     var tapestryWidth = nodeDimensions.x;
     var tapestryHeight = nodeDimensions.y;
 
-    var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
-    var tapestryBrowserRatio = tapestryWidth / getBrowserWidth();
+    var tapestryViewportWidth = getBrowserWidth() - $('#'+TAPESTRY_CONTAINER_ID).offset().left;
+    var tapestryViewportHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
 
-    if (tapestryHeight > getBrowserHeight() && tapestryAspectRatio < 1) {
-        tapestryWidth *= tapestryHeight/getBrowserHeight() / tapestryBrowserRatio;
+    var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
+    var tapestryBrowserRatio = tapestryWidth / tapestryViewportWidth;
+
+    if (tapestryHeight > tapestryViewportHeight && tapestryAspectRatio < 1) {
+        tapestryWidth *= tapestryHeight/tapestryViewportHeight / tapestryBrowserRatio;
     }
-    
-    // Work-around for an issue on iPhone that zooms in the tapestry too much
-    if (getBrowserWidth() < 600) {
-        tapestryHeight *= 1.2;
-        tapestryWidth *= 1.2;
+
+    if (tapestryViewportHeight < tapestryHeight) {
+        var scaleRatio = tapestryViewportHeight / tapestryHeight;
+        tapestryWidth /= scaleRatio;
     }
+
+    // var tapestryViewportWidth = getBrowserWidth() - $('#'+TAPESTRY_CONTAINER_ID).offset().left;
+    // var tapestryViewportHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
 
     // Set to be at least the size of the browser
+    if (tapestryWidth < tapestryViewportWidth) {
+        tapestryWidth = tapestryViewportWidth;
+    }
+    if (tapestryHeight < tapestryViewportHeight) {
+        tapestryHeight = tapestryViewportHeight;
+    }
+
+    // Set to be at least the size of the SVG
     if (document.getElementById("tapestry-svg") !== null) {
-        if (tapestryWidth < screenToSVG(getBrowserWidth(), 0).x) {
-            tapestryWidth = screenToSVG(getBrowserWidth(), 0).x;
+        if (tapestryWidth < screenToSVG(tapestryViewportWidth, 0).x) {
+            tapestryWidth = screenToSVG(tapestryViewportWidth, 0).x;
         }
 
-        if (tapestryHeight < screenToSVG(0, getBrowserHeight() - $("#footer").height()).y) {
-            tapestryHeight = screenToSVG(0, getBrowserHeight() - $("#footer").height()).y;
+        if (tapestryHeight < screenToSVG(0, tapestryViewportHeight - $("#footer").height()).y) {
+            tapestryHeight = screenToSVG(0, tapestryViewportHeight - $("#footer").height()).y;
         }
     }
 

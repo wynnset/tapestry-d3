@@ -126,6 +126,10 @@ body {
     text-align:center;
 }
 
+div.modal {
+    top: 80px;
+}
+
 #spotlight-content {
     position: absolute;
     top: 5vh;
