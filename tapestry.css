@@ -60,23 +60,28 @@ body {
     transform: translate(-8.5px, 0);
 }
 
+/* Tapestry Controls */
+
+#tapestry-controls-wrapper {
+    margin: -30px 10% 20px;
+    padding: 10px 20px;
+    float: right;
+    width: auto;
+    background: #EEE;
+    box-shadow: 0 0 7px 0 #BBB;
+}
+#tapestry-controls-wrapper > * {
+    float: left;
+    padding-right: 20px;
+}
+
 /* depth slider */
 
-#header slider-wrapper {
-    position: absolute;
-    padding-top: 100px;
-    padding-left: 100px;
-}
-
-#slider-wrapper {
-    padding-left: 10%;
-}
-
 #tapestry-depth-slider {
+    margin-top: 6px;
     outline: none;
     background: #d3d3d3;
-    height: 15px;
-    border-radius: 20%;
+    height: 10px;
     opacity: 0.7;
     transition: opacity .2s;
 }

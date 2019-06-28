@@ -250,7 +250,7 @@ $(function() {
                 "mediaURL": "",
                 "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
                 "mediaHeight": 600,
-                "unlocked": true        //TODO might need to change based on edit mode or view mode
+                "unlocked": true
             },
             "fx": getBrowserWidth(),
             "fy": getBrowserHeight()
@@ -302,6 +302,7 @@ $(function() {
                     break;
                 case "appearsAt":
                     appearsAt = parseInt(fieldValue);
+                    newNodeEntry.typeData.unlocked = !appearsAt || type == "root";
                     break;
                 default:
                     break;
@@ -328,8 +329,7 @@ $(function() {
                     redrawTapestryWithNewNode("new");
                 }).fail(function(e) {
                     $("#add-node-error-msg").text(e.responseJSON.message);
-                    console.error("Error with adding new link");
-                    console.error(e);
+                    console.error("Error with adding new link", e);
                 });
             } else {
                 // Redraw root node
@@ -398,8 +398,8 @@ $(function() {
                     }
                     break;
                 case "appearsAt":
-                    if (!onlyContainsDigits(fieldValue) && type === "new") {
-                        errMsg += "Please enter numeric value for Appears At \n";
+                    if (fieldValue.length > 0 && !onlyContainsDigits(fieldValue) && type === "new") {
+                        errMsg += "Please enter numeric value for Appears At (or leave empty to not lock) \n";
                     }
                     break;
                 default:
@@ -444,50 +444,49 @@ $(function() {
 });
 
 /****************************************************
- * SLIDER RELATED FUNCTIONS
+ * ADD TAPESTRY CONTROLS
  ****************************************************/
-function hideAndUnhideDepthSlider(root) {
-    if (findMaxDepth(root) >= 3) {
-        if ($("#slider-wrapper")) {
-            $("#slider-wrapper").show();
-        }
-    } else {
-        if ($("#slider-wrapper")) {
-            $("#slider-wrapper").hide();
-        }
-    }
+    
+//--------------------------------------------------
+// Create wrapper div for tapestry controls
+//--------------------------------------------------
+
+var tapestryControlsDiv = document.createElement("div");
+tapestryControlsDiv.id = "tapestry-controls-wrapper";
+document.getElementById(TAPESTRY_CONTAINER_ID).appendChild(tapestryControlsDiv);
+
+//--------------------------------------------------
+// Add in Depth Slider
+//--------------------------------------------------
+
+// Create wrapper div 
+var depthSliderWrapper = document.createElement("div");
+depthSliderWrapper.id = "tapestry-depth-slider-wrapper";
+depthSliderWrapper.style.display = "none";
+
+// Create label element
+var tapestryDepthSliderLabel = document.createElement("label");
+tapestryDepthSliderLabel.innerHTML = "Depth: ";
+depthSliderWrapper.appendChild(tapestryDepthSliderLabel);
+
+// Create input element
+var tapestryDepthSlider = document.createElement("input");
+setAttributes(tapestryDepthSlider ,{
+    type:"range",
+    min:"1",
+    max:"3",
+    value:"2",
+    id:"tapestry-depth-slider"
+});
+depthSliderWrapper.appendChild(tapestryDepthSlider);
+
+// Hide depth slider if depth is less than 3 
+function hideShowDepthSlider() {
+    depthSliderWrapper.style.display = (findMaxDepth(root) >= 3) ? "block" : "none";
 }
+hideShowDepthSlider(); // run it now (we will also run it later when tapestry is modified)
 
-function createDepthSlider() {
-    // Instantiate input element, set its attributes and class.
-    var depthSlider = document.createElement("input");
-    setAttributes(depthSlider,{
-        type:"range",
-        min:"1",
-        max:"3",
-        value:"2",
-        id:"tapestry-depth-slider"
-    });
-
-    // Create div for slider to fit in.
-    var sliderWrapper = document.createElement("div");
-    sliderWrapper.id = "slider-wrapper";
-
-    // Establish div hierarchy.
-    // *  tapestry           *
-    // *  - sliderWrapper    *
-    // *  -- depthSlider     *
-    document.getElementById("tapestry").appendChild(sliderWrapper);
-    document.getElementById("slider-wrapper").appendChild(depthSlider);
-}
-
-// call it now
-createDepthSlider();
-hideAndUnhideDepthSlider(root);
-
-var tapestryDepthSlider = document.getElementById("tapestry-depth-slider");
-
-// Every time the slider's value is changed, do the following.
+// Every time the slider's value is changed, do the following
 tapestryDepthSlider.onchange = function() {
     tapestryDepth = this.value;
 
@@ -497,6 +496,44 @@ tapestryDepthSlider.onchange = function() {
 
     rebuildNodeContents();
 };
+
+tapestryControlsDiv.appendChild(depthSliderWrapper);
+
+//--------------------------------------------------
+// Checkbox to view locked nodes (logged in users only)
+//--------------------------------------------------
+
+// Create wrapper div
+var viewLockedCheckboxWrapper = document.createElement("div");
+viewLockedCheckboxWrapper.id = "tapestry-view-locked-checkbox-wrapper";
+
+// Create input element
+var viewLockedCheckbox = document.createElement("input");
+setAttributes(viewLockedCheckbox,{
+    type:"checkbox",
+    value:"1",
+    id: "tapestry-view-locked-checkbox"
+});
+viewLockedCheckbox.onchange = function() {
+    filterNodes();
+    filterLinks();
+    rebuildNodeContents();
+};
+
+// Create label element
+var viewLockedLabel = document.createElement("label");
+viewLockedLabel.innerHTML = " View locked nodes";
+setAttributes(viewLockedLabel,{
+    forHtml:"tapestry-view-locked-checkbox"
+});
+
+viewLockedCheckboxWrapper.appendChild(viewLockedCheckbox);
+viewLockedCheckboxWrapper.appendChild(viewLockedLabel);
+
+if (tapestryWpUserId) {
+    // Append the new element in its wrapper to the tapestry container
+    tapestryControlsDiv.appendChild(viewLockedCheckboxWrapper);
+}
 
 /****************************************************
  * D3 RELATED FUNCTIONS
@@ -695,7 +732,7 @@ function filterLinks() {
         var targetIndex = findNodeIndex(targetId);
         if ((sourceId === root || targetId === root) && getViewable(dataset.nodes[targetIndex])) {
             shouldRender = true;
-        } else if ((getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) && !inViewMode && dataset.nodes[targetIndex].typeData.unlocked) {
+        } else if ((getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) && !inViewMode && getViewable(dataset.nodes[targetIndex])) {
             shouldRender = true;
         }
         return !shouldRender;
@@ -715,7 +752,7 @@ function filterLinks() {
         var targetIndex = findNodeIndex(targetId);
         if ((sourceId === root || targetId === root) && getViewable(dataset.nodes[targetIndex])) {
             shouldRender = true;
-        } else if ((getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) && !inViewMode && dataset.nodes[targetIndex].typeData.unlocked) {
+        } else if ((getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) && !inViewMode && getViewable(dataset.nodes[targetIndex])) {
             shouldRender = true;
         }
         return shouldRender;
@@ -743,7 +780,7 @@ function filterLinks() {
 /* Draws the components that make up node */
 function buildNodeContents() {
     tapestryDepthSlider.max = findMaxDepth(root);
-    hideAndUnhideDepthSlider(root);
+    hideShowDepthSlider();
     /* Draws the circle that defines how large the node is */
     nodes.append("rect")
         .attr("class", function (d) {
@@ -1010,7 +1047,7 @@ function buildPathAndButton() {
     // Append addNodeButton
     nodes
         .filter(function (d) {
-            return d.nodeType === "root";
+            return d.nodeType === "root" && tapestryWpUserId;
         })
         .append("svg:foreignObject")
         .html(function (d) {
@@ -1840,7 +1877,7 @@ function arrayRemove(arr, value) {
 /* Gets the size of the node depending on the type of the node relevant to the current root */
 function getRadius(d) {
     var radius;
-    if (d.nodeType === "" || !d.typeData.unlocked) {
+    if (d.nodeType === "") {
         return 0;
     } else if (d.nodeType === "root") {
         radius = NORMAL_RADIUS * adjustedRadiusRatio + ROOT_RADIUS_DIFF;
@@ -1977,7 +2014,7 @@ function setLinkTypes(rootId) {
 
         // If unlocked, set proper link type. Else, set it as "" to present that it shouldn't be shown
         var parentIndex = findNodeIndex(dataset.links[i].source.id);
-        if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
+        if (dataset.links[i].appearsAt && dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
             if (targetId === root) {
                 link.type = "root";
             } else if (children.indexOf(targetId) > -1) {
@@ -2042,7 +2079,7 @@ function getViewable(node) {
     // if (node.completedNode !== undefined && !node.completedNode) return true;
 
     // CHECK 3: If the user has unlocked the node
-    if (!node.typeData.unlocked) return false;
+    if (!node.typeData.unlocked && !viewLockedCheckbox.checked) return false;
 
     // CHECK 4: If the node is currently in view (ie: root/child/grandchild)
     if (node.nodeType === "") return false;
