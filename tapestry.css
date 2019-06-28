@@ -56,21 +56,32 @@ body {
     margin-top: 100px;
 }
 
-#header slider-wrapper {
-    position: absolute;
-    padding-top: 100px;
-    padding-left: 100px;
+#tapestry-svg > g {
+    transform: translate(-8.5px, 0);
 }
 
-#slider-wrapper {
-    padding-left: 10%;
+/* Tapestry Controls */
+
+#tapestry-controls-wrapper {
+    margin: -30px 10% 20px;
+    padding: 10px 20px;
+    float: right;
+    width: auto;
+    background: #EEE;
+    box-shadow: 0 0 7px 0 #BBB;
 }
+#tapestry-controls-wrapper > * {
+    float: left;
+    padding-right: 20px;
+}
+
+/* depth slider */
 
 #tapestry-depth-slider {
+    margin-top: 6px;
     outline: none;
     background: #d3d3d3;
-    height: 15px;
-    border-radius: 20%;
+    height: 10px;
     opacity: 0.7;
     transition: opacity .2s;
 }
@@ -120,6 +131,10 @@ body {
     text-align:center;
 }
 
+div.modal {
+    top: 80px;
+}
+
 #spotlight-content {
     position: absolute;
     top: 5vh;
@@ -132,16 +147,17 @@ body {
     opacity: 1;
     transition: all 1s;
     transition-timing-function: ease-in;
+    border: solid 1px #999;
+    border-radius: 40px;
+    overflow: hidden;
+}
+#spotlight-content > * {
+    background: #000;
+    outline: none;
 }
 #spotlight-content[data-media-format=mp4] > * {
-    box-shadow: 0 0 800px #000;
-    background: #000;
     width: 100%;
     height: auto;
-}
-#spotlight-content[data-media-format=h5p] {
-    box-shadow: 0 0 800px #000;
-    background: #000;
 }
 
 #spotlight-overlay {
@@ -429,8 +445,7 @@ body {font-family: Arial, Helvetica, sans-serif;}
 
 /* Root Node button */
 #root-node-btn {
-    float: right;
-    margin-right: 5%;
+    text-align: center;
     cursor: pointer;
 }
 

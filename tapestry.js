@@ -4,7 +4,7 @@
  * CONSTANTS AND GLOBAL VARIABLES
  ****************************************************/
 
-var // declared
+var // declared constants
     TAPESTRY_CONTAINER_ID = "tapestry",
     PROGRESS_THICKNESS = 20,
     LINK_THICKNESS = 6,
@@ -17,12 +17,13 @@ var // declared
     COLOR_LINK = "#999",
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
-    FONT_ADJUST = 1.25,    
+    FONT_ADJUST = 1.25,
+    NODE_UNLOCK_TIMEFRAME = 2; // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
     TAPESTRY_PROGRESS_URL = apiUrl + "/users/progress",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings";
 
-
-var dataset, root, svg, links, nodes,               // Basics
+var // declared variables
+    dataset, root, svg, links, nodes,               // Basics
     originalDataset,                                // For saving the value of the original dataset pre-changes
     path, pieGenerator, arcGenerator,               // Donut
     linkForce, collideForce, force,                 // Force
@@ -35,12 +36,12 @@ var dataset, root, svg, links, nodes,               // Basics
     h5pVideoSettings = {};
     tapestryDepth = 2;                              // Default depth of Tapestry
 
+
 // FLAGS
 var inViewMode = false;                             // Flag for when we're in view mode
 
 var // calculated
-    MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30;     // 30 is to count for the icon
-var
+    MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
     innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
     outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2);
 
@@ -59,6 +60,9 @@ jQuery.ajaxSetup({
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
+    if (dataset && dataset.nodes && dataset.nodes.length > 0) {
+        dataset.nodes[0].typeData.unlocked = true;
+    }
     originalDataset = result;
     saveCoordinates();
 
@@ -246,10 +250,10 @@ $(function() {
                 "mediaURL": "",
                 "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
                 "mediaHeight": 600,
-                "unlocked": true        //TODO might need to change based on edit mode or view mode
+                "unlocked": true
             },
-            "fx": 800,
-            "fy": 470
+            "fx": getBrowserWidth(),
+            "fy": getBrowserHeight()
         };
 
         if (isAddNewNode) {
@@ -298,6 +302,7 @@ $(function() {
                     break;
                 case "appearsAt":
                     appearsAt = parseInt(fieldValue);
+                    newNodeEntry.typeData.unlocked = !appearsAt || type == "root";
                     break;
                 default:
                     break;
@@ -369,8 +374,7 @@ $(function() {
                     });
                 }).fail(function(e) {
                     $("#add-node-error-msg").text(e.responseJSON.message);
-                    console.error("Error with adding new link");
-                    console.error(e);
+                    console.error("Error with adding new link", e);
                 });
             } else {
                 // Redraw root node
@@ -404,9 +408,6 @@ $(function() {
         setLinkTypes(root);
         setUnlocked();
 
-        if (type === "root") {
-            svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
-        }
         // Rebuild the nodes and links
         links = createLinks();
         nodes = createNodes();
@@ -453,15 +454,15 @@ $(function() {
         }
     });
 
-    $("#group-permissions-btn").click(function() {
-        var groupId = $("#group-number-input").val();
-        if (groupId && onlyContainsDigits(groupId) && $("#group-" + groupId + "-editcell").val() != "") {
-            appendPermissionsRow(groupId, "group");
-            $("#group-number-input").val("");
-        } else {
-            alert("Enter valid group id");
-        }
-    });
+    // $("#group-permissions-btn").click(function() {
+    //     var groupId = $("#group-number-input").val();
+    //     if (groupId && onlyContainsDigits(groupId) && $("#group-" + groupId + "-editcell").val() != "") {
+    //         appendPermissionsRow(groupId, "group");
+    //         $("#group-number-input").val("");
+    //     } else {
+    //         alert("Enter valid group id");
+    //     }
+    // });
 
     // Type is either "user" or "group"  
     function appendPermissionsRow(id, type) {
@@ -513,8 +514,8 @@ $(function() {
                     }
                     break;
                 case "appearsAt":
-                    if (!onlyContainsDigits(fieldValue) && type === "new") {
-                        errMsg += "Please enter numeric value for Appears At \n";
+                    if (fieldValue.length > 0 && !onlyContainsDigits(fieldValue) && type === "new") {
+                        errMsg += "Please enter numeric value for Appears At (or leave empty to not lock) \n";
                     }
                     break;
                 default:
@@ -559,38 +560,49 @@ $(function() {
 });
 
 /****************************************************
- * SLIDER RELATED FUNCTIONS
+ * ADD TAPESTRY CONTROLS
  ****************************************************/
+    
+//--------------------------------------------------
+// Create wrapper div for tapestry controls
+//--------------------------------------------------
 
-function createDepthSlider() {
-    // Instantiate input element, set its attributes and class.
-    var depthSlider = document.createElement("input");
-    setAttributes(depthSlider,{
-        type:"range",
-        min:"1",
-        max:"3",
-        value:"2",
-        id:"tapestry-depth-slider"
-    });
+var tapestryControlsDiv = document.createElement("div");
+tapestryControlsDiv.id = "tapestry-controls-wrapper";
+document.getElementById(TAPESTRY_CONTAINER_ID).appendChild(tapestryControlsDiv);
 
-    // Create div for slider to fit in.
-    var sliderWrapper = document.createElement("div");
-    sliderWrapper.id = "slider-wrapper";
+//--------------------------------------------------
+// Add in Depth Slider
+//--------------------------------------------------
 
-    // Establish div hierarchy.
-    // *  tapestry           *
-    // *  - sliderWrapper    *
-    // *  -- depthSlider     *
-    document.getElementById("tapestry").appendChild(sliderWrapper);
-    document.getElementById("slider-wrapper").appendChild(depthSlider);
+// Create wrapper div 
+var depthSliderWrapper = document.createElement("div");
+depthSliderWrapper.id = "tapestry-depth-slider-wrapper";
+depthSliderWrapper.style.display = "none";
+
+// Create label element
+var tapestryDepthSliderLabel = document.createElement("label");
+tapestryDepthSliderLabel.innerHTML = "Depth: ";
+depthSliderWrapper.appendChild(tapestryDepthSliderLabel);
+
+// Create input element
+var tapestryDepthSlider = document.createElement("input");
+setAttributes(tapestryDepthSlider ,{
+    type:"range",
+    min:"1",
+    max:"3",
+    value:"2",
+    id:"tapestry-depth-slider"
+});
+depthSliderWrapper.appendChild(tapestryDepthSlider);
+
+// Hide depth slider if depth is less than 3 
+function hideShowDepthSlider() {
+    depthSliderWrapper.style.display = (findMaxDepth(root) >= 3) ? "block" : "none";
 }
+hideShowDepthSlider(); // run it now (we will also run it later when tapestry is modified)
 
-// call it now
-createDepthSlider();
-
-var tapestryDepthSlider = document.getElementById("tapestry-depth-slider");
-
-// Every time the slider's value is changed, do the following.
+// Every time the slider's value is changed, do the following
 tapestryDepthSlider.onchange = function() {
     tapestryDepth = this.value;
 
@@ -600,6 +612,44 @@ tapestryDepthSlider.onchange = function() {
 
     rebuildNodeContents();
 };
+
+tapestryControlsDiv.appendChild(depthSliderWrapper);
+
+//--------------------------------------------------
+// Checkbox to view locked nodes (logged in users only)
+//--------------------------------------------------
+
+// Create wrapper div
+var viewLockedCheckboxWrapper = document.createElement("div");
+viewLockedCheckboxWrapper.id = "tapestry-view-locked-checkbox-wrapper";
+
+// Create input element
+var viewLockedCheckbox = document.createElement("input");
+setAttributes(viewLockedCheckbox,{
+    type:"checkbox",
+    value:"1",
+    id: "tapestry-view-locked-checkbox"
+});
+viewLockedCheckbox.onchange = function() {
+    filterNodes();
+    filterLinks();
+    rebuildNodeContents();
+};
+
+// Create label element
+var viewLockedLabel = document.createElement("label");
+viewLockedLabel.innerHTML = " View locked nodes";
+setAttributes(viewLockedLabel,{
+    forHtml:"tapestry-view-locked-checkbox"
+});
+
+viewLockedCheckboxWrapper.appendChild(viewLockedCheckbox);
+viewLockedCheckboxWrapper.appendChild(viewLockedLabel);
+
+if (tapestryWpUserId) {
+    // Append the new element in its wrapper to the tapestry container
+    tapestryControlsDiv.appendChild(viewLockedCheckboxWrapper);
+}
 
 /****************************************************
  * D3 RELATED FUNCTIONS
@@ -641,7 +691,6 @@ function startForce() {
 //Resize all nodes, where id is now the root
 function resizeNodes(id) {
     getChildren(id);
-
     setNodeTypes(id);
     setLinkTypes(id);
     filterLinks();
@@ -657,23 +706,23 @@ function ticked() {
     var tapestryDimensions = getTapestryDimensions();
     links
         .attr("x1", function (d) {
-            return getBoundedCoord(d.source.x, tapestryDimensions['width']);
+            return getBoundedCoord(d.source.x, tapestryDimensions.width);
         })
         .attr("y1", function (d) {
-            return getBoundedCoord(d.source.y, tapestryDimensions['height']);
+            return getBoundedCoord(d.source.y, tapestryDimensions.height);
         })
         .attr("x2", function (d) {
-            return getBoundedCoord(d.target.x, tapestryDimensions['width']);
+            return getBoundedCoord(d.target.x, tapestryDimensions.width);
         })
         .attr("y2", function (d) {
-            return getBoundedCoord(d.target.y, tapestryDimensions['height']);
+            return getBoundedCoord(d.target.y, tapestryDimensions.height);
         });
     nodes
         .attr("cx", function (d) {
-            return getBoundedCoord(d.x, tapestryDimensions['width']);
+            return getBoundedCoord(d.x, tapestryDimensions.width);
         })
         .attr("cy", function (d) {
-            return getBoundedCoord(d.y, tapestryDimensions['height']);
+            return getBoundedCoord(d.y, tapestryDimensions.height);
         })
         .attr("transform", function (d) {
             return "translate(" + getBoundedCoord(d.x, tapestryDimensions.width) + "," + getBoundedCoord(d.y, tapestryDimensions.height) + ")";
@@ -696,12 +745,21 @@ function dragged(d) {
 
 function dragended(d) {
     if (!d3.event.active) force.alphaTarget(0);
-    d.fx = d.x;
-    d.fy = d.y;
-    
-    // Uncomment the line below to get the node positions saved into the container
-    // and then copy over to json file to have updated coordinates
-    // $('#h5p-log').text(JSON.stringify(dataset.nodes));
+
+    $.ajax({
+        url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + d.id + "/coordinates",
+        method: 'PUT',
+        data: JSON.stringify({x: d.x, y: d.y}),
+        success: function(result) {
+            d.fx = d.x;
+            d.fy = d.y;
+        },
+        error: function(e) {
+            console.error("Error saving coordinates of nodes");
+            console.error(e);
+        }
+    });
+
 
     recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
 }
@@ -713,8 +771,7 @@ function createSvgContainer(containerId) {
                 .attr("id", containerId+"-svg")
                 .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height)
                 .attr("preserveAspectRatio", "xMidYMid meet")
-                .append("svg:g")
-                .attr("transform", "translate(-20, -20)");
+                .append("svg:g");
 }
 
 function updateSvgDimensions(containerId) {
@@ -791,7 +848,7 @@ function filterLinks() {
         var targetIndex = findNodeIndex(targetId);
         if ((sourceId === root || targetId === root) && getViewable(dataset.nodes[targetIndex])) {
             shouldRender = true;
-        } else if (getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) {
+        } else if ((getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) && !inViewMode && getViewable(dataset.nodes[targetIndex])) {
             shouldRender = true;
         }
         return !shouldRender;
@@ -811,7 +868,7 @@ function filterLinks() {
         var targetIndex = findNodeIndex(targetId);
         if ((sourceId === root || targetId === root) && getViewable(dataset.nodes[targetIndex])) {
             shouldRender = true;
-        } else if (getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) {
+        } else if ((getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) && !inViewMode && getViewable(dataset.nodes[targetIndex])) {
             shouldRender = true;
         }
         return shouldRender;
@@ -839,7 +896,7 @@ function filterLinks() {
 /* Draws the components that make up node */
 function buildNodeContents() {
     tapestryDepthSlider.max = findMaxDepth(root);
-    
+    hideShowDepthSlider();
     /* Draws the circle that defines how large the node is */
     nodes.append("rect")
         .attr("class", function (d) {
@@ -1145,17 +1202,14 @@ function buildPathAndButton() {
 function updateViewedProgress() {
     path = nodes
         .filter(function (d) {
-            return getViewable(d);
+            return d.nodeType !== "" && d.typeData.unlocked;
         })
         .selectAll("path")
         .data(function (d, i) {
             var data = d.typeData.progress;
             data.forEach(function (e) {
-                e.extra = {
-                    "nodeType": d.nodeType,
-                    "unlocked": d.typeData.unlocked,
-                    };
-            });
+                e.extra = {'nodeType': d.nodeType, 'unlocked': d.typeData.unlocked };
+            })
             return pieGenerator(data, i);
         });
 
@@ -1182,7 +1236,7 @@ function updateViewedProgress() {
 }
 
 function arcTween(a) {
-    const i = d3.interpolate(this._current, a);
+    var i = d3.interpolate(this._current, a);
     this._current = i(1);
     return (t) => {
         return arcGenerator(adjustProgressBarRadii(i(t)))
@@ -1233,6 +1287,8 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
         distance: 8
     });
 
+    media.appendTo('#spotlight-content');
+
     $('<a class="lightbox-close">X</a>')
         .css({
             background: "none",
@@ -1244,8 +1300,6 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
             exitViewMode();
         })
         .appendTo('#spotlight-content');
-
-    media.appendTo('#spotlight-content');
 
     setTimeout(function(){
         $('#spotlight-content').css({
@@ -1315,6 +1369,8 @@ function getLightboxDimensions(videoHeight, videoWidth) {
         adjustmentRatio = heightAdjustmentRatio;
     }
 
+    adjustmentRatio *= 0.95;
+
     return {
         "adjustedOn": adjustedOn,
         "width": videoWidth * adjustmentRatio,
@@ -1357,8 +1413,8 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
             video.addEventListener('timeupdate', function () {
                 if (video.played.length > 0 && viewedAmount < video.currentTime) {
                     for (var i = 0; i < childrenData.length; i++) {
-                        if (childrenData[i].appearsAt < video.currentTime && !dataset.nodes[childrenData[i].nodeIndex].typeData.unlocked) {
-                            setUnlocked();
+                        if (Math.abs(childrenData[i].appearsAt - video.currentTime) <= NODE_UNLOCK_TIMEFRAME && video.paused === false && !dataset.nodes[childrenData[i].nodeIndex].typeData.unlocked) {
+                            setUnlocked(childrenData[i].nodeIndex);
                             filterLinks();
                             filterNodes();
                             rebuildNodeContents();
@@ -1600,7 +1656,9 @@ function setAdjustedRadiusRatio(adjustedOn, numChildren) {
         }
 
         if (adjustedRadiusRatio > 1) adjustedRadiusRatio = 1;
-    } else adjustedRadiusRatio = 1;
+    } else {
+        adjustedRadiusRatio = 1;
+    }
 }
 
 function exitViewMode() {
@@ -1634,7 +1692,9 @@ function filterNodes() {
         var shouldRender = false;
         if (!getViewable(d)) {
             shouldRender = false;
-        } else shouldRender = true;
+        } else {
+            shouldRender = true;
+        }
         return !shouldRender;
     });
 
@@ -1642,7 +1702,9 @@ function filterNodes() {
         var shouldRender = false;
         if (!getViewable(d)) {
             shouldRender = false;
-        } else shouldRender = true;
+        } else {
+            shouldRender = true;
+        }
         return shouldRender;
     });
 
@@ -1719,30 +1781,43 @@ function getNodesDimensions(dataset) {
 function getTapestryDimensions() {
 
     var nodeDimensions = getNodesDimensions(originalDataset);
-    var tapestryWidth = nodeDimensions['x'];
-    var tapestryHeight = nodeDimensions['y'];
+    var tapestryWidth = nodeDimensions.x;
+    var tapestryHeight = nodeDimensions.y;
+
+    var tapestryViewportWidth = getBrowserWidth() - $('#'+TAPESTRY_CONTAINER_ID).offset().left;
+    var tapestryViewportHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
 
     var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
-    var tapestryBrowserRatio = tapestryWidth / getBrowserWidth();
+    var tapestryBrowserRatio = tapestryWidth / tapestryViewportWidth;
 
-    if (tapestryHeight > getBrowserHeight() && tapestryAspectRatio < 1) {
-        tapestryWidth *= tapestryHeight/getBrowserHeight() / tapestryBrowserRatio;
+    if (tapestryHeight > tapestryViewportHeight && tapestryAspectRatio < 1) {
+        tapestryWidth *= tapestryHeight/tapestryViewportHeight / tapestryBrowserRatio;
     }
-    
-    // Work-around for an issue on iPhone that zooms in the tapestry too much
-    if (getBrowserWidth() < 600) {
-        tapestryHeight *= 1.2;
-        tapestryWidth *= 1.2;
+
+    if (tapestryViewportHeight < tapestryHeight) {
+        var scaleRatio = tapestryViewportHeight / tapestryHeight;
+        tapestryWidth /= scaleRatio;
     }
+
+    // var tapestryViewportWidth = getBrowserWidth() - $('#'+TAPESTRY_CONTAINER_ID).offset().left;
+    // var tapestryViewportHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
 
     // Set to be at least the size of the browser
+    if (tapestryWidth < tapestryViewportWidth) {
+        tapestryWidth = tapestryViewportWidth;
+    }
+    if (tapestryHeight < tapestryViewportHeight) {
+        tapestryHeight = tapestryViewportHeight;
+    }
+
+    // Set to be at least the size of the SVG
     if (document.getElementById("tapestry-svg") !== null) {
-        if (tapestryWidth < screenToSVG(getBrowserWidth(), 0).x) {
-            tapestryWidth = screenToSVG(getBrowserWidth(), 0).x;
+        if (tapestryWidth < screenToSVG(tapestryViewportWidth, 0).x) {
+            tapestryWidth = screenToSVG(tapestryViewportWidth, 0).x;
         }
 
-        if (tapestryHeight < screenToSVG(0, getBrowserHeight() - $("#footer").height()).y) {
-            tapestryHeight = screenToSVG(0, getBrowserHeight() - $("#footer").height()).y;
+        if (tapestryHeight < screenToSVG(0, tapestryViewportHeight - $("#footer").height()).y) {
+            tapestryHeight = screenToSVG(0, tapestryViewportHeight - $("#footer").height()).y;
         }
     }
 
@@ -1843,8 +1918,13 @@ function addDepthToNodes(id, depth, visited) {
 
 function findMaxDepth(id) {
 
-    // create the .depth parameter for every node
-    addDepthToNodes(id, 0, []);
+    if ((dataset && dataset.nodes.length === 0) || !id)  {
+        return 0;
+    } else {
+        // create the .depth parameter for every node
+        addDepthToNodes(id, 0, []);
+    }
+
     var nodes = dataset.nodes;
 
     // idList: collect node IDs since they're numbered dynamically
@@ -1914,14 +1994,15 @@ function arrayRemove(arr, value) {
 /* Gets the size of the node depending on the type of the node relevant to the current root */
 function getRadius(d) {
     var radius;
-    if (d.nodeType === "" || !d.typeData.unlocked) {
+    if (d.nodeType === "") {
         return 0;
     } else if (d.nodeType === "root") {
         radius = NORMAL_RADIUS * adjustedRadiusRatio + ROOT_RADIUS_DIFF;
     } else if (d.nodeType === "grandchild") {
         radius = NORMAL_RADIUS + GRANDCHILD_RADIUS_DIFF;
-    } else radius = NORMAL_RADIUS * adjustedRadiusRatio;
-
+    } else {
+        radius = NORMAL_RADIUS * adjustedRadiusRatio;
+    }
     return radius;
 }
 
@@ -2050,7 +2131,7 @@ function setLinkTypes(rootId) {
 
         // If unlocked, set proper link type. Else, set it as "" to present that it shouldn't be shown
         var parentIndex = findNodeIndex(dataset.links[i].source.id);
-        if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
+        if (dataset.links[i].appearsAt && dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
             if (targetId === root) {
                 link.type = "root";
             } else if (children.indexOf(targetId) > -1) {
@@ -2066,21 +2147,44 @@ function setLinkTypes(rootId) {
     }
 }
 
-/* For setting the "unlocked" field of nodes.typeData in dataset */
-function setUnlocked() {
-    for (var i = 0; i < dataset.links.length; i++) {
-        var parentIndex = findNodeIndex(dataset.links[i].source.id);
-        var childIndex = findNodeIndex(dataset.links[i].target.id);
-        if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
-            dataset.nodes[childIndex].typeData.unlocked = true;
-            // Save to database 
-            // TODO: test for integration with database
-            // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/unlocked", JSON.stringify({"unlocked" : true}), function(result) {})
-            // .fail(function(e) {
-            //     console.error("Error with update node's unlock property");
-            //     console.error(e);
-            // });
+/* For setting the "unlocked" field of nodes.typeData in dataset or a specific node (if a parameter is passed in) */
+function setUnlocked(childIndex) {
+    if (typeof childIndex === 'undefined') {
+        var parentIndex;
+        for (var i = 0; i < dataset.links.length; i++) {
+            childIndex = findNodeIndex(dataset.links[i].target.id);
+            parentIndex = findNodeIndex(dataset.links[i].source.id);
+            // TODO move unlocked out of typeData
+            if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
+                dataset.nodes[childIndex].typeData.unlocked = true;
+                $.ajax({
+                    url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/typeData",
+                    method: 'PUT',
+                    data: JSON.stringify(dataset.nodes[childIndex].typeData),
+                    success: function(result) {
+                    },
+                    error: function(e) {
+                        console.error("Error with update node's unlock property");
+                        console.error(e);
+                    }
+                });
+            }
         }
+    }
+    else {
+        // TODO move unlocked out of typeData
+        dataset.nodes[childIndex].typeData.unlocked = true;
+        $.ajax({
+            url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/typeData",
+            method: 'PUT',
+            data: JSON.stringify(dataset.nodes[childIndex].typeData),
+            success: function(result) {
+            },
+            error: function(e) {
+                console.error("Error with update node's unlock property");
+                console.error(e);
+            }
+        });
     }
 }
 
@@ -2092,7 +2196,7 @@ function getViewable(node) {
     // if (node.completedNode !== undefined && !node.completedNode) return true;
 
     // CHECK 3: If the user has unlocked the node
-    if (!node.typeData.unlocked) return false;
+    if (!node.typeData.unlocked && !viewLockedCheckbox.checked) return false;
 
     // CHECK 4: If the node is currently in view (ie: root/child/grandchild)
     if (node.nodeType === "") return false;
@@ -2109,13 +2213,17 @@ function checkPermission(node, permissionType) {
     if (tapestryWpIsAdmin) {
         return node.nodeType === "root";
     }
-
-    if (tapestryWpUserId) {
+    if (tapestryWpUserId && tapestryWpUserId !== "") {
         const userIndex = "user-" + tapestryWpUserId;
         if (node.permissions[userIndex] && node.permissions[userIndex].includes(permissionType)) {
             return node.nodeType === "root";
         }
     }
+    
+    if (node.permissions["public"] && node.permissions["public"].includes(permissionType)) {
+        return node.nodeType === "root";
+    }
+
 
     // // TODO Check user's group id
 
@@ -2272,7 +2380,6 @@ function getIconClass(mediaType, action) {
     return classStr;
 }
 
-
 // Helper for converting the screen coordinates to SVG coordinates
 function screenToSVG(screenX, screenY) {
     var svg = document.getElementById("tapestry-svg");
@@ -2286,8 +2393,7 @@ function screenToSVG(screenX, screenY) {
  * ANALYTICS FUNCTIONS
  ****************************************************/
 
-var analyticsAJAXUrl = '',  // Analytics (set to empty string to disable analytics)
-
+var analyticsAJAXUrl = '',  // e.g. '/wp-admin/admin-ajax.php' (set to empty string to disable analytics)
     analyticsAJAXAction = 'tapestry_tool_log_event';// Analytics
 
 function recordAnalyticsEvent(actor, action, object, objectID, details){
