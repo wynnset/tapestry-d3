@@ -62,6 +62,7 @@ jQuery.ajaxSetup({
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
+    createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
         dataset.nodes[0].typeData.unlocked = true;
     }
@@ -169,16 +170,6 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
  * FUNCTIONS FOR ADD NEW NODE FORM
  ****************************************************/
 $(function() {
-    // Adding Root node
-    $("#root-node-btn").on("click", function(e) {
-        $('#createNewNodeModalLabel').text("Add root node");
-        $("#submit-add-new-node").hide();	
-        $("#submit-add-root-node").show();	
-        $("#appearsat-section").hide();
-        // Show the modal
-        $("#createNewNodeModal").modal();
-    });
-
     // Adding Root Node
     $("#submit-add-root-node").on("click", function(e) {
         e.preventDefault(); // cancel the actual submit
@@ -533,6 +524,29 @@ viewLockedCheckboxWrapper.appendChild(viewLockedLabel);
 if (tapestryWpUserId) {
     // Append the new element in its wrapper to the tapestry container
     tapestryControlsDiv.appendChild(viewLockedCheckboxWrapper);
+}
+
+// Create Root Node Button
+function createRootNodeButton(dataset) {
+    if (!dataset || dataset.nodes.length == 0) {
+        var rootNodeDiv = document.createElement("div");
+        rootNodeDiv.id = "root-node-container";
+        rootNodeDiv.innerHTML = '<div id="root-node-btn"><i class="fas fa-plus-circle fa-5x"></i></div><div id="root-node-label">Add Root Node</div>';
+
+        if (tapestryWpUserId) {
+            document.getElementById(TAPESTRY_CONTAINER_ID).append(rootNodeDiv);
+        }
+
+        // Adding Root node
+        $("#root-node-btn").on("click", function(e) {
+            $('#createNewNodeModalLabel').text("Add root node");
+            $("#submit-add-new-node").hide();
+            $("#submit-add-root-node").show();
+            $("#appearsat-section").hide();
+            // Show the modal
+            $("#createNewNodeModal").modal();
+        });
+    }
 }
 
 /****************************************************
