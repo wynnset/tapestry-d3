@@ -493,6 +493,7 @@ tapestryDepthSlider.onchange = function() {
     setNodeTypes(root);
     setLinkTypes(root);
     filterLinks();
+    filterNodes();
 
     rebuildNodeContents();
 };
