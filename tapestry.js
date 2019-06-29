@@ -63,7 +63,6 @@ jQuery.ajaxSetup({
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
-    loadModals();
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
         dataset.nodes[0].typeData.unlocked = true;
@@ -171,7 +170,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 /****************************************************
  * ADD TAPESTRY CONTROLS
  ****************************************************/
-    
+
 //--------------------------------------------------
 // Create wrapper div for tapestry controls
 //--------------------------------------------------
@@ -260,8 +259,15 @@ if (tapestryWpUserId) {
     tapestryControlsDiv.appendChild(viewLockedCheckboxWrapper);
 }
 
-// Create Root Node Button
+/****************************************************
+ * ADD EDITOR ELEMENTS
+ ****************************************************/
+
+//--------------------------------------------------
+// Insert the "Add Root Node" button if no nodes
+//--------------------------------------------------
 function createRootNodeButton(dataset) {
+
     if (!dataset || dataset.nodes.length == 0) {
         var rootNodeDiv = document.createElement("div");
         rootNodeDiv.id = "root-node-container";
@@ -271,7 +277,6 @@ function createRootNodeButton(dataset) {
             document.getElementById(TAPESTRY_CONTAINER_ID).append(rootNodeDiv);
         }
 
-        // Adding Root node
         $("#root-node-btn").on("click", function(e) {
             $('#createNewNodeModalLabel').text("Add root node");
             $("#submit-add-new-node").hide();
@@ -283,69 +288,70 @@ function createRootNodeButton(dataset) {
     }
 }
 
-function loadModals() {
-    var modalDiv = document.createElement("div");
-    modalDiv.id = "tapeestry-modal-div";
-    document.getElementById(TAPESTRY_CONTAINER_ID).append(modalDiv);
-    $("#tapeestry-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, statusTxt, xhr){
-        if (statusTxt == "success") {
-            /****************************************************
-             * FUNCTIONS FOR ADD NEW NODE FORM
-             ****************************************************/
+//--------------------------------------------------
+// Insert the modal template
+//--------------------------------------------------
 
-            // Adding Root Node
-            $("#submit-add-root-node").on("click", function(e) {
-                e.preventDefault(); // cancel the actual submit
-                var formData = $("form").serializeArray();
-                tapestryAddNewNode(formData, "root");
-            });
+var modalDiv = document.createElement("div");
+modalDiv.id = "tapeestry-modal-div";
+document.getElementById(TAPESTRY_CONTAINER_ID).append(modalDiv);
+$("#tapeestry-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, statusTxt, xhr){
+    if (statusTxt == "success") {
 
-            // Adding New Nodes
-            $("#submit-add-new-node").on("click", function(e) {
-                e.preventDefault(); // cancel the actual submit
-                var formData = $("form").serializeArray();
-                tapestryAddNewNode(formData, "new");
-            });
+        // Adding Root Node
+        $("#submit-add-root-node").on("click", function(e) {
+            e.preventDefault(); // cancel the actual submit
+            var formData = $("form").serializeArray();
+            tapestryAddNewNode(formData, true);
+        });
 
-            $("#mediaFormat").on("change", function(){
-                var selectedType = $(this).val();
-                switch(selectedType)
-                {
-                    case "mp4":
-                        $("#contents-details").show();
-                        $("#mp4-content").show();
-                        $("#h5p-content").hide();
-                        break;
-                    case "h5p":
-                        $("#contents-details").show();
-                        $("#mp4-content").hide();
-                        $("#h5p-content").show();
-                        break;
-                    default:
-                        $("#contents-details").hide();
-                        $("#mp4-content").hide();
-                        $("#h5p-content").hide();
-                        break;
-                }
-            });
+        // Adding New Nodes
+        $("#submit-add-new-node").on("click", function(e) {
+            e.preventDefault(); // cancel the actual submit
+            var formData = $("form").serializeArray();
+            tapestryAddNewNode(formData);
+        });
 
-            $("#cancel-add-new-node").on("click", function() {
-                tapestryHideAddNodeModal();
-            });
-        }
-    });
-}
+        $("#mediaFormat").on("change", function(){
+            var selectedType = $(this).val();
+            switch(selectedType)
+            {
+                case "mp4":
+                    $("#contents-details").show();
+                    $("#mp4-content").show();
+                    $("#h5p-content").hide();
+                    break;
+                case "h5p":
+                    $("#contents-details").show();
+                    $("#mp4-content").hide();
+                    $("#h5p-content").show();
+                    break;
+                default:
+                    $("#contents-details").hide();
+                    $("#mp4-content").hide();
+                    $("#h5p-content").hide();
+                    break;
+            }
+        });
+
+        $("#cancel-add-new-node").on("click", function() {
+            tapestryHideAddNodeModal();
+        });
+    }
+});
 
 // Function for adding a new node
-// type is either "root" or "new" node
-function tapestryAddNewNode(formData, type) {
-    var errorMsg = tapestryValidateNewNode(formData, type);
+function tapestryAddNewNode(formData, isRoot) {
+
+    if (typeof isRoot == 'undefined') {
+        isRoot = false;
+    }
+
+    var errorMsg = tapestryValidateNewNode(formData, isRoot);
     if (errorMsg) {
         alert(errorMsg);
         return;
     }
-
-    var isAddNewNode = (type == "new") ? true : false;
 
     // Add the node data first
     var newNodeEntry = {
@@ -373,7 +379,7 @@ function tapestryAddNewNode(formData, type) {
         "fy": getBrowserHeight()
     };
 
-    if (isAddNewNode) {
+    if (!isRoot) {
         // Just put the node right under the current node
         newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx;
         newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
@@ -419,7 +425,7 @@ function tapestryAddNewNode(formData, type) {
                 break;
             case "appearsAt":
                 appearsAt = parseInt(fieldValue);
-                newNodeEntry.typeData.unlocked = !appearsAt || type == "root";
+                newNodeEntry.typeData.unlocked = !appearsAt || isRoot;
                 break;
             default:
                 break;
@@ -433,7 +439,7 @@ function tapestryAddNewNode(formData, type) {
         newNodeEntry.id = result.id;
         dataset.nodes.push(newNodeEntry);
 
-        if (isAddNewNode) {
+        if (!isRoot) {
             // Get ID from callback and set it as target's id
             var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
 
@@ -443,7 +449,7 @@ function tapestryAddNewNode(formData, type) {
                 dataset.links.push(newLink);
 
                 tapestryHideAddNodeModal();
-                redrawTapestryWithNewNode("new");
+                redrawTapestryWithNewNode();
             }).fail(function(e) {
                 console.error("Error with adding new link", e);
             });
@@ -453,7 +459,7 @@ function tapestryAddNewNode(formData, type) {
             tapestryHideAddNodeModal();
             root = dataset.rootId; // need to set root to newly created node
 
-            redrawTapestryWithNewNode("root");
+            redrawTapestryWithNewNode(true);
             $("#root-node-container").hide(); // hide the root node button after creating it.
         }
     }).fail(function(e) {
@@ -469,7 +475,11 @@ function tapestryHideAddNodeModal() {
     $("#appearsat-section").show();
 }
 
-function redrawTapestryWithNewNode(type) {
+function redrawTapestryWithNewNode(isRoot) {
+
+    if (typeof isRoot == 'undefined') {
+        isRoot = false;
+    }
 
     saveCoordinates();
     updateTapestrySize();
@@ -483,18 +493,23 @@ function redrawTapestryWithNewNode(type) {
     nodes = createNodes();
 
     filterLinks();
-    if (type === "new") {
+    if (!isRoot) {
         filterNodes();
     }
     // Rebuild everything to include the new node
     buildNodeContents();
-    if (type === "new") {
+    if (!isRoot) {
         rebuildNodeContents();
     }
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
 }
 
-function tapestryValidateNewNode(formData, type) {
+function tapestryValidateNewNode(formData, isRoot) {
+
+    if (typeof isRoot == 'undefined') {
+        isRoot = false;
+    }
+    
     var errMsg = "";
 
     for (var i = 0; i < formData.length; i++) {
@@ -513,7 +528,7 @@ function tapestryValidateNewNode(formData, type) {
                 }
                 break;
             case "appearsAt":
-                if (fieldValue.length > 0 && !onlyContainsDigits(fieldValue) && type === "new") {
+                if (fieldValue.length > 0 && !onlyContainsDigits(fieldValue) && !isRoot) {
                     errMsg += "Please enter numeric value for Appears At (or leave empty to not lock) \n";
                 }
                 break;
