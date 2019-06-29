@@ -21,7 +21,8 @@ var // declared constants
     TIME_BETWEEN_SAVE_PROGRESS = 5, // Means the number of seconds between each save progress call
     NODE_UNLOCK_TIMEFRAME = 2; // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
     TAPESTRY_PROGRESS_URL = apiUrl + "/users/progress",
-    TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings";
+    TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings",
+    CREATE_NEW_NODE_MODAL_PATH = "/tapestry-wp/wp-content/plugins/tapestry/templates/tapestry-d3/create-new-node-modal.html";
 
 var // declared variables
     dataset, root, svg, links, nodes,               // Basics
@@ -62,6 +63,7 @@ jQuery.ajaxSetup({
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
+    loadModals();
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
         dataset.nodes[0].typeData.unlocked = true;
@@ -164,274 +166,6 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 }).fail(function(e) {
     console.error("Error with loading tapestries");
     console.error(e);
-});
-
-/****************************************************
- * FUNCTIONS FOR ADD NEW NODE FORM
- ****************************************************/
-$(function() {
-    // Adding Root Node
-    $("#submit-add-root-node").on("click", function(e) {
-        e.preventDefault(); // cancel the actual submit
-        var formData = $("form").serializeArray();
-        addNewNode(formData, "root");
-    });
-
-    // Adding New Nodes
-    $("#submit-add-new-node").on("click", function(e) {
-        e.preventDefault(); // cancel the actual submit
-        var formData = $("form").serializeArray();
-        addNewNode(formData, "new");
-    });
-
-    $("#mediaFormat").on("change", function(){
-        var selectedType = $(this).val();
-        switch(selectedType)
-        {
-            case "mp4":
-                $("#contents-details").show();
-                $("#mp4-content").show();
-                $("#h5p-content").hide();
-                break;
-            case "h5p":
-                $("#contents-details").show();
-                $("#mp4-content").hide();
-                $("#h5p-content").show();
-                break;
-            default:
-                $("#contents-details").hide();
-                $("#mp4-content").hide();
-                $("#h5p-content").hide();
-                break;
-        }
-    });
-
-    $("#cancel-add-new-node").on("click", function() {
-        hideNewNodeModal();
-    });
-
-    // Function for adding a new node
-    // type is either "root" or "new" node
-    function addNewNode(formData, type) {
-        var errorMsg = validateNewNode(formData, type);
-        if (errorMsg) {
-            alert(errorMsg);
-            return;
-        }
-
-        var isAddNewNode = (type == "new") ? true : false;
-
-        // Add the node data first
-        var newNodeEntry = {
-            "type": "tapestry_node",
-            "status": "publish",
-            "nodeType": "",
-            "title": "",
-            "imageURL": "",
-            "mediaType": "video",
-            "mediaFormat": "",
-            "mediaDuration": 0,
-            "typeId": 1,
-            "group": 1,
-            "typeData": {
-                "progress": [
-                    {"group": "viewed", "value": 0},
-                    {"group": "unviewed", "value": 1}
-                ],
-                "mediaURL": "",
-                "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
-                "mediaHeight": 600,
-                "unlocked": true
-            },
-            "fx": getBrowserWidth(),
-            "fy": getBrowserHeight()
-        };
-
-        if (isAddNewNode) {
-            // Just put the node right under the current node
-            newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx;
-            newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
-        }
-
-        var appearsAt = 0;
-        for (var i = 0; i < formData.length; i++) {
-            var fieldName = formData[i].name;
-            var fieldValue = formData[i].value;
-
-            switch (fieldName) {
-                case "title":
-                    newNodeEntry[fieldName] = fieldValue;
-                    break;
-                case "imageURL":
-                    newNodeEntry[fieldName] = fieldValue;
-                    break;
-                case "mediaType":
-                    newNodeEntry[fieldName] = fieldValue;
-                    break;
-                case "mediaFormat":
-                    newNodeEntry[fieldName] = fieldValue;
-                    break;
-                case "mp4-mediaURL":
-                    if (fieldValue !== "") {
-                        newNodeEntry.typeData.mediaURL = fieldValue;
-                    }
-                    break;
-                case "h5p-mediaURL":
-                    if (fieldValue !== "") {
-                        newNodeEntry.typeData.mediaURL = fieldValue;
-                    }
-                    break;
-                case "mp4-mediaDuration":
-                        if (fieldValue !== "") {
-                            newNodeEntry.mediaDuration = parseInt(fieldValue);
-                        }
-                    break;
-                case "h5p-mediaDuration":
-                    if (fieldValue !== "") {
-                        newNodeEntry.typeData.mediaDuration = parseInt(fieldValue);
-                    }
-                    break;
-                case "appearsAt":
-                    appearsAt = parseInt(fieldValue);
-                    newNodeEntry.typeData.unlocked = !appearsAt || type == "root";
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        // Save to database, first save node then the link
-        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
-            // only add link if it's for adding new node and not root node
-            // Add new node to dataset after getting the id
-            newNodeEntry.id = result.id;
-            dataset.nodes.push(newNodeEntry);
-
-            if (isAddNewNode) {
-                // Get ID from callback and set it as target's id
-                var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
-
-                jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
-
-                    // Add the new link to the dataset
-                    dataset.links.push(newLink);
-
-                    hideNewNodeModal();
-                    redrawTapestryWithNewNode("new");
-                }).fail(function(e) {
-                    $("#add-node-error-msg").text(e.responseJSON.message);
-                    console.error("Error with adding new link", e);
-                });
-            } else {
-                // Redraw root node
-                dataset.rootId = result.id;
-                hideNewNodeModal();
-                root = dataset.rootId; // need to set root to newly created node
-
-                redrawTapestryWithNewNode("root");
-                $("#root-node-container").hide(); // hide the root node button after creating it.
-            }
-        }).fail(function(e) {
-            $("#add-node-error-msg").text(e.responseJSON.message);
-            console.error("Error with adding new node");
-            console.error(e);
-        });
-    }
-
-    function hideNewNodeModal() {
-        $("#createNewNodeModalBody input[type='text']").val("");
-        $("#createNewNodeModalBody input[type='url']").val("");
-        $("#createNewNodeModal").modal("hide");
-        $("#appearsat-section").show();
-    }
-
-    function redrawTapestryWithNewNode(type) {
-
-        saveCoordinates();
-        updateTapestrySize();
-
-        setNodeTypes(root);
-        setLinkTypes(root);
-        setUnlocked();
-
-        // Rebuild the nodes and links
-        links = createLinks();
-        nodes = createNodes();
-
-        filterLinks();
-        if (type === "new") {
-            filterNodes();
-        }
-        // Rebuild everything to include the new node
-        buildNodeContents();
-        if (type === "new") {
-            rebuildNodeContents();
-        }
-        updateSvgDimensions(TAPESTRY_CONTAINER_ID);
-    }
-
-    function validateNewNode(formData, type) {
-        var errMsg = "";
-
-        for (var i = 0; i < formData.length; i++) {
-            var fieldName = formData[i].name;
-            var fieldValue = formData[i].value;
-
-            switch (fieldName) {
-                case "title":
-                    if (fieldValue === "") {
-                        errMsg += "Please enter a title \n";
-                    }
-                    break;
-                case "imageURL":
-                    if (fieldValue === "") {
-                        errMsg += "Please enter a thumbnail URL \n";
-                    }
-                    break;
-                case "appearsAt":
-                    if (fieldValue.length > 0 && !onlyContainsDigits(fieldValue) && type === "new") {
-                        errMsg += "Please enter numeric value for Appears At (or leave empty to not lock) \n";
-                    }
-                    break;
-                default:
-                    break;
-            }
-            if ($("#mediaFormat").val() === "mp4") {
-                switch (fieldName) {
-                    case "mp4-mediaURL":
-                        if (fieldValue === "") {
-                            errMsg += "Please enter a MP4 video URL \n";
-                        }
-                        break;
-                    case "mp4-mediaDuration":
-                        if (!onlyContainsDigits(fieldValue)) {
-                            errMsg += "Please enter numeric value for media duration \n";
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            } else if ($("#mediaFormat").val() === "h5p") {
-                switch (fieldName) {
-                    case "h5p-mediaURL":
-                        if (fieldValue === "") {
-                            errMsg += "Please enter a H5P URL \n";
-                        }
-                        break;
-                    case "h5p-mediaDuration":
-                        if (!onlyContainsDigits(fieldValue)) {
-                            errMsg += "Please enter numeric value for media duration \n";
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            } else {
-                errMsg += "Please enter correct media format \n";
-            }
-        }
-        return errMsg;
-    }
 });
 
 /****************************************************
@@ -547,6 +281,280 @@ function createRootNodeButton(dataset) {
             $("#createNewNodeModal").modal();
         });
     }
+}
+
+function loadModals() {
+    var modalDiv = document.createElement("div");
+    modalDiv.id = "tapeestry-modal-div";
+    document.getElementById(TAPESTRY_CONTAINER_ID).append(modalDiv);
+    $("#tapeestry-modal-div").load(CREATE_NEW_NODE_MODAL_PATH, function(responseTxt, statusTxt, xhr){
+        if (statusTxt == "success") {
+            /****************************************************
+             * FUNCTIONS FOR ADD NEW NODE FORM
+             ****************************************************/
+
+            // Adding Root Node
+            $("#submit-add-root-node").on("click", function(e) {
+                e.preventDefault(); // cancel the actual submit
+                var formData = $("form").serializeArray();
+                addNewNode(formData, "root");
+            });
+
+            // Adding New Nodes
+            $("#submit-add-new-node").on("click", function(e) {
+                e.preventDefault(); // cancel the actual submit
+                var formData = $("form").serializeArray();
+                addNewNode(formData, "new");
+            });
+
+            $("#mediaFormat").on("change", function(){
+                var selectedType = $(this).val();
+                switch(selectedType)
+                {
+                    case "mp4":
+                        $("#contents-details").show();
+                        $("#mp4-content").show();
+                        $("#h5p-content").hide();
+                        break;
+                    case "h5p":
+                        $("#contents-details").show();
+                        $("#mp4-content").hide();
+                        $("#h5p-content").show();
+                        break;
+                    default:
+                        $("#contents-details").hide();
+                        $("#mp4-content").hide();
+                        $("#h5p-content").hide();
+                        break;
+                }
+            });
+
+            $("#cancel-add-new-node").on("click", function() {
+                hideNewNodeModal();
+            });
+
+            // Function for adding a new node
+            // type is either "root" or "new" node
+            function addNewNode(formData, type) {
+                var errorMsg = validateNewNode(formData, type);
+                if (errorMsg) {
+                    alert(errorMsg);
+                    return;
+                }
+
+                var isAddNewNode = (type == "new") ? true : false;
+
+                // Add the node data first
+                var newNodeEntry = {
+                    "type": "tapestry_node",
+                    "status": "publish",
+                    "nodeType": "",
+                    "title": "",
+                    "imageURL": "",
+                    "mediaType": "video",
+                    "mediaFormat": "",
+                    "mediaDuration": 0,
+                    "typeId": 1,
+                    "group": 1,
+                    "typeData": {
+                        "progress": [
+                            {"group": "viewed", "value": 0},
+                            {"group": "unviewed", "value": 1}
+                        ],
+                        "mediaURL": "",
+                        "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
+                        "mediaHeight": 600,
+                        "unlocked": true
+                    },
+                    "fx": getBrowserWidth(),
+                    "fy": getBrowserHeight()
+                };
+
+                if (isAddNewNode) {
+                    // Just put the node right under the current node
+                    newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx;
+                    newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
+                }
+
+                var appearsAt = 0;
+                for (var i = 0; i < formData.length; i++) {
+                    var fieldName = formData[i].name;
+                    var fieldValue = formData[i].value;
+
+                    switch (fieldName) {
+                        case "title":
+                            newNodeEntry[fieldName] = fieldValue;
+                            break;
+                        case "imageURL":
+                            newNodeEntry[fieldName] = fieldValue;
+                            break;
+                        case "mediaType":
+                            newNodeEntry[fieldName] = fieldValue;
+                            break;
+                        case "mediaFormat":
+                            newNodeEntry[fieldName] = fieldValue;
+                            break;
+                        case "mp4-mediaURL":
+                            if (fieldValue !== "") {
+                                newNodeEntry.typeData.mediaURL = fieldValue;
+                            }
+                            break;
+                        case "h5p-mediaURL":
+                            if (fieldValue !== "") {
+                                newNodeEntry.typeData.mediaURL = fieldValue;
+                            }
+                            break;
+                        case "mp4-mediaDuration":
+                                if (fieldValue !== "") {
+                                    newNodeEntry.mediaDuration = parseInt(fieldValue);
+                                }
+                            break;
+                        case "h5p-mediaDuration":
+                            if (fieldValue !== "") {
+                                newNodeEntry.typeData.mediaDuration = parseInt(fieldValue);
+                            }
+                            break;
+                        case "appearsAt":
+                            appearsAt = parseInt(fieldValue);
+                            newNodeEntry.typeData.unlocked = !appearsAt || type == "root";
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                // Save to database, first save node then the link
+                jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
+                    // only add link if it's for adding new node and not root node
+                    // Add new node to dataset after getting the id
+                    newNodeEntry.id = result.id;
+                    dataset.nodes.push(newNodeEntry);
+
+                    if (isAddNewNode) {
+                        // Get ID from callback and set it as target's id
+                        var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
+
+                        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
+
+                            // Add the new link to the dataset
+                            dataset.links.push(newLink);
+
+                            hideNewNodeModal();
+                            redrawTapestryWithNewNode("new");
+                        }).fail(function(e) {
+                            console.error("Error with adding new link", e);
+                        });
+                    } else {
+                        // Redraw root node
+                        dataset.rootId = result.id;
+                        hideNewNodeModal();
+                        root = dataset.rootId; // need to set root to newly created node
+
+                        redrawTapestryWithNewNode("root");
+                        $("#root-node-container").hide(); // hide the root node button after creating it.
+                    }
+                }).fail(function(e) {
+                    console.error("Error with adding new node");
+                    console.error(e);
+                });
+            }
+
+            function hideNewNodeModal() {
+                $("#createNewNodeModalBody input[type='text']").val("");
+                $("#createNewNodeModalBody input[type='url']").val("");
+                $("#createNewNodeModal").modal("hide");
+                $("#appearsat-section").show();
+            }
+
+            function redrawTapestryWithNewNode(type) {
+
+                saveCoordinates();
+                updateTapestrySize();
+
+                setNodeTypes(root);
+                setLinkTypes(root);
+                setUnlocked();
+
+                // Rebuild the nodes and links
+                links = createLinks();
+                nodes = createNodes();
+
+                filterLinks();
+                if (type === "new") {
+                    filterNodes();
+                }
+                // Rebuild everything to include the new node
+                buildNodeContents();
+                if (type === "new") {
+                    rebuildNodeContents();
+                }
+                updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+            }
+
+            function validateNewNode(formData, type) {
+                var errMsg = "";
+
+                for (var i = 0; i < formData.length; i++) {
+                    var fieldName = formData[i].name;
+                    var fieldValue = formData[i].value;
+
+                    switch (fieldName) {
+                        case "title":
+                            if (fieldValue === "") {
+                                errMsg += "Please enter a title \n";
+                            }
+                            break;
+                        case "imageURL":
+                            if (fieldValue === "") {
+                                errMsg += "Please enter a thumbnail URL \n";
+                            }
+                            break;
+                        case "appearsAt":
+                            if (fieldValue.length > 0 && !onlyContainsDigits(fieldValue) && type === "new") {
+                                errMsg += "Please enter numeric value for Appears At (or leave empty to not lock) \n";
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    if ($("#mediaFormat").val() === "mp4") {
+                        switch (fieldName) {
+                            case "mp4-mediaURL":
+                                if (fieldValue === "") {
+                                    errMsg += "Please enter a MP4 video URL \n";
+                                }
+                                break;
+                            case "mp4-mediaDuration":
+                                if (!onlyContainsDigits(fieldValue)) {
+                                    errMsg += "Please enter numeric value for media duration \n";
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                    } else if ($("#mediaFormat").val() === "h5p") {
+                        switch (fieldName) {
+                            case "h5p-mediaURL":
+                                if (fieldValue === "") {
+                                    errMsg += "Please enter a H5P URL \n";
+                                }
+                                break;
+                            case "h5p-mediaDuration":
+                                if (!onlyContainsDigits(fieldValue)) {
+                                    errMsg += "Please enter numeric value for media duration \n";
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                    } else {
+                        errMsg += "Please enter correct media format \n";
+                    }
+                }
+                return errMsg;
+            }
+        }
+    });
 }
 
 /****************************************************
