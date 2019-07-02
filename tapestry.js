@@ -385,7 +385,7 @@ $("#tapeestry-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, statusT
 // Type is either "user" or "group"  
 function appendPermissionsRow(id, type) {
     $('#permissions-table').append(
-        '<tr>' +
+        '<tr class="permissions-dynamic-row">' +
         '<td>' + capitalizeFirstLetter(type) + " " + id + '</td>' +
         '<td id="' + type + "-" + id + "-editcell" + '"' + '></td>' +
         '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-checkbox" name="add" type="checkbox"></td>' +
@@ -597,6 +597,7 @@ function tapestryAddNewNode(formData, isRoot) {
 function tapestryHideAddNodeModal() {
     $("#createNewNodeModalBody input[type='text']").val("");
     $("#createNewNodeModalBody input[type='url']").val("");
+    $(".permissions-dynamic-row").remove(); // remove the dynamically created permission rows
     $("#createNewNodeModal").modal("hide");
     $("#appearsat-section").show();
 }
@@ -2265,17 +2266,17 @@ function checkPermission(node, permissionType) {
     if (tapestryWpIsAdmin) {
         return node.nodeType === "root";
     }
+
+    if (node.permissions["public"] && node.permissions["public"].includes(permissionType)) {
+        return node.nodeType === "root";
+    }
+
     if (tapestryWpUserId && tapestryWpUserId !== "") {
         const userIndex = "user-" + tapestryWpUserId;
         if (node.permissions[userIndex] && node.permissions[userIndex].includes(permissionType)) {
             return node.nodeType === "root";
         }
     }
-    
-    if (node.permissions["public"] && node.permissions["public"].includes(permissionType)) {
-        return node.nodeType === "root";
-    }
-
 
     // // TODO Check user's group id
 
