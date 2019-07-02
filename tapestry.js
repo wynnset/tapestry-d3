@@ -351,8 +351,7 @@ $("#tapestry-edit-modal-div").load(EDIT__NODE_MODAL_URL, function(responseTxt, s
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
             var nodeIndex = findNodeIndex(root);
-            // TODO: validation here
-
+            tapestryHideEditNodeModal();
             for (var i = 0; i < formData.length; i++) {
                 var fieldName = formData[i].name;
                 var fieldValue = formData[i].value;
@@ -360,21 +359,40 @@ $("#tapestry-edit-modal-div").load(EDIT__NODE_MODAL_URL, function(responseTxt, s
                 switch (fieldName) {
                     case "edit-node-title":
                         if (fieldValue !== "") {
-                            dataset.nodes[nodeIndex].title = fieldValue;
+                            $.ajax({
+                                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root + "/title",
+                                method: 'PUT',
+                                data: JSON.stringify(fieldValue),
+                                success: function(result) {
+                                    dataset.nodes[nodeIndex].title = result;
+                                    redrawTapestryWithNewNode();
+                                },
+                                error: function(e) {
+                                    console.error("Error editing title", e);
+                                }
+                            });
                         }
                         break;
                     case "edit-node-imageURL":
                             if (fieldValue !== "") {
-                                dataset.nodes[nodeIndex].imageURL = fieldValue;
+                                $.ajax({
+                                    url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root + "/imageURL",
+                                    method: 'PUT',
+                                    data: JSON.stringify(fieldValue),
+                                    success: function(result) {
+                                        dataset.nodes[nodeIndex].imageURL = result;
+                                        redrawTapestryWithNewNode();
+                                    },
+                                    error: function(e) {
+                                        console.error("Error editing imageUrl", e);
+                                    }
+                                });
                             }
                         break;
                     default:
                         break;
                 }
             }
-            // Add Request for DB
-            tapestryHideEditNodeModal();
-            redrawTapestryWithNewNode();
         });
     }
 }); 
@@ -616,63 +634,6 @@ function tapestryValidateNewNode(formData, isRoot) {
     }
     return errMsg;
 }
-
-/****************************************************
- * FUNCTIONS FOR EDIT TAPESTRY SETTINGS
- ****************************************************/
-// $(function() {
-//     $("#tapestry-setting-btn").on("click", function() {
-//         $("#editTapestrySettingModal").modal();
-//     });
-
-//     $("#submit-edit-setting").on("click", function(e) {
-//         e.preventDefault();
-//         var title = "";
-//         var settingFormData = $("form").serializeArray();
-//         // TODO: Validate title here
-
-//         for (var i = 0; i < settingFormData.length; i++) {
-//             var fieldName = settingFormData[i]["name"];
-//             var fieldValue = settingFormData[i]["value"];
-
-//             switch (fieldName) {
-//                 case "settings-title":
-//                     title = fieldValue;
-//                     break;
-//                 default:
-//                     break;
-//             }
-//         }
-
-//         var settings = {
-//             "tapestrySlug": "intercultural-understanding",
-//             "saveProgressToCookie": false,
-//             "zoom": 1,
-//             "type": "tapestry",
-//             "title": title,
-//             "status": "publish"
-//         };
-//         var settingsData = {
-//             "settings": JSON.stringify(settings)
-//         }
-
-//         $.ajax({
-//             url: apiUrl + "/tapestries/" + tapestryWpPostId + "/settings",
-//             method: 'PUT',
-//             data: settingsData,
-//             success: function(result) {
-//                 // TODO: maybe successs TOAST
-//                 console.log(result);
-//                 $("#editTapestrySettingModal").modal("hide");
-//             },
-//             error: function(e) {
-//                 console.log("Error with updating tapestry setting:");
-//                 console.log(e);
-//             }
-//         });
-        
-//     });
-// });
 
 /****************************************************
  * D3 RELATED FUNCTIONS
