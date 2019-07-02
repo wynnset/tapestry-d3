@@ -352,6 +352,7 @@ $("#tapestry-edit-modal-div").load(EDIT__NODE_MODAL_URL, function(responseTxt, s
             var formData = $("form").serializeArray();
             var nodeIndex = findNodeIndex(root);
             tapestryHideEditNodeModal();
+            promiseActionArr = [];
             for (var i = 0; i < formData.length; i++) {
                 var fieldName = formData[i].name;
                 var fieldValue = formData[i].value;
@@ -359,43 +360,46 @@ $("#tapestry-edit-modal-div").load(EDIT__NODE_MODAL_URL, function(responseTxt, s
                 switch (fieldName) {
                     case "edit-node-title":
                         if (fieldValue !== "") {
-                            $.ajax({
-                                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root + "/title",
-                                method: 'PUT',
-                                data: JSON.stringify(fieldValue),
-                                success: function(result) {
-                                    dataset.nodes[nodeIndex].title = result;
-                                    redrawTapestryWithNewNode();
-                                },
-                                error: function(e) {
-                                    console.error("Error editing title", e);
-                                }
-                            });
+                            promiseActionArr.push(makeAjaxCall(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root + "/title", "PUT", fieldValue).then(function(res) {
+                                dataset.nodes[nodeIndex].title = res;
+                            }, function(err) {
+                                console.error("Error editing node title", err);
+                            })); 
                         }
                         break;
                     case "edit-node-imageURL":
                             if (fieldValue !== "") {
-                                $.ajax({
-                                    url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root + "/imageURL",
-                                    method: 'PUT',
-                                    data: JSON.stringify(fieldValue),
-                                    success: function(result) {
-                                        dataset.nodes[nodeIndex].imageURL = result;
-                                        redrawTapestryWithNewNode();
-                                    },
-                                    error: function(e) {
-                                        console.error("Error editing imageUrl", e);
-                                    }
-                                });
+                                promiseActionArr.push(makeAjaxCall(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root + "/imageURL", "PUT", fieldValue).then(function(res) {
+                                    dataset.nodes[nodeIndex].imageURL = res;
+                                }, function(err) {
+                                    console.error("Error editing node imageURL", err);
+                                }));
                             }
                         break;
                     default:
                         break;
                 }
             }
+
+            let results = Promise.all(promiseActionArr);
+            results.then(function(res) {
+                redrawTapestryWithNewNode();
+            }, function(err) {
+                console.error(err);
+            });
         });
     }
 }); 
+
+// Return Promise for creating
+// TODO refactor all ajax calls to use this function
+function makeAjaxCall(url, methodType, data){
+    return $.ajax({
+        url : url,
+        method : methodType,
+        data: JSON.stringify(data),
+    });
+}
 
 // Function for adding a new node
 function tapestryAddNewNode(formData, isRoot) {
