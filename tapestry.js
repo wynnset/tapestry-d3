@@ -388,14 +388,14 @@ function appendPermissionsRow(id, type) {
         '<tr>' +
         '<td>' + capitalizeFirstLetter(type) + " " + id + '</td>' +
         '<td id="' + type + "-" + id + "-editcell" + '"' + '></td>' +
-        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-checkbox" name="add" type="checkbox" disabled></td>' +
-        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-edit-checkbox" name="edit" type="checkbox" disabled></td>' +
-        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-submit-checkbox" name="add_submit" type="checkbox" disabled></td>' +
-        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox"+ '"' + 'id="user-' + id +'-edit-submit-checkbox" name="edit_submit" type="checkbox" disabled"></td>' +
-        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-approve-checkbox" name="approve" type="checkbox" disabled></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-checkbox" name="add" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-edit-checkbox" name="edit" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-submit-checkbox" name="add_submit" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox"+ '"' + 'id="user-' + id +'-edit-submit-checkbox" name="edit_submit" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-approve-checkbox" name="approve" type="checkbox"></td>' +
         '</tr>'
     );
-    $('<input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-read-checkbox" name="read" type="checkbox">').on("change", function() {
+    $('<input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-read-checkbox" name="read" type="checkbox" checked>').on("change", function() {
         if ($(this).is(":checked")) {
             $("." + type + "-" + id + "-checkbox").each(function() {
                 if($(this).prop('disabled')) {
@@ -569,13 +569,14 @@ function tapestryAddNewNode(formData, isRoot) {
                 console.error("Error with adding new link", e);
             });
         } else {
+            var newId = result.id;
             $.ajax({
-                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + result.id + "/permissions",
+                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + newId + "/permissions",
                 method: 'PUT',
                 data: JSON.stringify(permissionData),
                 success: function(result) {
                     // Redraw root node
-                    dataset.rootId = result.id;
+                    dataset.rootId = newId;
                     tapestryHideAddNodeModal();
                     root = dataset.rootId; // need to set root to newly created node
 
