@@ -62,7 +62,6 @@ jQuery.ajaxSetup({
 });
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
-    console.log(result);
     dataset = result;
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
@@ -570,13 +569,23 @@ function tapestryAddNewNode(formData, isRoot) {
                 console.error("Error with adding new link", e);
             });
         } else {
-            // Redraw root node
-            dataset.rootId = result.id;
-            tapestryHideAddNodeModal();
-            root = dataset.rootId; // need to set root to newly created node
+            $.ajax({
+                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + result.id + "/permissions",
+                method: 'PUT',
+                data: JSON.stringify(permissionData),
+                success: function(result) {
+                    // Redraw root node
+                    dataset.rootId = result.id;
+                    tapestryHideAddNodeModal();
+                    root = dataset.rootId; // need to set root to newly created node
 
-            redrawTapestryWithNewNode(true);
-            $("#root-node-container").hide(); // hide the root node button after creating it.
+                    redrawTapestryWithNewNode(true);
+                    $("#root-node-container").hide(); // hide the root node button after creating it.
+                },
+                error: function(e) {
+                    console.error("Error with adding permission to root node", e);
+                }
+            });
         }
     }).fail(function(e) {
         console.error("Error with adding new node");
