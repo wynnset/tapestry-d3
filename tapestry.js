@@ -2128,6 +2128,9 @@ function getViewable(node) {
     // CHECK 5: If we are currently in view mode & if the node will be viewable in that case
     if (node.nodeType === "grandchild" && inViewMode) return false;
 
+    // CHECK 6: If all the node's parents are locked, don't display it
+    if (node.depth > tapestryDepth);
+
     // If it passes all the checks, return true!
     return true;
 }
