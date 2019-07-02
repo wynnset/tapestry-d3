@@ -56,21 +56,32 @@ body {
     margin-top: 100px;
 }
 
-#header slider-wrapper {
-    position: absolute;
-    padding-top: 100px;
-    padding-left: 100px;
+#tapestry-svg > g {
+    transform: translate(-8.5px, 0);
 }
 
-#slider-wrapper {
-    padding-left: 10%;
+/* Tapestry Controls */
+
+#tapestry-controls-wrapper {
+    margin: -30px 10% 20px;
+    padding: 10px 20px;
+    float: right;
+    width: auto;
+    background: #EEE;
+    box-shadow: 0 0 7px 0 #BBB;
 }
+#tapestry-controls-wrapper > * {
+    float: left;
+    padding-right: 20px;
+}
+
+/* depth slider */
 
 #tapestry-depth-slider {
+    margin-top: 6px;
     outline: none;
     background: #d3d3d3;
-    height: 15px;
-    border-radius: 20%;
+    height: 10px;
     opacity: 0.7;
     transition: opacity .2s;
 }
@@ -120,6 +131,10 @@ body {
     text-align:center;
 }
 
+div.modal {
+    top: 80px;
+}
+
 #spotlight-content {
     position: absolute;
     top: 5vh;
@@ -132,16 +147,17 @@ body {
     opacity: 1;
     transition: all 1s;
     transition-timing-function: ease-in;
+    border: solid 1px #999;
+    border-radius: 40px;
+    overflow: hidden;
+}
+#spotlight-content > * {
+    background: #000;
+    outline: none;
 }
 #spotlight-content[data-media-format=mp4] > * {
-    box-shadow: 0 0 800px #000;
-    background: #000;
     width: 100%;
     height: auto;
-}
-#spotlight-content[data-media-format=h5p] {
-    box-shadow: 0 0 800px #000;
-    background: #000;
 }
 
 #spotlight-overlay {
@@ -195,6 +211,8 @@ text {
     stroke-opacity: 5;
 }
 
+/* MEDIA BUTTON */
+
 .mediaButton {
     transition: all 0.25s ease;
     cursor: pointer;
@@ -226,6 +244,28 @@ text {
     height: 94%;
     background-size: 98%;
     box-shadow: 0 0 0 2px #666 inset;
+}
+
+/* ADD NODE BUTTON */
+.addNodeButton {
+    transition: all 0.25s ease;
+    cursor: pointer;
+    color: #666666;
+    overflow: hidden;
+    border-radius: 100%;
+}
+
+.addNodeButton:hover,
+.addNodeButton:active {
+    transform: scale(1.15) translate(0, -21px);
+    color: #11a6d8;
+}
+
+.addNodeButton > i:not(.mediaButtonLoading) {
+    font-size: 55px;
+    background: #fff;
+    border: solid 1px #fff;
+    padding: 2px;
 }
 
 i {
@@ -276,7 +316,7 @@ i {
 
 .lightbox-close {
     text-transform: uppercase;
-    background: transparent;
+    background: none;
     position: absolute;
     font-weight: 300;
     font-size: 12px;
@@ -284,7 +324,9 @@ i {
     border: none;
     color: white;
     top: -22px;
-    right: 3%;
+    right: 0.5%;
+    text-align: right;
+    box-shadow: none;
 }
 
 #instructions-wrapper {
@@ -314,4 +356,111 @@ i {
         max-width: 430px;
         right: 45px;
     }
+}
+
+/* Add new node form */
+
+body {font-family: Arial, Helvetica, sans-serif;}
+* {box-sizing: border-box;}
+
+/* The popup form - hidden by default */
+.form-popup {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    right: 15px;
+    border: 3px solid #f1f1f1;
+    z-index: 9;
+}
+
+/* Add styles to the form container */
+.form-container {
+    padding: 6%;
+    background-color: white;
+    margin: 0 auto;
+}
+
+/* Full-width input fields */
+.form-container input[type=text], .form-container input[type=url] {
+    width: 100%;
+    padding: 15px;
+    margin: 5px 0 22px 0;
+    border: none;
+    background: #f1f1f1;
+}
+
+/* When the inputs get focus, do something */
+.form-container input[type=text]:focus, .form-container input[type=password]:focus {
+    background-color: #ddd;
+    outline: none;
+}
+
+/* Set a style for the submit/login button */
+.form-container .btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 16px 20px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 10px;
+    opacity: 0.8;
+}
+
+#submit-add-new-node, #submit-add-root-node {
+    color: white;
+}
+
+#cancel-add-new-node {
+    color: white;
+    background-color: #dc3545;
+}
+
+#add-node-error-msg {
+    color: #dc3545;
+    font-size: 15px;
+    margin-left: 4%;
+}
+
+/* Add some hover effects to buttons */
+.form-container .btn:hover, .open-button:hover {
+    opacity: 1;
+}
+
+.dropdown #mediaType {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 15px;
+    width: 50%;
+    height: 30px;
+}
+
+.dropdown #mediaFormat {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 15px;
+    width: 50%;
+    height: 30px;
+}
+
+#root-node-container {
+    padding-top: 40px;
+}
+/* Root Node button */
+#root-node-btn {
+    margin-top: 20vh;
+    text-align: center;
+    cursor: pointer;
+}
+
+#root-node-label {
+    text-align: center; 
+    font-size: 1.5em;
+    padding-top: 10px;
+}
+
+#root-node-btn:hover,
+#root-node-btn:active {
+    transform: scale(1.1);
+    color: #11a6d8;
 }
