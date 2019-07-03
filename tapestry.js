@@ -2114,6 +2114,20 @@ function setUnlocked(childIndex) {
 
 // ALL the checks for whether a certain node is viewable
 function getViewable(node) {
+    var children = getChildren(node.id);
+    var viewable = false;
+
+    children.forEach(function (id) {
+        if (!dataset.nodes[findNodeIndex(id)].typeData.unlocked)  {
+            console.log(dataset.nodes[findNodeIndex(id)]);
+        }
+    });
+
+    // for (var childId in children) {
+    //     if (dataset.nodes[findNodeIndex(children[childId])].typeData.unlocked) {
+    //         console.log(dataset.nodes[findNodeIndex(children[childId])])
+    //     }
+    // }
     // TODO: CHECK 1: If user is authorized to view it
 
     // CHECK 2: If it is a new node that needs the position to be set (ie: incomplete), show it so that the user can place the node
