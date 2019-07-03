@@ -922,6 +922,7 @@ function buildNodeContents() {
         .on("click", function (d) {
             // prevent multiple clicks
             if (root != d.id) {
+                console.log("click")
                 root = d.id;
                 resizeNodes(d.id);
                 tapestryDepthSlider.max = findMaxDepth(root);
@@ -2114,20 +2115,19 @@ function setUnlocked(childIndex) {
 
 // ALL the checks for whether a certain node is viewable
 function getViewable(node) {
-    var children = getChildren(node.id);
-    var viewable = false;
+    var children = getChildren(node.id, 1);
+    console.log(children);
 
-    children.forEach(function (id) {
-        if (!dataset.nodes[findNodeIndex(id)].typeData.unlocked)  {
-            console.log(dataset.nodes[findNodeIndex(id)]);
+    // return true if at least one neighboring node is unlocked
+    let noUnlockedNeighbor = children.every(function(id) {
+        if (!dataset.nodes[findNodeIndex(id)].typeData.unlocked) {
+            return true;
         }
     });
 
-    // for (var childId in children) {
-    //     if (dataset.nodes[findNodeIndex(children[childId])].typeData.unlocked) {
-    //         console.log(dataset.nodes[findNodeIndex(children[childId])])
-    //     }
-    // }
+    console.log(node.title)
+    console.log(node.id + " noUnlockedNeighbor: " + noUnlockedNeighbor + " children: " + children)
+
     // TODO: CHECK 1: If user is authorized to view it
 
     // CHECK 2: If it is a new node that needs the position to be set (ie: incomplete), show it so that the user can place the node
@@ -2142,8 +2142,8 @@ function getViewable(node) {
     // CHECK 5: If we are currently in view mode & if the node will be viewable in that case
     if (node.nodeType === "grandchild" && inViewMode) return false;
 
-    // CHECK 6: If all the node's parents are locked, don't display it
-    if (node.depth > tapestryDepth);
+    // CHECK 6: If all the node's neighbors are locked, don't display it
+    if (node.nodeType === "grandchild" && noUnlockedNeighbor) return false;
 
     // If it passes all the checks, return true!
     return true;
@@ -2206,6 +2206,11 @@ function saveCoordinates() {
             "fy": node.fy
         };
     }
+}
+
+// Returns false if 
+function checkUnlockedChildren(id) {
+
 }
 
 // Get data from child needed for knowing whether it is unlocked or not
