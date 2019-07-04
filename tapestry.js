@@ -2116,24 +2116,15 @@ function setUnlocked(childIndex) {
 // ALL the checks for whether a certain node is viewable
 function getViewable(node) {
     var children = getChildren(node.id, 1);
-//    console.log(children);
 
     // return true if at least one neighboring node is unlocked
     let noUnlockedNeighbor = children.every(function(id) {
         if (!dataset.nodes[findNodeIndex(id)].typeData.unlocked) {
+            return true;
+        } else {
             return false;
         }
     });
-
-    for (childId in children) {
-        if (dataset.nodes[findNodeIndex(children[childId])].typeData.unlocked) {
-            console.log("childtitle: "+ dataset.nodes[findNodeIndex(children[childId])].title);
-        }
-    }
-    
-
-    // console.log(node.title)
-    // console.log(node.id + " noUnlockedNeighbor: " + noUnlockedNeighbor + " children: " + children)
 
     // TODO: CHECK 1: If user is authorized to view it
 
@@ -2150,7 +2141,7 @@ function getViewable(node) {
     if (node.nodeType === "grandchild" && inViewMode) return false;
 
     // CHECK 6: If all the node's neighbors are locked, don't display it
-    if (node.nodeType === "grandchild" && !noUnlockedNeighbor) return false;
+    if (!(node.nodeType === "root") && noUnlockedNeighbor) return false;
 
     // If it passes all the checks, return true!
     return true;
