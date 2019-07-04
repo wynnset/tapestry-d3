@@ -151,6 +151,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     nodes = createNodes();
 
     filterLinks();
+    filterNodes();
     buildNodeContents();
 
     
@@ -668,20 +669,21 @@ function dragged(d) {
 function dragended(d) {
     if (!d3.event.active) force.alphaTarget(0);
 
-    $.ajax({
-        url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + d.id + "/coordinates",
-        method: 'PUT',
-        data: JSON.stringify({x: d.x, y: d.y}),
-        success: function(result) {
-            d.fx = d.x;
-            d.fy = d.y;
-        },
-        error: function(e) {
-            console.error("Error saving coordinates of nodes");
-            console.error(e);
-        }
-    });
-
+    if (tapestryWpUserId) {
+        $.ajax({
+            url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + d.id + "/coordinates",
+            method: 'PUT',
+            data: JSON.stringify({x: d.x, y: d.y}),
+            success: function(result) {
+                d.fx = d.x;
+                d.fy = d.y;
+            },
+            error: function(e) {
+                console.error("Error saving coordinates of nodes");
+                console.error(e);
+            }
+        });
+    }
 
     recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
 }
@@ -1787,6 +1789,11 @@ function findNodeIndex(id) {
     return dataset.nodes.findIndex(helper);
 }
 
+/* Gets a node in the dataset by ID */
+function getNodeById(id) {
+    return dataset.nodes.find(node => node.id === id);
+}
+
 function getBoundedCoord(coord, maxCoord) {
     return Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
 }
@@ -2081,17 +2088,18 @@ function setUnlocked(childIndex) {
             // TODO move unlocked out of typeData
             if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
                 dataset.nodes[childIndex].typeData.unlocked = true;
-                $.ajax({
-                    url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/typeData",
-                    method: 'PUT',
-                    data: JSON.stringify(dataset.nodes[childIndex].typeData),
-                    success: function(result) {
-                    },
-                    error: function(e) {
-                        console.error("Error with update node's unlock property");
-                        console.error(e);
-                    }
-                });
+                // TODO: this should only affect this user's tapestry, not saved to the base tapestry
+                // $.ajax({
+                //     url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/typeData",
+                //     method: 'PUT',
+                //     data: JSON.stringify(dataset.nodes[childIndex].typeData),
+                //     success: function(result) {
+                //     },
+                //     error: function(e) {
+                //         console.error("Error with update node's unlock property");
+                //         console.error(e);
+                //     }
+                // });
             }
         }
     }
@@ -2110,17 +2118,51 @@ function setUnlocked(childIndex) {
             }
         });
     }
+    setAccessibleStatus();
+}
+
+/**
+ * Recursively sets the accessible status of the given node and its children up to the given depth
+ * @param {object} node 
+ * @param {integer} depth 
+ */
+function setAccessibleStatus(node, depth, parentNodeId, parentIsAccessible = true){
+
+    // If no node passed in, assume root node
+    if (typeof node == "undefined") {
+        node = dataset.nodes[findNodeIndex(dataset.rootId)];
+    }
+
+    // If no node passed in, assume tapestry depth
+    if (typeof depth == "undefined") {
+        depth = tapestryDepth;
+    }
+
+    getChildren(node.id, 1).forEach (childNodeId => {
+        var thisNode = getNodeById(childNodeId);
+        // Do not traverse up the parent
+        if (parentNodeId != thisNode.id) {
+            // If a node is accessible, only if it's unlocked and its parent is accessible
+            var isAccessible = thisNode.typeData.unlocked && parentIsAccessible;
+            dataset.nodes[findNodeIndex(thisNode.id)].accessible = isAccessible;
+            if (depth > 0) {
+                // Keep going deeper in
+                setAccessibleStatus(thisNode, depth-1, node.id, isAccessible);
+            }
+        }
+    });
 }
 
 // ALL the checks for whether a certain node is viewable
 function getViewable(node) {
+
     // TODO: CHECK 1: If user is authorized to view it
 
-    // CHECK 2: If it is a new node that needs the position to be set (ie: incomplete), show it so that the user can place the node
-    // if (node.completedNode !== undefined && !node.completedNode) return true;
+    // CHECK 2: Always show root node
+    if (node.nodeType === "root") return true;
 
     // CHECK 3: If the user has unlocked the node
-    if (!node.typeData.unlocked && !viewLockedCheckbox.checked) return false;
+    if (!node.accessible && !viewLockedCheckbox.checked) return false;
 
     // CHECK 4: If the node is currently in view (ie: root/child/grandchild)
     if (node.nodeType === "") return false;
