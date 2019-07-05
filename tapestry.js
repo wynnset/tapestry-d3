@@ -1052,7 +1052,7 @@ function buildPathAndButton() {
         .append("xhtml:div")
             .attr("class","title")
             .html(function(d){
-                return "<div><h1>" + d.title + "</h1></div>"
+                return "<div><h1>" + d.title + "</h1></div>";
             });
 
     // Append mediaButton
