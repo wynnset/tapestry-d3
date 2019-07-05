@@ -1037,12 +1037,13 @@ function buildPathAndButton() {
             return d.id;
         })
         .text(function (d) {
+            console.log("title created");
             return d.title;
         })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
-        })
-        .call(wrapText, NORMAL_RADIUS * 2);
+        });
+//        .call(wrapText, NORMAL_RADIUS * 2);
 
     // Append mediaButton
     nodes
