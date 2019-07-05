@@ -1024,6 +1024,8 @@ function buildPathAndButton() {
     /* Update the progress pies */
     updateViewedProgress();
 
+    filterNodes();
+
     nodes
         .filter(function (d) {
             return getViewable(d);
@@ -1036,14 +1038,32 @@ function buildPathAndButton() {
         .attr("data-id", function (d) {
             return d.id;
         })
-        .text(function (d) {
-            console.log("title created");
-            return d.title;
-        })
+        // .text(function (d) {
+        //     console.log("title created");
+        //     return d.title;
+        // })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
-        });
+        })
+
+        
 //        .call(wrapText, NORMAL_RADIUS * 2);
+//        var titleString = "<div><h1>" + d.title + "</h1></div>"
+
+        nodes
+            .filter(function (d){
+                return d.nodeType === "child" || d.nodeType === "root";
+            })
+            .append('foreignObject')
+            .attr("width",NORMAL_RADIUS)
+            .attr("height",NORMAL_RADIUS)
+            .attr("x",-NORMAL_RADIUS/2)
+            .attr("y",-NORMAL_RADIUS/2)
+            .append("xhtml:div")
+                .attr("class","parent")
+                .html(function(d){
+                    return "<div><h1>" + d.title + "</h1></div>"
+                })
 
     // Append mediaButton
     nodes
