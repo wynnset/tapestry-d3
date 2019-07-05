@@ -17,7 +17,6 @@ var // declared constants
     COLOR_LINK = "#999",
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
-    FONT_ADJUST = 1.25,
     TIME_BETWEEN_SAVE_PROGRESS = 5, // Means the number of seconds between each save progress call
     NODE_UNLOCK_TIMEFRAME = 2; // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
     TAPESTRY_PROGRESS_URL = apiUrl + "/users/progress",
@@ -933,6 +932,10 @@ function buildNodeContents() {
 }
 
 function rebuildNodeContents() {
+    /* Remove text before transition animation */
+    $(".title").remove();
+
+    /* Commence transition animation */
     nodes.selectAll(".imageOverlay")
             .transition()
             .duration(TRANSITION_DURATION/2)
@@ -1024,46 +1027,33 @@ function buildPathAndButton() {
     /* Update the progress pies */
     updateViewedProgress();
 
-    filterNodes();
-
     nodes
         .filter(function (d) {
             return getViewable(d);
         })
         .append("text")
-        .attr("text-anchor", "middle")
-        .attr("fill", "white")
-        .attr("class", "title")
-        .attr("text-anchor", "middle")
         .attr("data-id", function (d) {
             return d.id;
         })
-        // .text(function (d) {
-        //     console.log("title created");
-        //     return d.title;
-        // })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
+        });
+
+    /* Create the node titles */
+    nodes
+        .filter(function (d){
+            return d.depth < tapestryDepth;
         })
-
-        
-//        .call(wrapText, NORMAL_RADIUS * 2);
-//        var titleString = "<div><h1>" + d.title + "</h1></div>"
-
-        nodes
-            .filter(function (d){
-                return d.nodeType === "child" || d.nodeType === "root";
-            })
-            .append('foreignObject')
-            .attr("width",NORMAL_RADIUS)
-            .attr("height",NORMAL_RADIUS)
-            .attr("x",-NORMAL_RADIUS/2)
-            .attr("y",-NORMAL_RADIUS/2)
-            .append("xhtml:div")
-                .attr("class","parent")
-                .html(function(d){
-                    return "<div><h1>" + d.title + "</h1></div>"
-                })
+        .append('foreignObject')
+        .attr("width", MAX_RADIUS)
+        .attr("height", MAX_RADIUS)
+        .attr("x", -MAX_RADIUS/2)
+        .attr("y", -MAX_RADIUS/2)
+        .append("xhtml:div")
+            .attr("class","title")
+            .html(function(d){
+                return "<div><h1>" + d.title + "</h1></div>"
+            });
 
     // Append mediaButton
     nodes
@@ -1276,7 +1266,6 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     });
 }
 
-//
 function getLightboxDimensions(videoHeight, videoWidth) {
     var resizeRatio = 1;
     if (videoWidth > getBrowserWidth()) {
@@ -2193,53 +2182,6 @@ function getViewable(node) {
 
     // If it passes all the checks, return true!
     return true;
-}
-
-// Wrap function specifically for SVG text
-// Found on https://bl.ocks.org/mbostock/7555321
-function wrapText(text, width) {
-    width /= FONT_ADJUST;
-    text.each(function (d) {
-        var text = d3.select(this),
-            words = text.text().split(/\s+/).reverse(),
-            word,
-            lines = [],
-            currentLine = [],
-            lineNumber = 0,
-            lineHeight = 1.1 * FONT_ADJUST, // ems
-            tspan = text.text(null)
-                .append("tspan")
-                .attr("class", "line" + d.id)
-                .attr("x", 0)
-                .attr("y", 0);
-
-        while (word = words.pop()) {
-            currentLine.push(word);
-            tspan.text(currentLine.join(" "));
-            if (tspan.node().getComputedTextLength() > width) {
-                currentLine.pop(); // Pop the last word off of the previous line
-                lines.push(currentLine);
-                tspan.text(currentLine.join(" "));
-                currentLine = [word]; // line now becomes a new array
-                lineNumber++;
-                tspan = text.append("tspan")
-                    .attr("class", "line" + d.id)
-                    .attr("x", 0) //0 because it keeps it in the center
-                    .attr("y", function() {
-                        return ++lineNumber * lineHeight + "em";
-                    })
-                    .text(word);
-            }
-        }
-
-        var midLineIndex = Math.floor(lineNumber / 4);
-        var tspans = document.getElementsByClassName("line" + d.id);
-        var i = 0;
-        while (tspans[i] !== undefined) {
-            tspans[i].setAttribute("y", (i - midLineIndex) * lineHeight + "em");
-            i++;
-        }
-    });
 }
 
 // For saving the coordinates of all the nodes prior to transitioning to play-mode

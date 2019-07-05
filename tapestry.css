@@ -177,7 +177,15 @@ div.modal {
 }
 
 .title {
-    font-size: 20px;
+    color:white;
+    min-height: 100%;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction:column;
+    text-align: center;
+    font-size: 18px;
     text-shadow: 1.5px 1.5px #333333;
 }
 
