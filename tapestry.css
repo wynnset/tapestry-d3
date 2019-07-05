@@ -177,7 +177,7 @@ div.modal {
 }
 
 .title {
-    color:white;
+    color: white;
     min-height: 100%;
     pointer-events: none;
     display: flex;
@@ -185,7 +185,7 @@ div.modal {
     align-items: center;
     flex-direction:column;
     text-align: center;
-    font-size: 18px;
+    font-size: 20px;
     text-shadow: 1.5px 1.5px #333333;
 }
 

@@ -120,9 +120,9 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     // 2. SIZE AND SCALE THE TAPESTRY AND SVG TO FIT WELL
     //---------------------------------------------------
 
-    // do it now
+    // Do it now
     updateTapestrySize();
-    // also do it whenever window is resized
+    // Also do it whenever window is resized
     $(window).resize(function(){
         updateTapestrySize();
     });
@@ -577,7 +577,7 @@ function tapestryValidateNewNode(formData, isRoot) {
  * D3 RELATED FUNCTIONS
  ****************************************************/
 
-/* Define forces that will determine the layout of the graph. */
+/* Define forces that will determine the layout of the graph */
 function startForce() {
 
     var tapestryDimensions = getTapestryDimensions();
@@ -1045,14 +1045,14 @@ function buildPathAndButton() {
             return d.depth < tapestryDepth;
         })
         .append('foreignObject')
-        .attr("width", MAX_RADIUS)
-        .attr("height", MAX_RADIUS)
-        .attr("x", -MAX_RADIUS/2)
-        .attr("y", -MAX_RADIUS/2)
+        .attr("width", NORMAL_RADIUS * 1.66)
+        .attr("height", NORMAL_RADIUS * 2)
+        .attr("x", -NORMAL_RADIUS)
+        .attr("y", -NORMAL_RADIUS)
         .append("xhtml:div")
             .attr("class","title")
             .html(function(d){
-                return "<div><h1>" + d.title + "</h1></div>";
+                return "<div><p>" + d.title + "</p></div>";
             });
 
     // Append mediaButton
@@ -1663,7 +1663,7 @@ function filterNodes() {
  * HELPER FUNCTIONS
  ****************************************************/
 
-// Set multiple attributes for an HTML element at once.
+// Set multiple attributes for an HTML element at once
 function setAttributes(elem, obj) {
     for (var prop in obj) {
         if (obj.hasOwnProperty(prop)) {
@@ -1672,7 +1672,7 @@ function setAttributes(elem, obj) {
     }
 }
 
-// Get width, height, and aspect ratio of viewable region.
+// Get width, height, and aspect ratio of viewable region
 function getBrowserWidth() {
     return Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
 }
@@ -1821,7 +1821,7 @@ function addDepthToNodes(id, depth, visited) {
 
     var childLevel;
 
-    // progress through every child at a given node one at a time:
+    // Progress through every child at a given node one at a time:
     while (depthAt < children.length) {
         for (var childId in children) {
             // if the child has been visited, check to make sure the calculated depth
@@ -1836,7 +1836,7 @@ function addDepthToNodes(id, depth, visited) {
                     depthAt++;
                 }
             }
-            // if the child has not been visited, record its depth (one away from the
+            // If the child has not been visited, record its depth (one away from the
             // current node's childLevel), and recursively add depth to all of the 
             // child's children.
             else {
@@ -1852,14 +1852,14 @@ function addDepthToNodes(id, depth, visited) {
     
 }
 
-/* Return the distance between a node and its farthest descendant node. */
+/* Return the distance between a node and its farthest descendant node */
 
 function findMaxDepth(id) {
 
     if ((dataset && dataset.nodes.length === 0) || !id)  {
         return 0;
     } else {
-        // create the .depth parameter for every node
+        // Create the .depth parameter for every node
         addDepthToNodes(id, 0, []);
     }
 
