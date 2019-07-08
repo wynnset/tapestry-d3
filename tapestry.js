@@ -12,6 +12,7 @@ var // declared constants
     ROOT_RADIUS_DIFF = 70,
     GRANDCHILD_RADIUS_DIFF = -100,
     TRANSITION_DURATION = 800,
+    NODE_TEXT_RATIO = 5/6,
     COLOR_STROKE = "#072d42",
     COLOR_GRANDCHILD = "#CCC",
     COLOR_LINK = "#999",
@@ -1045,14 +1046,14 @@ function buildPathAndButton() {
             return d.depth < tapestryDepth;
         })
         .append('foreignObject')
-        .attr("width", NORMAL_RADIUS * 1.66)
-        .attr("height", NORMAL_RADIUS * 2)
-        .attr("x", -NORMAL_RADIUS)
-        .attr("y", -NORMAL_RADIUS)
+        .attr("width", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
+        .attr("height", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
+        .attr("x", -NORMAL_RADIUS * NODE_TEXT_RATIO)
+        .attr("y", -NORMAL_RADIUS * NODE_TEXT_RATIO)
         .append("xhtml:div")
             .attr("class","title")
             .html(function(d){
-                return "<div><p>" + d.title + "</p></div>";
+                return "<p>" + d.title + "</p>";
             });
 
     // Append mediaButton
