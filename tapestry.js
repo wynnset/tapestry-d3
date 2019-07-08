@@ -349,15 +349,112 @@ $("#tapeestry-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, statusT
                         $(this).prop('disabled', false);
                     }
                 });
+                $(".user-checkbox").each(function() {
+                    if (this.name === "read") {
+                        $(this).prop("checked", true);
+                        $(this).prop("disabled", true);
+                    }
+                });
             } else {
+                // Disable other permissinos for public
                 $('.public-checkbox').each(function() {
                     if (this.id !== "public-read-checkbox") {
                         $(this).prop('checked', false);
                         $(this).prop('disabled', true);
                     }
                 });
+                // Enable all checkboxes
+                $(".user-checkbox").each(function() {
+                    $(this).prop("disabled", false);
+                });
             }
         });
+
+        $("#public-add-checkbox").change(function() {
+            if ($(this).is(":checked")) {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "add") {
+                        $(this).prop("checked", true);
+                        $(this).prop("disabled", true);
+                    }
+                });
+            } else {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "add") {
+                        $(this).prop("disabled", false);
+                    }
+                });
+            }
+        });
+
+        $("#public-edit-checkbox").change(function() {
+            if ($(this).is(":checked")) {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "edit") {
+                        $(this).prop("checked", true);
+                        $(this).prop("disabled", true);
+                    }
+                });
+            } else {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "edit") {
+                        $(this).prop("disabled", false);
+                    }
+                });
+            }
+        });
+
+        $("#public-add-sub-checkbox").change(function() {
+            if ($(this).is(":checked")) {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "add_submit") {
+                        $(this).prop("checked", true);
+                        $(this).prop("disabled", true);
+                    }
+                });
+            } else {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "add_submit") {
+                        $(this).prop("disabled", false);
+                    }
+                });
+            }
+        });
+
+        $("#public-edit-sub-checkbox").change(function() {
+            if ($(this).is(":checked")) {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "edit_submit") {
+                        $(this).prop("checked", true);
+                        $(this).prop("disabled", true);
+                    }
+                });
+            } else {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "edit_submit") {
+                        $(this).prop("disabled", false);
+                    }
+                });
+            }
+        });
+
+        $("#public-approve-checkbox").change(function() {
+            if ($(this).is(":checked")) {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "approve") {
+                        $(this).prop("checked", true);
+                        $(this).prop("disabled", true);
+                    }
+                });
+            } else {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "approve") {
+                        $(this).prop("disabled", false);
+                    }
+                });
+            }
+        });
+
 
         $("#user-permissions-btn").click(function() {
             var userId = $("#user-number-input").val();
@@ -411,9 +508,11 @@ function appendPermissionsRow(id, type) {
             });
         }
     }).appendTo("#" + type + "-" + id + "-editcell");
+
     $('.public-checkbox').each(function() {
         if ($(this).is(":checked")) {
             $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('checked', true);
+            $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('disabled', true);
         }
     });
 }
