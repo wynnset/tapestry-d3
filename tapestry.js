@@ -23,7 +23,6 @@ var // declared constants
     TAPESTRY_PROGRESS_URL = apiUrl + "/users/progress",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings",
     ADD_NODE_MODAL_URL = addNodeModalUrl;
-    EDIT__NODE_MODAL_URL = editNodeModalUrl;
 
 var // declared variables
     dataset, root, svg, links, nodes,               // Basics
