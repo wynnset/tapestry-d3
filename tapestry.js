@@ -537,6 +537,8 @@ function tapestryAddNewNode(formData, isRoot) {
         }
     });
 
+    newNodeEntry.permissions = permissionData;
+
     // Save to database, first save node then the link
     jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
         // only add link if it's for adding new node and not root node
@@ -552,19 +554,8 @@ function tapestryAddNewNode(formData, isRoot) {
 
                 // Add the new link to the dataset
                 dataset.links.push(newLink);
-
-                $.ajax({
-                    url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + newNodeEntry.id + "/permissions",
-                    method: 'PUT',
-                    data: JSON.stringify(permissionData),
-                    success: function(result) {
-                        tapestryHideAddNodeModal();
-                        redrawTapestryWithNewNode();
-                    },
-                    error: function(e) {
-                        console.error("Error with adding permission", e);
-                    }
-                });
+                tapestryHideAddNodeModal();
+                redrawTapestryWithNewNode();
             }).fail(function(e) {
                 console.error("Error with adding new link", e);
             });
