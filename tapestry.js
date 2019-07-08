@@ -280,8 +280,10 @@ function createRootNodeButton(dataset) {
         }
 
         $("#root-node-btn").on("click", function(e) {
+            // Populate title
             $('#createNewNodeModalLabel').text("Add root node");
             $("#submit-add-new-node").hide();
+            $("#submit-edit-node").hide();
             $("#submit-add-root-node").show();
             $("#appearsat-section").hide();
             // Show the modal
@@ -339,67 +341,15 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         $("#cancel-add-new-node").on("click", function() {
             tapestryHideAddNodeModal();
         });
-    }
-});
 
-var editModalDiv = document.createElement("div");
-editModalDiv.id = "tapestry-edit-modal-div";
-document.getElementById(TAPESTRY_CONTAINER_ID).append(editModalDiv);
-$("#tapestry-edit-modal-div").load(EDIT__NODE_MODAL_URL, function(responseTxt, statusTxt, xhr){
-    if(statusTxt == "success") {
         $("#submit-edit-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
-            var nodeIndex = findNodeIndex(root);
-            tapestryHideEditNodeModal();
-            promiseActionArr = [];
-            for (var i = 0; i < formData.length; i++) {
-                var fieldName = formData[i].name;
-                var fieldValue = formData[i].value;
-
-                switch (fieldName) {
-                    case "edit-node-title":
-                        if (fieldValue !== "") {
-                            promiseActionArr.push(makeAjaxCall(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root + "/title", "PUT", fieldValue).then(function(res) {
-                                dataset.nodes[nodeIndex].title = res;
-                            }, function(err) {
-                                console.error("Error editing node title", err);
-                            })); 
-                        }
-                        break;
-                    case "edit-node-imageURL":
-                            if (fieldValue !== "") {
-                                promiseActionArr.push(makeAjaxCall(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root + "/imageURL", "PUT", fieldValue).then(function(res) {
-                                    dataset.nodes[nodeIndex].imageURL = res;
-                                }, function(err) {
-                                    console.error("Error editing node imageURL", err);
-                                }));
-                            }
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            let results = Promise.all(promiseActionArr);
-            results.then(function(res) {
-                redrawTapestryWithNewNode();
-            }, function(err) {
-                console.error(err);
-            });
+            tapestryAddNewNode(formData);
         });
-    }
-}); 
 
-// Return Promise for creating
-// TODO refactor all ajax calls to use this function
-function makeAjaxCall(url, methodType, data){
-    return $.ajax({
-        url : url,
-        method : methodType,
-        data: JSON.stringify(data),
-    });
-}
+    }
+});
 
 // Function for adding a new node
 function tapestryAddNewNode(formData, isRoot) {
@@ -534,12 +484,6 @@ function tapestryHideAddNodeModal() {
     $("#createNewNodeModalBody input[type='url']").val("");
     $("#createNewNodeModal").modal("hide");
     $("#appearsat-section").show();
-}
-
-function tapestryHideEditNodeModal() {
-    $("#editNodeModalBody input[type='text']").val("");
-    $("#editNodeModalBody input[type='url']").val("");
-    $("#editNodeModal").modal("hide");
 }
 
 function redrawTapestryWithNewNode(isRoot) {
@@ -1206,15 +1150,44 @@ function buildPathAndButton() {
 
     $('.editNodeButton > i').click(function(){
         // Add in the title for the modal
-        $('#editNodeModalLabel').text("Edit node: " + dataset.nodes[findNodeIndex(root)].title);
+        $('#createNewNodeModalLabel').text("Edit node: " + dataset.nodes[findNodeIndex(root)].title);
+        $("#submit-add-root-node").hide();
+        $("#submit-add-new-node").hide();
+        $("#submit-edit-node").show();
+        $("#appearsat-section").hide();
+
+        // Load the values into input
+        $("#add-node-title-input").val(dataset.nodes[findNodeIndex(root)].title);
+        $("#add-node-thumbnail-input").val(dataset.nodes[findNodeIndex(root)].imageURL);
+        if (dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
+            $("#mediaFormat").val("mp4");
+            $("#mp4-mediaURL-input").val(dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
+            $("#mp4-mediaDuration-input").val(dataset.nodes[findNodeIndex(root)].mediaDuration);
+            $("#contents-details").show();
+            $("#mp4-content").show();
+            $("#h5p-content").hide();
+        } else if (dataset.nodes[findNodeIndex(root)].mediaForm === "h5p") {
+            $("#mediaFormat").val("h5p");
+            $("#h5p-mediaURL-input").val(dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
+            $("#h5p-mediaDuration-input").val(dataset.nodes[findNodeIndex(root)].mediaDuration);
+            $("#contents-details").show();
+            $("#mp4-content").hide();
+            $("#h5p-content").show();
+        } else {
+            $("#contents-details").hide();
+            $("#mp4-content").hide();
+            $("#h5p-content").hide();
+        }
+
         // Show the modal
-        $("#editNodeModal").modal();
+        $("#createNewNodeModal").modal();
     });
 
     $('.addNodeButton > i').click(function(){
         // Set up the title of the form
         $('#createNewNodeModalLabel').text("Add new sub-topic to " + dataset.nodes[findNodeIndex(root)].title);
-        $("#submit-add-root-node").hide();	
+        $("#submit-add-root-node").hide();
+        $("#submit-edit-node").hide();
         $("#submit-add-new-node").show();
         // Show the modal
         $("#createNewNodeModal").modal();
