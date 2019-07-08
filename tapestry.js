@@ -1152,7 +1152,7 @@ function buildPathAndButton() {
         .append("svg:foreignObject")
         .html(function (d) {
             return '<i id="editNodeIcon' + d.id + '"' +
-                ' class=" fas fa-pencil-alt' + ' editNodeIcon"' +
+                ' class=" fas fa-pen-square' + ' editNodeIcon"' +
                 ' data-id="' + d.id + '"><\/i>';
         })
         .attr("id", function (d) {

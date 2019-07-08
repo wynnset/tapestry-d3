@@ -266,6 +266,7 @@ text {
     color: #666666;
     overflow: hidden;
     border-radius: 100%;
+    border: solid 4px #fff;
 }
 
 .editNodeButton:hover,
@@ -283,11 +284,12 @@ text {
     color: white;
 }
 
-.editNodeButton > i:not(.mediaButtonLoading) {
-    font-size: 55px;
+.editNodeButton > i {
+    font-size: 63px;
     background: #fff;
     border: solid 1px #fff;
     padding: 2px;
+    margin: -8px 0 0 -5px;
 }
 
 /* ADD NODE BUTTON */
