@@ -306,14 +306,14 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         $("#submit-add-root-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
-            tapestryAddNewNode(formData, true);
+            tapestryAddNewNode(formData, "root");
         });
 
         // Adding New Nodes
         $("#submit-add-new-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
-            tapestryAddNewNode(formData);
+            tapestryAddNewNode(formData, "new");
         });
 
         $("#mediaFormat").on("change", function(){
@@ -345,20 +345,16 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         $("#submit-edit-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
-            tapestryAddNewNode(formData);
+            tapestryAddNewNode(formData, "edit");
         });
 
     }
 });
 
-// Function for adding a new node
-function tapestryAddNewNode(formData, isRoot) {
+// Function for adding a new node if type is "new" or "root". If type is "edit", modifies the node
+function tapestryAddNewNode(formData, type) {
 
-    if (typeof isRoot == 'undefined') {
-        isRoot = false;
-    }
-
-    var errorMsg = tapestryValidateNewNode(formData, isRoot);
+    var errorMsg = tapestryValidateNewNode(formData, type === "root");
     if (errorMsg) {
         alert(errorMsg);
         return;
@@ -390,10 +386,13 @@ function tapestryAddNewNode(formData, isRoot) {
         "fy": getBrowserHeight()
     };
 
-    if (!isRoot) {
+    if (type === "new") {
         // Just put the node right under the current node
         newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx;
         newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
+    } else if (type === "edit") {
+        newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx;
+        newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy;
     }
 
     var appearsAt = 0;
@@ -436,47 +435,59 @@ function tapestryAddNewNode(formData, isRoot) {
                 break;
             case "appearsAt":
                 appearsAt = parseInt(fieldValue);
-                newNodeEntry.typeData.unlocked = !appearsAt || isRoot;
+                newNodeEntry.typeData.unlocked = !appearsAt || type === "root";
                 break;
             default:
                 break;
         }
     }
+    if (type === "root" || type === "new") {
+        // Save to database, first save node then the link
+        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
+            // only add link if it's for adding new node and not root node
+            // Add new node to dataset after getting the id
+            newNodeEntry.id = result.id;
+            dataset.nodes.push(newNodeEntry);
 
-    // Save to database, first save node then the link
-    jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
-        // only add link if it's for adding new node and not root node
-        // Add new node to dataset after getting the id
-        newNodeEntry.id = result.id;
-        dataset.nodes.push(newNodeEntry);
+            if (type === "new") {
+                // Get ID from callback and set it as target's id
+                var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
 
-        if (!isRoot) {
-            // Get ID from callback and set it as target's id
-            var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
+                jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
 
-            jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
+                    // Add the new link to the dataset
+                    dataset.links.push(newLink);
 
-                // Add the new link to the dataset
-                dataset.links.push(newLink);
-
+                    tapestryHideAddNodeModal();
+                    redrawTapestryWithNewNode();
+                }).fail(function(e) {
+                    console.error("Error with adding new link", e);
+                });
+            } else {
+                // Redraw root node
+                dataset.rootId = result.id;
                 tapestryHideAddNodeModal();
-                redrawTapestryWithNewNode();
-            }).fail(function(e) {
-                console.error("Error with adding new link", e);
-            });
-        } else {
-            // Redraw root node
-            dataset.rootId = result.id;
-            tapestryHideAddNodeModal();
-            root = dataset.rootId; // need to set root to newly created node
+                root = dataset.rootId; // need to set root to newly created node
 
-            redrawTapestryWithNewNode(true);
-            $("#root-node-container").hide(); // hide the root node button after creating it.
-        }
-    }).fail(function(e) {
-        console.error("Error with adding new node");
-        console.error(e);
-    });
+                redrawTapestryWithNewNode(true);
+                $("#root-node-container").hide(); // hide the root node button after creating it.
+            }
+        }).fail(function(e) {
+            console.error("Error with adding new node");
+            console.error(e);
+        });
+    } else if (type === "edit") {
+        // TODO test integration with db
+        // Call endpoint for editing node
+        // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root, JSON.stringify(newNodeEntry), function(result){
+        //     newNodeEntry.id = result.id;
+        //     dataset.nodes[findNodeIndex(root)] = newNodeEntry;
+        //     redrawTapestryWithNewNode();
+        //     tapestryHideAddNodeModal();
+        // }).fail(function(e) {
+        //     console.error("Error editing node", e);
+        // });
+    }
 }
 
 function tapestryHideAddNodeModal() {
