@@ -411,6 +411,11 @@ function appendPermissionsRow(id, type) {
             });
         }
     }).appendTo("#" + type + "-" + id + "-editcell");
+    $('.public-checkbox').each(function() {
+        if ($(this).is(":checked")) {
+            $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('checked', true);
+        }
+    });
 }
 
 // Function for adding a new node
@@ -589,6 +594,12 @@ function tapestryHideAddNodeModal() {
     $("#createNewNodeModalBody input[type='text']").val("");
     $("#createNewNodeModalBody input[type='url']").val("");
     $(".permissions-dynamic-row").remove(); // remove the dynamically created permission rows
+    // Uncheck all public permissions except read
+    $('.public-checkbox').each(function() {
+        if ($(this).is(":checked") && this.name !== "read") {
+            $(this).prop('checked', false);
+        }
+    });
     $("#createNewNodeModal").modal("hide");
     $("#appearsat-section").show();
 }
