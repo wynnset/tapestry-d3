@@ -12,12 +12,12 @@ var // declared constants
     ROOT_RADIUS_DIFF = 70,
     GRANDCHILD_RADIUS_DIFF = -100,
     TRANSITION_DURATION = 800,
+    NODE_TEXT_RATIO = 5/6,
     COLOR_STROKE = "#072d42",
     COLOR_GRANDCHILD = "#CCC",
     COLOR_LINK = "#999",
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
-    FONT_ADJUST = 1.25,
     TIME_BETWEEN_SAVE_PROGRESS = 5, // Means the number of seconds between each save progress call
     NODE_UNLOCK_TIMEFRAME = 2; // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
     TAPESTRY_PROGRESS_URL = apiUrl + "/users/progress",
@@ -121,9 +121,9 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     // 2. SIZE AND SCALE THE TAPESTRY AND SVG TO FIT WELL
     //---------------------------------------------------
 
-    // do it now
+    // Do it now
     updateTapestrySize();
-    // also do it whenever window is resized
+    // Also do it whenever window is resized
     $(window).resize(function(){
         updateTapestrySize();
     });
@@ -578,7 +578,7 @@ function tapestryValidateNewNode(formData, isRoot) {
  * D3 RELATED FUNCTIONS
  ****************************************************/
 
-/* Define forces that will determine the layout of the graph. */
+/* Define forces that will determine the layout of the graph */
 function startForce() {
 
     var tapestryDimensions = getTapestryDimensions();
@@ -933,6 +933,10 @@ function buildNodeContents() {
 }
 
 function rebuildNodeContents() {
+    /* Remove text before transition animation */
+    $(".title").remove();
+
+    /* Commence transition animation */
     nodes.selectAll(".imageOverlay")
             .transition()
             .duration(TRANSITION_DURATION/2)
@@ -1029,20 +1033,28 @@ function buildPathAndButton() {
             return getViewable(d);
         })
         .append("text")
-        .attr("text-anchor", "middle")
-        .attr("fill", "white")
-        .attr("class", "title")
-        .attr("text-anchor", "middle")
         .attr("data-id", function (d) {
             return d.id;
         })
-        .text(function (d) {
-            return d.title;
-        })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
+        });
+
+    /* Create the node titles */
+    nodes
+        .filter(function (d){
+            return d.depth < tapestryDepth;
         })
-        .call(wrapText, NORMAL_RADIUS * 2);
+        .append('foreignObject')
+        .attr("width", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
+        .attr("height", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
+        .attr("x", -NORMAL_RADIUS * NODE_TEXT_RATIO)
+        .attr("y", -NORMAL_RADIUS * NODE_TEXT_RATIO)
+        .append("xhtml:div")
+            .attr("class","title")
+            .html(function(d){
+                return "<p>" + d.title + "</p>";
+            });
 
     // Append mediaButton
     nodes
@@ -1255,7 +1267,6 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     });
 }
 
-//
 function getLightboxDimensions(videoHeight, videoWidth) {
     var resizeRatio = 1;
     if (videoWidth > getBrowserWidth()) {
@@ -1653,7 +1664,7 @@ function filterNodes() {
  * HELPER FUNCTIONS
  ****************************************************/
 
-// Set multiple attributes for an HTML element at once.
+// Set multiple attributes for an HTML element at once
 function setAttributes(elem, obj) {
     for (var prop in obj) {
         if (obj.hasOwnProperty(prop)) {
@@ -1662,7 +1673,7 @@ function setAttributes(elem, obj) {
     }
 }
 
-// Get width, height, and aspect ratio of viewable region.
+// Get width, height, and aspect ratio of viewable region
 function getBrowserWidth() {
     return Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
 }
@@ -1811,7 +1822,7 @@ function addDepthToNodes(id, depth, visited) {
 
     var childLevel;
 
-    // progress through every child at a given node one at a time:
+    // Progress through every child at a given node one at a time:
     while (depthAt < children.length) {
         for (var childId in children) {
             // if the child has been visited, check to make sure the calculated depth
@@ -1826,7 +1837,7 @@ function addDepthToNodes(id, depth, visited) {
                     depthAt++;
                 }
             }
-            // if the child has not been visited, record its depth (one away from the
+            // If the child has not been visited, record its depth (one away from the
             // current node's childLevel), and recursively add depth to all of the 
             // child's children.
             else {
@@ -1842,14 +1853,14 @@ function addDepthToNodes(id, depth, visited) {
     
 }
 
-/* Return the distance between a node and its farthest descendant node. */
+/* Return the distance between a node and its farthest descendant node */
 
 function findMaxDepth(id) {
 
     if ((dataset && dataset.nodes.length === 0) || !id)  {
         return 0;
     } else {
-        // create the .depth parameter for every node
+        // Create the .depth parameter for every node
         addDepthToNodes(id, 0, []);
     }
 
@@ -2172,53 +2183,6 @@ function getViewable(node) {
 
     // If it passes all the checks, return true!
     return true;
-}
-
-// Wrap function specifically for SVG text
-// Found on https://bl.ocks.org/mbostock/7555321
-function wrapText(text, width) {
-    width /= FONT_ADJUST;
-    text.each(function (d) {
-        var text = d3.select(this),
-            words = text.text().split(/\s+/).reverse(),
-            word,
-            lines = [],
-            currentLine = [],
-            lineNumber = 0,
-            lineHeight = 1.1 * FONT_ADJUST, // ems
-            tspan = text.text(null)
-                .append("tspan")
-                .attr("class", "line" + d.id)
-                .attr("x", 0)
-                .attr("y", 0);
-
-        while (word = words.pop()) {
-            currentLine.push(word);
-            tspan.text(currentLine.join(" "));
-            if (tspan.node().getComputedTextLength() > width) {
-                currentLine.pop(); // Pop the last word off of the previous line
-                lines.push(currentLine);
-                tspan.text(currentLine.join(" "));
-                currentLine = [word]; // line now becomes a new array
-                lineNumber++;
-                tspan = text.append("tspan")
-                    .attr("class", "line" + d.id)
-                    .attr("x", 0) //0 because it keeps it in the center
-                    .attr("y", function() {
-                        return ++lineNumber * lineHeight + "em";
-                    })
-                    .text(word);
-            }
-        }
-
-        var midLineIndex = Math.floor(lineNumber / 4);
-        var tspans = document.getElementsByClassName("line" + d.id);
-        var i = 0;
-        while (tspans[i] !== undefined) {
-            tspans[i].setAttribute("y", (i - midLineIndex) * lineHeight + "em");
-            i++;
-        }
-    });
 }
 
 // For saving the coordinates of all the nodes prior to transitioning to play-mode
