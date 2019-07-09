@@ -737,6 +737,7 @@ function createSvgContainer(containerId) {
 }
 
 function updateSvgDimensions(containerId) {
+    console.log("habbenig");
     var tapestryDimensions = getTapestryDimensions();
     d3.select("#"+containerId+"-svg")
         .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height);
@@ -1630,6 +1631,7 @@ function setAdjustedRadiusRatio(adjustedOn, numChildren) {
 }
 
 function exitViewMode() {
+
     // For reapplying the coordinates of all the nodes prior to transitioning to play-mode
     for (var i in dataset.nodes) {
         var id = dataset.nodes[i].id;
@@ -1637,12 +1639,18 @@ function exitViewMode() {
         dataset.nodes[i].y = nodeCoordinates[id].y; // fy - ford
     }
 
+//     .attr("fixed", false)
+    d3.selectAll('g.node')
+        .each(function(d) {
+            d.fixed = false;
+            delete d.fx;
+            delete d.fy;
+        });
+
     d3.selectAll('g.node')
         .transition()
-        .duration(TRANSITION_DURATION)
-        .attr("cx", function(d) { return d.x; })   // fx - ford
-        .attr("cy", function(d) { return d.y; }); // fy - ford
-
+        .duration(TRANSITION_DURATION);
+        
     inViewMode = false;
     filterLinks();
     filterNodes();
@@ -1652,7 +1660,7 @@ function exitViewMode() {
         rebuildNodeContents();
     }
     startForce();
-}
+    };
 
 // Helper function for hiding/showing grandchild nodes when entering/exiting view mode
 function filterNodes() {
@@ -1790,10 +1798,12 @@ function getTapestryDimensions() {
             tapestryHeight = screenToSVG(0, tapestryViewportHeight - $("#footer").height()).y;
         }
     }
+//    console.log(tapestryWidth);
+//    console.log(tapestryHeight);
 
     return {
-        'width': tapestryWidth*1.2,
-        'height': tapestryHeight*1.2
+        'width': tapestryWidth,
+        'height': tapestryHeight
     };
 }
 
@@ -1816,6 +1826,7 @@ function updateTapestrySize() {
         // Update svg dimensions to the new dimensions of the browser
         updateSvgDimensions(TAPESTRY_CONTAINER_ID);
     }
+    startForce();
 }
 
 /* Changes the node depending on horizontal/vertical view */
