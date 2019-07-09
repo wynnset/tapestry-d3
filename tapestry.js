@@ -67,6 +67,7 @@ var // calculated
  * INITIALIZATION
  ****************************************************/
 
+
 /* Import data from json file, then start D3 */
 jQuery.ajaxSetup({
     beforeSend: function (xhr) {
@@ -76,8 +77,8 @@ jQuery.ajaxSetup({
     }
 });
 
-//$.getJSON(jsonUrl,function(result){
-jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
+$.getJSON(jsonUrl,function(result){
+//jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
@@ -1519,18 +1520,22 @@ function changeToViewMode(lightboxDimensions) {
     setAdjustedRadiusRatio(lightboxDimensions.adjustedOn, children.length);
     var coordinates = getViewModeCoordinates(lightboxDimensions, children);
 
+    //d3.selectAll('g.node').classed("fixed",d.fixed = true);
+
     // Add the coordinates to the nodes
     d3.selectAll('g.node').each(function(d) {
         if (d.nodeType === "root") {
-            d.x = getTapestryDimensions().width / 2;  // left side fx & fy - ford
+            d.fixed = true;
+            d.fx = getTapestryDimensions().width / 2;  // left side fx & fy - ford
             if (lightboxDimensions.adjustedOn === "width") {
-                d.y = getTapestryDimensions().height / 2;
+                d.fy = getTapestryDimensions().height / 2;
             } else {
-                d.y = screenToSVG(0, $("#header").height() + NORMAL_RADIUS + ($("#spotlight-content").height() / 2)).y;
+                d.fy = screenToSVG(0, $("#header").height() + NORMAL_RADIUS + ($("#spotlight-content").height() / 2)).y;
             }
         } else if (d.nodeType === "child") {
-            d.x = coordinates[d.id].x;  // fx & fy - ford
-            d.y = coordinates[d.id].y;
+            d.fixed = true;
+            d.fx = coordinates[d.id].x;  // fx & fy - ford
+            d.fy = coordinates[d.id].y;
         }
     });
 
