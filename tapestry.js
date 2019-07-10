@@ -77,8 +77,8 @@ jQuery.ajaxSetup({
     }
 });
 
-$.getJSON(jsonUrl,function(result){
-//jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
+//$.getJSON(jsonUrl,function(result){
+jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
@@ -186,6 +186,11 @@ $.getJSON(jsonUrl,function(result){
     //---------------------------------------------------
     // 4. UPDATE SVG DIMENSIONS AND START THE GRAPH
     //---------------------------------------------------
+
+    d3.selectAll('g.node').each(function(d){
+        delete d.fx;
+        delete d.fy;
+    })
 
     startForce();
     
@@ -1521,12 +1526,11 @@ function changeToViewMode(lightboxDimensions) {
     setAdjustedRadiusRatio(lightboxDimensions.adjustedOn, children.length);
     var coordinates = getViewModeCoordinates(lightboxDimensions, children);
 
-    //d3.selectAll('g.node').classed("fixed",d.fixed = true);
-
     // Add the coordinates to the nodes
     d3.selectAll('g.node').each(function(d) {
+        d.fixed = true;
         if (d.nodeType === "root") {
-            d.fixed = true;
+//            d.fixed = true;
             d.fx = getTapestryDimensions().width / 2;  // left side fx & fy - ford
             if (lightboxDimensions.adjustedOn === "width") {
                 d.fy = getTapestryDimensions().height / 2;
@@ -1534,7 +1538,7 @@ function changeToViewMode(lightboxDimensions) {
                 d.fy = screenToSVG(0, $("#header").height() + NORMAL_RADIUS + ($("#spotlight-content").height() / 2)).y;
             }
         } else if (d.nodeType === "child") {
-            d.fixed = true;
+//            d.fixed = true;
             d.fx = coordinates[d.id].x;  // fx & fy - ford
             d.fy = coordinates[d.id].y;
         }
@@ -1657,8 +1661,7 @@ function exitViewMode() {
         setAdjustedRadiusRatio(null, null);  //Values set to null because we don't really care; Function should just return 1
         rebuildNodeContents();
     }
- //   startForce();
-    };
+}
 
 // Helper function for hiding/showing grandchild nodes when entering/exiting view mode
 function filterNodes() {
