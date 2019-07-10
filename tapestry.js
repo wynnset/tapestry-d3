@@ -173,7 +173,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     d3.selectAll('g.node').each(function(d){
         delete d.fx;
         delete d.fy;
-    })
+    });
 
     startForce();
     
