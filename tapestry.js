@@ -355,8 +355,8 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
 function tapestryAddNewNode(formData, isEdit, isRoot) {
 
     if (typeof isRoot == 'undefined') {
-        isRoot = false;	
-    }	
+        isRoot = false;
+    }
 
     var errorMsg = tapestryValidateNewNode(formData, isRoot);
     if (errorMsg) {
