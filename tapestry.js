@@ -442,7 +442,7 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
                 break;
             case "appearsAt":
                 appearsAt = parseInt(fieldValue);
-                newNodeEntry.typeData.unlocked = !appearsAt || type === "root";
+                newNodeEntry.typeData.unlocked = !appearsAt || isRoot;
                 break;
             default:
                 break;
@@ -484,16 +484,15 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
             console.error(e);
         });
     } else {
-        // TODO test integration with db
         // Call endpoint for editing node
-        // jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root, JSON.stringify(newNodeEntry), function(result){
+        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root, JSON.stringify(newNodeEntry), function(result){
             newNodeEntry.id = result.id;
             dataset.nodes[findNodeIndex(root)] = newNodeEntry;
             redrawTapestryWithNewNode();
             tapestryHideAddNodeModal();
-        // }).fail(function(e) {
-        //     console.error("Error editing node", e);
-        // });
+        }).fail(function(e) {
+            console.error("Error editing node", e);
+        });
     }
 }
 
