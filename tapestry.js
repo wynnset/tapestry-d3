@@ -1631,7 +1631,6 @@ function setAdjustedRadiusRatio(adjustedOn, numChildren) {
 }
 
 function exitViewMode() {
-
     // For reapplying the coordinates of all the nodes prior to transitioning to play-mode
     for (var i in dataset.nodes) {
         var id = dataset.nodes[i].id;
@@ -1639,7 +1638,6 @@ function exitViewMode() {
         dataset.nodes[i].y = nodeCoordinates[id].y; // fy - ford
     }
 
-//     .attr("fixed", false)
     d3.selectAll('g.node')
         .each(function(d) {
             d.fixed = false;
