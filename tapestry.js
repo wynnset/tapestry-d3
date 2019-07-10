@@ -40,7 +40,6 @@ var // declared variables
     tapestryDepth = 2;                              // Default depth of Tapestry
 
 var npoints = 1000;
-// var ptdata = [[0,0], [2,2], [50,50], [100,100], [150,150], [200,200], [250,250], [300,300], [350,350], [400,400],[450,450],[500,500],[600,600], [1000, 1000]];
 var ptdata = [];
 var path2;
 var leftButtonDown = false;
@@ -93,7 +92,6 @@ jQuery.ajaxSetup({
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
-    console.log(result);
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
         dataset.nodes[0].typeData.unlocked = true;
@@ -605,59 +603,37 @@ function tapestryValidateNewNode(formData, isRoot) {
     return errMsg;
 }
 
-/****************************************************
- * LINK AND UNLINK NODES
- ****************************************************/
-$(function() {
-    $("#tapestry-link-btn").on("click", function() {
-        $("#addLinkModal").modal();
-    });
+// To establish two way connections
+function addLink(source, target, value, appearsAt, isDrawLinkPath = false) {
+    if (target === source) {
+        alert("Cannot connect node to itself");
+        return;
+    }
 
-    $("#submit-add-link").on("click", function() {
-        var sourceId = parseInt($("#add-link-source").val());
-        var targetId = parseInt($("#add-link-target").val());
-        addLink(sourceId, targetId, "1", 100);
-    });
-
-    // To establish two way connections
-    function addLink(source, target, value, appearsAt) {
+    for (var i = 0; i < dataset.links.length; i++) {
         // Check if link in dataset exists
-        for (link in dataset.links) {
-            if (link.source === source && link.target === target) {
-                alert("Link already exists");
-                return;
-            }
+        if ((dataset.links[i].source.id === source && dataset.links[i].target.id === target) || (dataset.links[i].source.id === target && dataset.links[i].target.id === source)) {
+            alert("Link already exists");
+            return;
+        }
+    }
+
+    jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt }), function(result) {
+        // Add the new link to the dataset
+        dataset.links.push({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt });
+        // redraw tapestry
+        redrawTapestryWithNewNode();
+        if (isDrawLinkPath) {
+            path2.remove();
+            leftButtonDown = false;
+            drawLinkNodePath = false;
+            ptdata = [];
         }
 
-        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt }), function(result) {
-            // Add the new link to the dataset
-            dataset.links.push({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt });
-            // redraw tapestry
-            redrawTapestryWithNewNode();
-            $("#addLinkModal").modal("hide");
-        }).fail(function(e) {
-            console.error("Error with adding new link");
-            console.error(e);
-        });
-    };
-
-    // function removeLink(source, target) {
-    //     jQuery.delete(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify({"source": source, "target": target }), function(result) {
-    //         for (var i = 0; i < dataset.links.length; i++) {
-    //             if (dataset.links[i].source === source && dataset.links[i].target === target) {
-    //                 dataset.links.splice(i, 1);
-    //                 break;
-    //             }
-    //         }
-    //         //redraw tapestry
-    //     }).fail(function(e) {
-    //         console.error("Error with removing link");
-    //         console.error(e);
-    //     });
-    // }
-});
-
-
+    }).fail(function(e) {
+        console.error("Error with adding new link", e);
+    });
+}
 
 /****************************************************
  * D3 RELATED FUNCTIONS
@@ -1189,7 +1165,7 @@ function buildPathAndButton() {
         })
         .append("svg:foreignObject")
         .html(function (d) {
-            return '<i id="addNodeIcon' + d.id + '"' +
+            return '<i  title="Add Node" id="addNodeIcon' + d.id + '"' +
                 ' class="' + getIconClass("add") + ' addNodeIcon"' +
                 ' data-id="' + d.id + '"><\/i>';
         })
@@ -1225,7 +1201,7 @@ function buildPathAndButton() {
         })
         .append("svg:foreignObject")
         .html(function (d) {
-            return '<i id="linkNodeIcon' + d.id + '"' +
+            return '<i title="Link nodes" id="linkNodeIcon' + d.id + '"' +
                 ' class="fas fa-link' +  ' linkNodeIcon"' +
                 ' data-id="' + d.id + '"><\/i>';
         })
@@ -1246,41 +1222,43 @@ function buildPathAndButton() {
         })
         .attr("class", "linkNodeButton");
 
-         $('.linkNodeButton > i').click(function(){
-            newSource = root;
-            drawLinkNodePath = true;
-            svg.on("mousemove", function() {
-                if (drawLinkNodePath) {
-                    var pt = d3.mouse(this);
-                    leftButtonDown = true;
-                    tick(pt);
-                }
-            });
-            $(".node").click(function() {
-                if (leftButtonDown) {
-                    var result = confirm("Do you want to link this node?");
-                    if (result == true) {
-                        var newLink = {"source": newSource, "target": getNumbersFromString(this.id), "value": 1, "type": "", "appearsAt": 0 };
-                        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
-
-                             // Add the new link to the dataset
-                            dataset.links.push(newLink);
-                            redrawTapestryWithNewNode();
+         $('.linkNodeButton').click(function(){
+            if (drawLinkNodePath) {
+                path2.remove();
+                leftButtonDown = false;
+                drawLinkNodePath = false;
+                ptdata = [];
+            } else {
+                newSource = root;
+                drawLinkNodePath = true;
+                svg.on("mousemove", function() {
+                    if (drawLinkNodePath) {
+                        var pt = d3.mouse(this);
+                        leftButtonDown = true;
+                        tick(pt);
+                    }
+                });
+                $(".node").click(function() {
+                    if (leftButtonDown) {
+                        var result = confirm("Are you sure want to link " + '"' + dataset.nodes[findNodeIndex(newSource)].title + '"' + " to " + '"' + dataset.nodes[findNodeIndex(getNumbersFromString(this.id))].title + '"' + "?");
+                        if (result == true) {
+                            addLink(newSource, getNumbersFromString(this.id), 1, 0, true);
+                        } else {
                             path2.remove();
                             leftButtonDown = false;
                             drawLinkNodePath = false;
-                        }).fail(function(e) {
-                            console.error("Error with adding new link", e);
-                        });
+                            ptdata = [];
+                        }
                     }
-                }
-            });
-            path2 = svg.append("g")
-                .append("path")
-                    .data([ptdata])
-                    .style("stroke", "red")
-                    .style("fill", "none")
-                    .style("stroke-width", "10px");
+                });
+                path2 = svg.append("g")
+                    .append("path")
+                        .data([ptdata])
+                        .style("stroke-dasharray", ("4, 2"))
+                        .style("stroke", COLOR_LINK)
+                        .style("fill", "none")
+                        .style("stroke-width", "20px");
+            }
         });
 }
 
