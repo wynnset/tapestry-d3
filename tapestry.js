@@ -1852,6 +1852,34 @@ function getBoundedCoord(coord, maxCoord) {
     return Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
 }
 
+function getBoundedCoordX(coord, maxCoord) {
+    var co = Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
+    var x = getTapestryDimensions().width;
+
+    console.log("x: " + x);
+    console.log("co:" + co);
+
+    if (co > x) {
+        return x;
+    } else {
+        return co;
+    }
+}
+
+function getBoundedCoordY(coord, maxCoord) {
+    var co =  Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
+    var y = getTapestryDimensions().height;
+
+    console.log("y: " + y);
+
+
+    if (co > y) {
+        return y;
+    } else {
+        return co;
+    }
+}
+
 /* Add 'depth' parameter to each node recursively. 
    The depth is determined by the number of levels from the root each node is. */
 
