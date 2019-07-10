@@ -1659,7 +1659,7 @@ function exitViewMode() {
         setAdjustedRadiusRatio(null, null);  //Values set to null because we don't really care; Function should just return 1
         rebuildNodeContents();
     }
-    startForce();
+ //   startForce();
     };
 
 // Helper function for hiding/showing grandchild nodes when entering/exiting view mode
