@@ -12,12 +12,12 @@ var // declared constants
     ROOT_RADIUS_DIFF = 46, 
     GRANDCHILD_RADIUS_DIFF = -66, 
     TRANSITION_DURATION = 800,
+    NODE_TEXT_RATIO = 5/6,
     COLOR_STROKE = "#072d42",
     COLOR_GRANDCHILD = "#CCC",
     COLOR_LINK = "#999",
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
-    FONT_ADJUST = 1.25,
     TIME_BETWEEN_SAVE_PROGRESS = 5, // Means the number of seconds between each save progress call
     NODE_UNLOCK_TIMEFRAME = 2; // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
     TAPESTRY_PROGRESS_URL = apiUrl + "/users/progress",
@@ -134,7 +134,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 
     // do it now
     updateTapestrySize();
-    // also do it whenever window is resized
+    // Also do it whenever window is resized
     $(window).resize(function(){
         updateTapestrySize();
     });
@@ -162,6 +162,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     nodes = createNodes();
 
     filterLinks();
+    filterNodes();
     buildNodeContents();
 
     //---------------------------------------------------
@@ -596,7 +597,7 @@ function tapestryValidateNewNode(formData, isRoot) {
  * D3 RELATED FUNCTIONS
  ****************************************************/
 
-/* Define forces that will determine the layout of the graph. */
+/* Define forces that will determine the layout of the graph */
 function startForce() {
 
     var nodes = dataset.nodes;
@@ -695,20 +696,21 @@ function dragged(d) {
 function dragended(d) {
     if (!d3.event.active) simulation.alphaTarget(0);  // originally force - ford
 
-    $.ajax({
-        url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + d.id + "/coordinates",
-        method: 'PUT',
-        data: JSON.stringify({x: d.x, y: d.y}),
-        success: function(result) {
-            d.x = d.x; // fx & fy (ONLY LEFT SIDE) - ford
-            d.y = d.y;
-        },
-        error: function(e) {
-            console.error("Error saving coordinates of nodes");
-            console.error(e);
-        }
-    });
-
+    if (tapestryWpUserId) {
+        $.ajax({
+            url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + d.id + "/coordinates",
+            method: 'PUT',
+            data: JSON.stringify({x: d.x, y: d.y}),
+            success: function(result) {
+                d.x = d.x;
+                d.y = d.y;
+            },
+            error: function(e) {
+                console.error("Error saving coordinates of nodes");
+                console.error(e);
+            }
+        });
+    }
 
     recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
 }
@@ -962,6 +964,10 @@ function buildNodeContents() {
 }
 
 function rebuildNodeContents() {
+    /* Remove text before transition animation */
+    $(".title").remove();
+
+    /* Commence transition animation */
     nodes.selectAll(".imageOverlay")
             .transition()
             .duration(TRANSITION_DURATION/2)
@@ -1058,20 +1064,28 @@ function buildPathAndButton() {
             return getViewable(d);
         })
         .append("text")
-        .attr("text-anchor", "middle")
-        .attr("fill", "white")
-        .attr("class", "title")
-        .attr("text-anchor", "middle")
         .attr("data-id", function (d) {
             return d.id;
         })
-        .text(function (d) {
-            return d.title;
-        })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
+        });
+
+    /* Create the node titles */
+    nodes
+        .filter(function (d){
+            return d.depth < tapestryDepth;
         })
-        .call(wrapText, NORMAL_RADIUS * 2);
+        .append('foreignObject')
+        .attr("width", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
+        .attr("height", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
+        .attr("x", -NORMAL_RADIUS * NODE_TEXT_RATIO)
+        .attr("y", -NORMAL_RADIUS * NODE_TEXT_RATIO)
+        .append("xhtml:div")
+            .attr("class","title")
+            .html(function(d){
+                return "<p>" + d.title + "</p>";
+            });
 
     // Append mediaButton
     nodes
@@ -1284,7 +1298,6 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     });
 }
 
-//
 function getLightboxDimensions(videoHeight, videoWidth) {
     var resizeRatio = 1;
     if (videoWidth > getBrowserWidth()) {
@@ -1689,7 +1702,7 @@ function filterNodes() {
  * HELPER FUNCTIONS
  ****************************************************/
 
- // Set multiple attributes for an HTML element at once.
+// Set multiple attributes for an HTML element at once
 function setAttributes(elem, obj) {
     for (var prop in obj) {
         if (obj.hasOwnProperty(prop)) {
@@ -1698,7 +1711,7 @@ function setAttributes(elem, obj) {
     }
 }
 
-// Get width, height, and aspect ratio of viewable region.
+// Get width, height, and aspect ratio of viewable region
 function getBrowserWidth() {
     return Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
 }
@@ -1830,6 +1843,11 @@ function findNodeIndex(id) {
     return dataset.nodes.findIndex(helper);
 }
 
+/* Gets a node in the dataset by ID */
+function getNodeById(id) {
+    return dataset.nodes.find(node => node.id === id);
+}
+
 function getBoundedCoord(coord, maxCoord) {
     return Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
 }
@@ -1847,7 +1865,7 @@ function addDepthToNodes(id, depth, visited) {
 
     var childLevel;
 
-    // progress through every child at a given node one at a time:
+    // Progress through every child at a given node one at a time:
     while (depthAt < children.length) {
         for (var childId in children) {
             // if the child has been visited, check to make sure the calculated depth
@@ -1862,7 +1880,7 @@ function addDepthToNodes(id, depth, visited) {
                     depthAt++;
                 }
             }
-            // if the child has not been visited, record its depth (one away from the
+            // If the child has not been visited, record its depth (one away from the
             // current node's childLevel), and recursively add depth to all of the 
             // child's children.
             else {
@@ -1878,14 +1896,14 @@ function addDepthToNodes(id, depth, visited) {
     
 }
 
-/* Return the distance between a node and its farthest descendant node. */
+/* Return the distance between a node and its farthest descendant node */
 
 function findMaxDepth(id) {
 
     if ((dataset && dataset.nodes.length === 0) || !id)  {
         return 0;
     } else {
-        // create the .depth parameter for every node
+        // Create the .depth parameter for every node
         addDepthToNodes(id, 0, []);
     }
 
@@ -2124,17 +2142,18 @@ function setUnlocked(childIndex) {
             // TODO move unlocked out of typeData
             if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
                 dataset.nodes[childIndex].typeData.unlocked = true;
-                $.ajax({
-                    url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/typeData",
-                    method: 'PUT',
-                    data: JSON.stringify(dataset.nodes[childIndex].typeData),
-                    success: function(result) {
-                    },
-                    error: function(e) {
-                        console.error("Error with update node's unlock property");
-                        console.error(e);
-                    }
-                });
+                // TODO: this should only affect this user's tapestry, not saved to the base tapestry
+                // $.ajax({
+                //     url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/typeData",
+                //     method: 'PUT',
+                //     data: JSON.stringify(dataset.nodes[childIndex].typeData),
+                //     success: function(result) {
+                //     },
+                //     error: function(e) {
+                //         console.error("Error with update node's unlock property");
+                //         console.error(e);
+                //     }
+                // });
             }
         }
     }
@@ -2153,17 +2172,51 @@ function setUnlocked(childIndex) {
             }
         });
     }
+    setAccessibleStatus();
+}
+
+/**
+ * Recursively sets the accessible status of the given node and its children up to the given depth
+ * @param {object} node 
+ * @param {integer} depth 
+ */
+function setAccessibleStatus(node, depth, parentNodeId, parentIsAccessible = true){
+
+    // If no node passed in, assume root node
+    if (typeof node == "undefined") {
+        node = dataset.nodes[findNodeIndex(dataset.rootId)];
+    }
+
+    // If no node passed in, assume tapestry depth
+    if (typeof depth == "undefined") {
+        depth = tapestryDepth;
+    }
+
+    getChildren(node.id, 1).forEach (childNodeId => {
+        var thisNode = getNodeById(childNodeId);
+        // Do not traverse up the parent
+        if (parentNodeId != thisNode.id) {
+            // If a node is accessible, only if it's unlocked and its parent is accessible
+            var isAccessible = thisNode.typeData.unlocked && parentIsAccessible;
+            dataset.nodes[findNodeIndex(thisNode.id)].accessible = isAccessible;
+            if (depth > 0) {
+                // Keep going deeper in
+                setAccessibleStatus(thisNode, depth-1, node.id, isAccessible);
+            }
+        }
+    });
 }
 
 // ALL the checks for whether a certain node is viewable
 function getViewable(node) {
+
     // TODO: CHECK 1: If user is authorized to view it
 
-    // CHECK 2: If it is a new node that needs the position to be set (ie: incomplete), show it so that the user can place the node
-    // if (node.completedNode !== undefined && !node.completedNode) return true;
+    // CHECK 2: Always show root node
+    if (node.nodeType === "root") return true;
 
     // CHECK 3: If the user has unlocked the node
-    if (!node.typeData.unlocked && !viewLockedCheckbox.checked) return false;
+    if (!node.accessible && !viewLockedCheckbox.checked) return false;
 
     // CHECK 4: If the node is currently in view (ie: root/child/grandchild)
     if (node.nodeType === "") return false;
@@ -2173,53 +2226,6 @@ function getViewable(node) {
 
     // If it passes all the checks, return true!
     return true;
-}
-
-// Wrap function specifically for SVG text
-// Found on https://bl.ocks.org/mbostock/7555321
-function wrapText(text, width) {
-    width /= FONT_ADJUST;
-    text.each(function (d) {
-        var text = d3.select(this),
-            words = text.text().split(/\s+/).reverse(),
-            word,
-            lines = [],
-            currentLine = [],
-            lineNumber = 0,
-            lineHeight = 1.1 * FONT_ADJUST, // ems
-            tspan = text.text(null)
-                .append("tspan")
-                .attr("class", "line" + d.id)
-                .attr("x", 0)
-                .attr("y", 0);
-
-        while (word = words.pop()) {
-            currentLine.push(word);
-            tspan.text(currentLine.join(" "));
-            if (tspan.node().getComputedTextLength() > width) {
-                currentLine.pop(); // Pop the last word off of the previous line
-                lines.push(currentLine);
-                tspan.text(currentLine.join(" "));
-                currentLine = [word]; // line now becomes a new array
-                lineNumber++;
-                tspan = text.append("tspan")
-                    .attr("class", "line" + d.id)
-                    .attr("x", 0) //0 because it keeps it in the center
-                    .attr("y", function() {
-                        return ++lineNumber * lineHeight + "em";
-                    })
-                    .text(word);
-            }
-        }
-
-        var midLineIndex = Math.floor(lineNumber / 4);
-        var tspans = document.getElementsByClassName("line" + d.id);
-        var i = 0;
-        while (tspans[i] !== undefined) {
-            tspans[i].setAttribute("y", (i - midLineIndex) * lineHeight + "em");
-            i++;
-        }
-    });
 }
 
 // For saving the coordinates of all the nodes prior to transitioning to play-mode

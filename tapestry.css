@@ -176,9 +176,21 @@ div.modal {
     fill: #11a6d8;
 }
 
-.title {
-    font-size: 15px;
+.node .title {
+    color: white;
+    min-height: 100%;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction:column;
+    text-align: center;
+    font-size: 30px;
     text-shadow: 1.5px 1.5px #333333;
+}
+.node .title p {
+    padding-left: 0;
+    margin: 15px 0;
 }
 
 .imageOverlay {
