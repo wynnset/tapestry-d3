@@ -39,12 +39,26 @@ var // declared variables
     h5pVideoSettings = {},
     tapestryDepth = 2;                              // Default depth of Tapestry
 
-var npoints = 1000;
-var ptdata = [];
-var path2;
-var leftButtonDown = false;
-var newSource;
-var drawLinkNodePath = false;
+// FLAGS
+var inViewMode = false;                             // Flag for when we're in view mode
+
+var // calculated
+    MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
+    innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
+    outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2);
+
+/****************************************************
+ * LINK NODE VARIABLES
+ ****************************************************/
+
+var NUM_LINK_PATH_DATA = 1000, // The number of points that can be drawn
+    linkPathData = [], // Data for linkPath
+    linkPath, // The line that is drawn
+    leftButtonDown = false,
+    newSource, // Saves the source because when target is clicked, root will be target
+    drawLinkNodePath = false; // toggle to draw the link node path
+
+// Shape of a line
 var line = d3.line()
     .x(function(d, i) { 
         return d[0]; 
@@ -53,29 +67,21 @@ var line = d3.line()
         return d[1]; 
     })
 
- function tick(pt) {
+// Connects line with new point
+function redrawLinkPath(pt) {
     // push a new data point onto the back
-    ptdata.push(pt);
+    linkPathData.push(pt);
     // Redraw the path:
-    path2
+    linkPath
         .attr("d", function(d) {
             return line(d);
         })
 
-
-     // If more than 100 points, drop the old data pt off the front
-    if (ptdata.length > npoints) {
-        ptdata.shift();
+    // If more than 100 points, drop the old data pt off the front
+    if (linkPathData.length > NUM_LINK_PATH_DATA) {
+        linkPathData.shift();
     }
 }
-
-// FLAGS
-var inViewMode = false;                             // Flag for when we're in view mode
-
-var // calculated
-    MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
-    innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
-    outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2);
 
 /****************************************************
  * INITIALIZATION
@@ -624,10 +630,10 @@ function addLink(source, target, value, appearsAt, isDrawLinkPath = false) {
         // redraw tapestry
         redrawTapestryWithNewNode();
         if (isDrawLinkPath) {
-            path2.remove();
+            linkPath.remove();
             leftButtonDown = false;
             drawLinkNodePath = false;
-            ptdata = [];
+            linkPathData = [];
         }
 
     }).fail(function(e) {
@@ -1224,10 +1230,10 @@ function buildPathAndButton() {
 
          $('.linkNodeButton').click(function(){
             if (drawLinkNodePath) {
-                path2.remove();
+                linkPath.remove();
                 leftButtonDown = false;
                 drawLinkNodePath = false;
-                ptdata = [];
+                linkPathData = [];
             } else {
                 newSource = root;
                 drawLinkNodePath = true;
@@ -1235,7 +1241,7 @@ function buildPathAndButton() {
                     if (drawLinkNodePath) {
                         var pt = d3.mouse(this);
                         leftButtonDown = true;
-                        tick(pt);
+                        redrawLinkPath(pt);
                     }
                 });
                 $(".node").click(function() {
@@ -1244,16 +1250,16 @@ function buildPathAndButton() {
                         if (result == true) {
                             addLink(newSource, getNumbersFromString(this.id), 1, 0, true);
                         } else {
-                            path2.remove();
+                            linkPath.remove();
                             leftButtonDown = false;
                             drawLinkNodePath = false;
-                            ptdata = [];
+                            linkPathData = [];
                         }
                     }
                 });
-                path2 = svg.append("g")
+                linkPath = svg.append("g")
                     .append("path")
-                        .data([ptdata])
+                        .data([linkPathData])
                         .style("stroke-dasharray", ("4, 2"))
                         .style("stroke", COLOR_LINK)
                         .style("fill", "none")
