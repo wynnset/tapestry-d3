@@ -24,21 +24,6 @@ var // declared constants
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings",
     ADD_NODE_MODAL_URL = addNodeModalUrl;
 
-
-// const // calculated
-//     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
-//     INNER_RADIUS = NORMAL_RADIUS - (PROGRESS_THICKNESS / 3),
-//     OUTER_RADIUS = NORMAL_RADIUS + (PROGRESS_THICKNESS / 3);
-
-// var dataset, root, svg, links, nodes,               // Basics
-//     path, pieGenerator, arcGenerator,               // Donut
-//    simulation,                                     // Force
-//    tapestrySlug, saveProgress = true,              // Cookie
-//    nodeImageHeight = 280,
-//    nodeImageWidth = 520,
-//    rootNodeImageHeightDiff = 46,
-
-
 var // declared variables
     dataset, root, svg, links, nodes,               // Basics
     originalDataset,                                // For saving the value of the original dataset pre-changes
@@ -54,7 +39,6 @@ var // declared variables
     h5pVideoSettings = {},
     tapestryDepth = 2;                              // Default depth of Tapestry
 
-
 // FLAGS
 var inViewMode = false;                             // Flag for when we're in view mode
 
@@ -66,7 +50,6 @@ var // calculated
 /****************************************************
  * INITIALIZATION
  ****************************************************/
-
 
 /* Import data from json file, then start D3 */
 jQuery.ajaxSetup({
@@ -138,7 +121,6 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     // 2. SIZE AND SCALE THE TAPESTRY AND SVG TO FIT WELL
     //---------------------------------------------------
 
-
     // establish initial positioning before the startforce()
     // this so 'getNodeDimensions' is operational at this stage
     for (var index in dataset.nodes) {
@@ -182,11 +164,11 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     filterLinks();
     buildNodeContents();
 
-    
     //---------------------------------------------------
     // 4. UPDATE SVG DIMENSIONS AND START THE GRAPH
     //---------------------------------------------------
 
+    // Remove fx & fy remnant upon refresh
     d3.selectAll('g.node').each(function(d){
         delete d.fx;
         delete d.fy;
@@ -374,6 +356,7 @@ $("#tapeestry-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, statusT
         $("#cancel-add-new-node").on("click", function() {
             tapestryHideAddNodeModal();
         });
+        hideShowDepthSlider();
     }
 });
 
@@ -742,7 +725,6 @@ function createSvgContainer(containerId) {
 }
 
 function updateSvgDimensions(containerId) {
-    console.log("habbenig");
     var tapestryDimensions = getTapestryDimensions();
     d3.select("#"+containerId+"-svg")
         .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height);
