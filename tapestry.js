@@ -29,6 +29,7 @@ var // declared variables
     originalDataset,                                // For saving the value of the original dataset pre-changes
     path, pieGenerator, arcGenerator,               // Donut
     linkForce, collideForce, force,                 // Force
+    linkToDragStarted = false, linkToNode,
     nodeCoordinates = [],                           // For saving the coordinates of the Tapestry pre transition to play mode
     adjustedRadiusRatio = 1,                        // Radius adjusted for view mode
     tapestrySlug, 
@@ -983,6 +984,13 @@ function buildNodeContents() {
     /* Add path and button */
     buildPathAndButton();
 
+    nodes.on("mouseover", function(data){
+        if (linkToDragStarted) {
+            linkToNode = data.id;
+            console.log('mouseover',data.id)
+        }
+    })
+
     /* Add dragging and node selection functionality to the node */
     nodes.call(d3.drag()
         .on("start", dragstarted)
@@ -1185,11 +1193,6 @@ function buildPathAndButton() {
         recordAnalyticsEvent('user', 'open', 'lightbox', thisBtn.dataset.id);
     });
 
-    $(".node").on("mouseup", function() {
-        console.log("here");
-        console.log(this);
-    });
-
     // Append addNodeButton
     nodes
         .filter(function (d) {
@@ -1218,8 +1221,15 @@ function buildPathAndButton() {
         })
         .attr("class", "addNodeButton")
         .call(d3.drag()
-            // .on("end", testfunc2)
-            .on("drag", testfunc));;
+            .on('drag',function(){
+                linkToDragStarted = true;
+            })
+            .on('end',function(data){
+                if (data.id != linkToNode) {
+                    alert('link from '+data.id+' to '+linkToNode)
+                }
+            })
+        );
 
     $('.addNodeButton').click(function(){
         // Set up the title of the form
