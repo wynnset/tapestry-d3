@@ -13,6 +13,7 @@ var // declared constants
     GRANDCHILD_RADIUS_DIFF = -100,
     TRANSITION_DURATION = 800,
     NODE_TEXT_RATIO = 5/6,
+    COLOR_ACTIVE = "#11a6d8",
     COLOR_STROKE = "#072d42",
     COLOR_GRANDCHILD = "#CCC",
     COLOR_LINK = "#999",
@@ -29,7 +30,6 @@ var // declared variables
     originalDataset,                                // For saving the value of the original dataset pre-changes
     path, pieGenerator, arcGenerator,               // Donut
     linkForce, collideForce, force,                 // Force
-    linkToDragStarted = false, linkToNode,
     nodeCoordinates = [],                           // For saving the coordinates of the Tapestry pre transition to play mode
     adjustedRadiusRatio = 1,                        // Radius adjusted for view mode
     tapestrySlug, 
@@ -49,40 +49,19 @@ var // calculated
     outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2);
 
 /****************************************************
- * LINK NODE VARIABLES
+ * EDIT-RELATED VARIABLES
  ****************************************************/
 
-var NUM_LINK_PATH_DATA = 1000, // The number of points that can be drawn
-    linkPathData = [], // Data for linkPath
-    linkPath, // The line that is drawn
-    leftButtonDown = false,
-    newSource, // Saves the source because when target is clicked, root will be target
-    drawLinkNodePath = false; // toggle to draw the link node path
+var 
+    linkToDragStarted = false, 
+    nodeLinkLine,
+    linkToNode, linkFromNode;
 
-// Shape of a line
-var line = d3.line()
-    .x(function(d, i) { 
-        return d[0]; 
-    })
-    .y(function(d, i) { 
-        return d[1]; 
-    })
-
-// Connects line with new point
-function redrawLinkPath(pt) {
-    // push a new data point onto the back
-    linkPathData.push(pt);
-    // Redraw the path:
-    linkPath
-        .attr("d", function(d) {
-            return line(d);
-        })
-
-    // If more than 100 points, drop the old data pt off the front
-    if (linkPathData.length > NUM_LINK_PATH_DATA) {
-        linkPathData.shift();
-    }
-}
+    // Create the linking line
+    nodeLinkLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+    nodeLinkLine.setAttribute('id','tapestry-node-link-line');
+    nodeLinkLine.setAttribute("stroke", COLOR_ACTIVE);
+    nodeLinkLine.setAttribute("stroke-width", LINK_THICKNESS);
 
 /****************************************************
  * INITIALIZATION
@@ -197,6 +176,14 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     
     // Ensure tapestry size fits well into the browser and start force
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+
+
+    //---------------------------------------------------
+    // 5. SET UP EDITING STUFF
+    //---------------------------------------------------
+
+    // Attach the link line to the tapestry SVG (it won't appear for now)
+    $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
 }).fail(function(e) {
@@ -611,9 +598,9 @@ function tapestryValidateNewNode(formData, isRoot) {
 }
 
 // To establish two way connections
-function addLink(source, target, value, appearsAt, isDrawLinkPath = false) {
+function addLink(source, target, value, appearsAt) {
     if (target === source) {
-        alert("Cannot connect node to itself");
+        console.log("addLink aborting: cannot connect node to itself");
         return;
     }
 
@@ -626,18 +613,11 @@ function addLink(source, target, value, appearsAt, isDrawLinkPath = false) {
     }
 
     jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt }), function(result) {
-        // Add the new link to the dataset
         dataset.links.push({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt });
-        // redraw tapestry
         redrawTapestryWithNewNode();
-        if (isDrawLinkPath) {
-            linkPath.remove();
-            leftButtonDown = false;
-            drawLinkNodePath = false;
-            linkPathData = [];
-        }
 
     }).fail(function(e) {
+        alert("Sorry, there was a problem adding the new link");
         console.error("Error with adding new link", e);
     });
 }
@@ -984,12 +964,15 @@ function buildNodeContents() {
     /* Add path and button */
     buildPathAndButton();
 
-    nodes.on("mouseover", function(data){
+    nodes.on("mouseover", function(thisNode){
         if (linkToDragStarted) {
-            linkToNode = data.id;
-            console.log('mouseover',data.id)
+            linkToNode = thisNode;
         }
-    })
+    }).on("mouseout", function(){
+        if (linkToDragStarted) {
+            linkToNode = undefined;
+        }
+    });
 
     /* Add dragging and node selection functionality to the node */
     nodes.call(d3.drag()
@@ -1086,32 +1069,10 @@ function rebuildNodeContents() {
     nodes.selectAll("text").remove();
     nodes.selectAll(".mediaButton").remove();
     nodes.selectAll(".addNodeButton").remove();
-    nodes.selectAll(".linkNodeButton").remove();
     nodes.selectAll("path").remove();
     setTimeout(function(){
         buildPathAndButton();
     }, TRANSITION_DURATION);
-}
-
-function testfunc(d) {
-    // console.log(d);
-    // console.log("dragged");
-    // $(".node").on("mouseup", function() {
-    //     console.log("here");
-    //     console.log(this);
-    // });
-}
-
-function testfunc2(d) {
-    console.log("dragend");
-    // $(".node").on("mouseup", function() {
-    //     console.log("here");
-    //     console.log(this);
-    // });
-}
-
-function testfunc3(d) {
-    console.log("mousedown");
 }
 
 function buildPathAndButton() {
@@ -1200,7 +1161,7 @@ function buildPathAndButton() {
         })
         .append("svg:foreignObject")
         .html(function (d) {
-            return '<i  title="Add Node" id="addNodeIcon' + d.id + '"' +
+            return '<i  title="Click to add node or drag to another node to link" id="addNodeIcon' + d.id + '"' +
                 ' class="' + getIconClass("add") + ' addNodeIcon"' +
                 ' data-id="' + d.id + '"><\/i>';
         })
@@ -1221,13 +1182,30 @@ function buildPathAndButton() {
         })
         .attr("class", "addNodeButton")
         .call(d3.drag()
-            .on('drag',function(){
-                linkToDragStarted = true;
+            .on('start',function(thisNode){
+                linkFromNode = thisNode;
             })
-            .on('end',function(data){
-                if (data.id != linkToNode) {
-                    alert('link from '+data.id+' to '+linkToNode)
+            .on('drag',function(){  
+                linkToDragStarted = true;
+                nodeLinkLine.setAttribute('x1',linkFromNode.x);
+                nodeLinkLine.setAttribute('y1',linkFromNode.y + MAX_RADIUS - 10);
+                nodeLinkLine.setAttribute('x2',d3.event.x);
+                nodeLinkLine.setAttribute('y2',d3.event.y + MAX_RADIUS - 10);
+            })
+            .on('end',function(){
+                if (typeof linkToNode != "undefined" && linkFromNode.id != linkToNode.id) {
+                    if (confirm('Link from ' + linkFromNode.title + ' to ' + linkToNode.title + "?")) {
+                        addLink(linkFromNode.id, linkToNode.id, 1, '');
+                    }
                 }
+                // Reset everything
+                linkToDragStarted = false;
+                linkFromNode = undefined;
+                linkToNode = undefined;
+                nodeLinkLine.removeAttribute('x1');
+                nodeLinkLine.removeAttribute('y1');
+                nodeLinkLine.removeAttribute('x2');
+                nodeLinkLine.removeAttribute('y2');
             })
         );
 
@@ -1239,72 +1217,6 @@ function buildPathAndButton() {
         // Show the modal
         $("#createNewNodeModal").modal();
     });
-
-    nodes
-        .filter(function (d) {
-            return d.nodeType === "root";
-        })
-        .append("svg:foreignObject")
-        .html(function (d) {
-            return '<i title="Link nodes" id="linkNodeIcon' + d.id + '"' +
-                ' class="fas fa-link' +  ' linkNodeIcon"' +
-                ' data-id="' + d.id + '"><\/i>';
-        })
-        .attr("id", function (d) {
-            return "linkNodeIcon" + d.id;
-        })
-        .attr("data-id", function (d) {
-            return d.id;
-        })
-        .attr("width", "60px")
-        .attr("height", "62px")
-        .attr("x", 30)
-        .attr("y", function (d) {
-            return NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30;
-        })
-        .attr("style", function (d) {
-            return d.nodeType === "grandchild" || d.nodeType === "child" ? "visibility: hidden" : "visibility: visible";
-        })
-        .attr("class", "linkNodeButton");
-
-         $('.linkNodeButton').click(function(){
-            if (drawLinkNodePath) {
-                linkPath.remove();
-                leftButtonDown = false;
-                drawLinkNodePath = false;
-                linkPathData = [];
-            } else {
-                newSource = root;
-                drawLinkNodePath = true;
-                svg.on("mousemove", function() {
-                    if (drawLinkNodePath) {
-                        var pt = d3.mouse(this);
-                        leftButtonDown = true;
-                        redrawLinkPath(pt);
-                    }
-                });
-                $(".node").click(function() {
-                    if (leftButtonDown) {
-                        var result = confirm("Are you sure want to link " + '"' + dataset.nodes[findNodeIndex(newSource)].title + '"' + " to " + '"' + dataset.nodes[findNodeIndex(getNumbersFromString(this.id))].title + '"' + "?");
-                        if (result == true) {
-                            addLink(newSource, getNumbersFromString(this.id), 1, 0, true);
-                        } else {
-                            linkPath.remove();
-                            leftButtonDown = false;
-                            drawLinkNodePath = false;
-                            linkPathData = [];
-                        }
-                    }
-                });
-                linkPath = svg.append("g")
-                    .append("path")
-                        .data([linkPathData])
-                        .style("stroke-dasharray", ("4, 2"))
-                        .style("stroke", COLOR_LINK)
-                        .style("fill", "none")
-                        .style("stroke-width", "10px");
-            }
-        });
 }
 
 function updateViewedProgress() {
@@ -1829,7 +1741,7 @@ function filterNodes() {
         .style("opacity", "1");
 
     setTimeout(function(){
-        nodesToHide.style("display", "block");
+        nodesToHide.style("display", "none");
     }, TRANSITION_DURATION);
 }
 
@@ -2530,12 +2442,6 @@ function isEmptyObject(obj) {
 function onlyContainsDigits(string) {
     var regex = new RegExp(/^\d+$/); 
     return regex.test(string);
-}
-
-// Returns numbers from the given string
-function getNumbersFromString(str) { 
-    var num = str.replace(/[^0-9]/g, ''); 
-    return parseInt(num,10); 
 }
 
 // Capture click events anywhere inside or outside tapestry

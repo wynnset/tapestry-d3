@@ -370,34 +370,6 @@ i {
     }
 }
 
-#tapestry-link-btn {
-    float: right;
-    margin-right: 5%;
-    cursor: pointer;
-}
-
-/* LINK NODE BUTTON */
-.linkNodeButton {
-    transition: all 0.25s ease;
-    cursor: pointer;
-    color: #666666;
-    overflow: hidden;
-    border-radius: 100%;
-}
-
-.linkNodeButton:hover,
-.linkNodeButton:active {
-    transform: scale(1.15) translate(0, -21px);
-    color: #11a6d8;
-}
-
- .linkNodeButton > i {
-    font-size: 55px;
-    background: #fff;
-    border: solid 1px #fff;
-    padding: 2px;
-}
-
 /* Add new node form */
 
 body {font-family: Arial, Helvetica, sans-serif;}
