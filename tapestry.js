@@ -1085,6 +1085,27 @@ function rebuildNodeContents() {
     }, TRANSITION_DURATION);
 }
 
+function testfunc(d) {
+    // console.log(d);
+    // console.log("dragged");
+    // $(".node").on("mouseup", function() {
+    //     console.log("here");
+    //     console.log(this);
+    // });
+}
+
+function testfunc2(d) {
+    console.log("dragend");
+    // $(".node").on("mouseup", function() {
+    //     console.log("here");
+    //     console.log(this);
+    // });
+}
+
+function testfunc3(d) {
+    console.log("mousedown");
+}
+
 function buildPathAndButton() {
 
     /* Add progress pie inside each node */
@@ -1164,6 +1185,11 @@ function buildPathAndButton() {
         recordAnalyticsEvent('user', 'open', 'lightbox', thisBtn.dataset.id);
     });
 
+    $(".node").on("mouseup", function() {
+        console.log("here");
+        console.log(this);
+    });
+
     // Append addNodeButton
     nodes
         .filter(function (d) {
@@ -1190,9 +1216,12 @@ function buildPathAndButton() {
         .attr("style", function (d) {
             return d.nodeType === "grandchild" || d.nodeType === "child" ? "visibility: hidden" : "visibility: visible";
         })
-        .attr("class", "addNodeButton");
+        .attr("class", "addNodeButton")
+        .call(d3.drag()
+            // .on("end", testfunc2)
+            .on("drag", testfunc));;
 
-    $('.addNodeButton > i').click(function(){
+    $('.addNodeButton').click(function(){
         // Set up the title of the form
         $('#createNewNodeModalLabel').text("Add new sub-topic to " + dataset.nodes[findNodeIndex(root)].title);
         $("#submit-add-root-node").hide();	
@@ -1263,7 +1292,7 @@ function buildPathAndButton() {
                         .style("stroke-dasharray", ("4, 2"))
                         .style("stroke", COLOR_LINK)
                         .style("fill", "none")
-                        .style("stroke-width", "20px");
+                        .style("stroke-width", "10px");
             }
         });
 }
