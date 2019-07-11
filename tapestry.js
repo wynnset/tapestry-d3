@@ -165,10 +165,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     links = createLinks();
     nodes = createNodes();
 
-    filterLinks();
-    filterNodes();
-    buildNodeContents();
-
+    filterTapestry(true);
     
     //---------------------------------------------------
     // 4. UPDATE SVG DIMENSIONS AND START THE GRAPH
@@ -240,10 +237,8 @@ tapestryDepthSlider.onchange = function() {
 
     setNodeTypes(root);
     setLinkTypes(root);
-    filterLinks();
-    filterNodes();
 
-    rebuildNodeContents();
+    filterTapestry();
 };
 
 tapestryControlsDiv.appendChild(depthSliderWrapper);
@@ -264,9 +259,7 @@ setAttributes(viewLockedCheckbox,{
     id: "tapestry-view-locked-checkbox"
 });
 viewLockedCheckbox.onchange = function() {
-    filterNodes();
-    filterLinks();
-    rebuildNodeContents();
+    filterTapestry();
 };
 
 // Create label element
@@ -517,15 +510,9 @@ function redrawTapestryWithNewNode(isRoot) {
     links = createLinks();
     nodes = createNodes();
 
-    filterLinks();
-    if (!isRoot) {
-        filterNodes();
-    }
-    // Rebuild everything to include the new node
     buildNodeContents();
-    if (!isRoot) {
-        rebuildNodeContents();
-    }
+    filterTapestry();
+    
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
 }
 
@@ -664,10 +651,8 @@ function resizeNodes(id) {
     getChildren(id);
     setNodeTypes(id);
     setLinkTypes(id);
-    filterLinks();
-    filterNodes();
 
-    rebuildNodeContents();
+    filterTapestry();
 
     /* Restart force */
     startForce();
@@ -804,65 +789,73 @@ function createNodes() {
                     });
 }
 
-// TODO: Get rid of this function (use buildNodeContents and rebuildNodeContents instead)
-function filterLinks() {
-    var linksToHide = links.filter(function (d) {
-        var sourceId, targetId;
-        if (typeof d.source === 'number' && typeof d.target === 'number') {
-            sourceId = d.source;
-            targetId = d.target;
-        } else if (typeof d.source === 'object' && typeof d.target === 'object') {
-            sourceId = d.source.id;
-            targetId = d.target.id;
-        }
+/**
+ * This function re-examines the tapestry, restructures it if necessary, and hides/shows elements based on the dataset
+ * @param {boolean} freshBuild If true, calls buildNodeContents() after done; otherwise calls rebuildNodeContents()
+ */
+function filterTapestry(freshBuild=false) {
 
-        var shouldRender = false;
-        var targetIndex = findNodeIndex(targetId);
-        if ((sourceId === root || targetId === root) && getViewable(dataset.nodes[targetIndex])) {
-            shouldRender = true;
-        } else if ((getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) && !inViewMode && getViewable(dataset.nodes[targetIndex])) {
-            shouldRender = true;
-        }
-        return !shouldRender;
-    });
+    // Show Links
 
     var linksToShow = links.filter(function (d) {
-        var sourceId, targetId;
-        if (typeof d.source === 'number' && typeof d.target === 'number') {
-            sourceId = d.source;
-            targetId = d.target;
-        } else if (typeof d.source === 'object' && typeof d.target === 'object') {
-            sourceId = d.source.id;
-            targetId = d.target.id;
-        }
-
-        var shouldRender = false;
-        var targetIndex = findNodeIndex(targetId);
-        if ((sourceId === root || targetId === root) && getViewable(dataset.nodes[targetIndex])) {
-            shouldRender = true;
-        } else if ((getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) && !inViewMode && getViewable(dataset.nodes[targetIndex])) {
-            shouldRender = true;
-        }
-        return shouldRender;
+        return ( getViewable(getNodeById(d.target.id)) && getViewable(getNodeById(d.source.id)) );
     });
 
     linksToShow
-        .style("display", "block");
-
-    linksToHide
-        .transition()
-        .duration(TRANSITION_DURATION)
-        .style("opacity", "0");
-
-    linksToShow
+        .style("display", "block")
         .transition()
         .duration(TRANSITION_DURATION)
         .style("opacity", "1");
+
+    // Hide Links
+
+    var linksToHide = links.filter(function (d) {
+        return !( getViewable(getNodeById(d.target.id)) && getViewable(getNodeById(d.source.id)) );
+    });
+
+    linksToHide
+        .transition()
+        .duration(TRANSITION_DURATION/2)
+        .style("opacity", "0");
     
     setTimeout(function(){
         linksToHide
             .style("display", "block");
+    }, TRANSITION_DURATION/2);
+
+    // Show Nodes
+
+    var nodesToShow = nodes.filter(function (d) {
+        return getViewable(d);
+    });
+
+    nodesToShow
+        .style("display", "block")
+        .transition()
+        .duration(TRANSITION_DURATION/2)
+        .style("opacity", "1");
+    
+    // Hide Nodes
+
+    var nodesToHide = nodes.filter(function (d) {
+        return !getViewable(d);
+    });
+
+    nodesToHide
+        .transition()
+        .duration(TRANSITION_DURATION)
+        .style("opacity", "0");
+
+    setTimeout(function(){
+        nodesToHide.style("display", "block");
     }, TRANSITION_DURATION);
+    
+    if (freshBuild) {
+        buildNodeContents();
+    }
+    else {
+        rebuildNodeContents();
+    }
 }
 
 /* Draws the components that make up node */
@@ -1106,6 +1099,9 @@ function buildPathAndButton() {
         .append('foreignObject')
         .attr("width", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
         .attr("height", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
+        .attr("style", function (d) {
+            return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
+        })
         .attr("x", -NORMAL_RADIUS * NODE_TEXT_RATIO)
         .attr("y", -NORMAL_RADIUS * NODE_TEXT_RATIO)
         .append("xhtml:div")
@@ -1434,9 +1430,7 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
                     for (var i = 0; i < childrenData.length; i++) {
                         if (Math.abs(childrenData[i].appearsAt - video.currentTime) <= NODE_UNLOCK_TIMEFRAME && video.paused === false && !dataset.nodes[childrenData[i].nodeIndex].typeData.unlocked) {
                             setUnlocked(childrenData[i].nodeIndex);
-                            filterLinks();
-                            filterNodes();
-                            rebuildNodeContents();
+                            filterTapestry();
                         }
                     }
                     updateViewedValue(id, video.currentTime, video.duration);
@@ -1590,11 +1584,8 @@ function changeToViewMode(lightboxDimensions) {
         }
     });
 
-    filterLinks();
-    filterNodes();
-    if (adjustedRadiusRatio < 1) {
-        rebuildNodeContents();
-    }
+    filterTapestry();
+
     startForce();
 }
 
@@ -1695,54 +1686,13 @@ function exitViewMode() {
         .attr("cy", function(d) { return d.fy; });
 
     inViewMode = false;
-    filterLinks();
-    filterNodes();
+
+    filterTapestry();
     updateTapestrySize();
     if (adjustedRadiusRatio < 1) {
         setAdjustedRadiusRatio(null, null);  //Values set to null because we don't really care; Function should just return 1
-        rebuildNodeContents();
     }
     startForce();
-}
-
-// Helper function for hiding/showing grandchild nodes when entering/exiting view mode
-function filterNodes() {
-    var nodesToHide = nodes.filter(function (d) {
-        var shouldRender = false;
-        if (!getViewable(d)) {
-            shouldRender = false;
-        } else {
-            shouldRender = true;
-        }
-        return !shouldRender;
-    });
-
-    var nodesToShow = nodes.filter(function (d) {
-        var shouldRender = false;
-        if (!getViewable(d)) {
-            shouldRender = false;
-        } else {
-            shouldRender = true;
-        }
-        return shouldRender;
-    });
-
-    nodesToShow
-        .style("display", "block");
-
-    nodesToHide
-        .transition()
-        .duration(TRANSITION_DURATION)
-        .style("opacity", "0");
-
-    nodesToShow
-        .transition()
-        .duration(TRANSITION_DURATION)
-        .style("opacity", "1");
-
-    setTimeout(function(){
-        nodesToHide.style("display", "none");
-    }, TRANSITION_DURATION);
 }
 
 /****************************************************

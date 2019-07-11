@@ -195,7 +195,6 @@ div.modal {
 
 .imageOverlay {
     opacity: 0.5;
-    transition: 0.2s all;
 }
 
 .node .expandGrandchildren {
@@ -204,15 +203,10 @@ div.modal {
 
 .node:hover .expandGrandchildren {
     transform: scale(1.2);
-    transition: 0.2s all;
 }
 
 .node:hover .imageOverlay {
     opacity: 0;
-}
-
-text {
-    transition: 0.2s all;
 }
 
 .node:hover text {
