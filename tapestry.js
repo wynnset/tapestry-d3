@@ -20,7 +20,8 @@ var // declared constants
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
     TIME_BETWEEN_SAVE_PROGRESS = 5, // Means the number of seconds between each save progress call
     NODE_UNLOCK_TIMEFRAME = 2; // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
-    TAPESTRY_PROGRESS_URL = apiUrl + "/users/progress",
+    USER_NODE_PROGRESS_URL = apiUrl + "/users/progress",
+    USER_NODE_UNLOCKED_URL = apiUrl + "/users/unlocked",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings",
     ADD_NODE_MODAL_URL = addNodeModalUrl;
 
@@ -80,7 +81,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
         // If user is logged in, get progress from database database
         if (tapestryWpUserId) {
 
-            jQuery.get(TAPESTRY_PROGRESS_URL, { "post_id": tapestryWpPostId }, function(result) {
+            jQuery.get(USER_NODE_PROGRESS_URL, { "post_id": tapestryWpPostId }, function(result) {
                 if (result && !isEmptyObject(result)) {
                     setDatasetProgress(JSON.parse(result));
                     updateViewedProgress(); // update viewed progress because async fetch of dataset
@@ -1970,7 +1971,7 @@ function updateViewedValue(id, amountViewedTime, duration) {
                         "node_id": id,
                         "progress_value": amountViewed
                     };
-                    jQuery.post(TAPESTRY_PROGRESS_URL, progData, function(result) {})
+                    jQuery.post(USER_NODE_PROGRESS_URL, progData, function(result) {})
                     .fail(function(e) {
                         console.error("Error with adding progress data");
                         console.error(e);
@@ -2020,8 +2021,9 @@ function setDatasetProgress(progressObj) {
     
     for (var id in progressObj) {
         
-        var amountViewed = progressObj[id];
+        var amountViewed = progressObj[id].progress;
         var amountUnviewed = 1.00 - amountViewed;
+        var unlocked = progressObj[id].unlocked;
     
         var index = findNodeIndex(id);
         
@@ -2029,6 +2031,7 @@ function setDatasetProgress(progressObj) {
             //Update the dataset with new values
             dataset.nodes[index].typeData.progress[0].value = amountViewed;
             dataset.nodes[index].typeData.progress[1].value = amountUnviewed;
+            dataset.nodes[index].typeData.unlocked = unlocked;
         }
     
     }
@@ -2099,34 +2102,25 @@ function setUnlocked(childIndex) {
             // TODO move unlocked out of typeData
             if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
                 dataset.nodes[childIndex].typeData.unlocked = true;
-                // TODO: this should only affect this user's tapestry, not saved to the base tapestry
-                // $.ajax({
-                //     url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/typeData",
-                //     method: 'PUT',
-                //     data: JSON.stringify(dataset.nodes[childIndex].typeData),
-                //     success: function(result) {
-                //     },
-                //     error: function(e) {
-                //         console.error("Error with update node's unlock property");
-                //         console.error(e);
-                //     }
-                // });
+                jQuery.post(USER_NODE_UNLOCKED_URL, {
+                        "post_id": tapestryWpPostId,
+                        "node_id": childIndex
+                    }).fail(function(e) {
+                        console.error("Error with update node's unlock property");
+                        console.error(e);
+                    });
             }
         }
     }
     else {
         // TODO move unlocked out of typeData
         dataset.nodes[childIndex].typeData.unlocked = true;
-        $.ajax({
-            url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + dataset.nodes[childIndex].id + "/typeData",
-            method: 'PUT',
-            data: JSON.stringify(dataset.nodes[childIndex].typeData),
-            success: function(result) {
-            },
-            error: function(e) {
-                console.error("Error with update node's unlock property");
-                console.error(e);
-            }
+        jQuery.post(USER_NODE_UNLOCKED_URL, {
+            "post_id": tapestryWpPostId,
+            "node_id": childIndex
+        }).fail(function(e) {
+            console.error("Error with update node's unlock property");
+            console.error(e);
         });
     }
     setAccessibleStatus();
