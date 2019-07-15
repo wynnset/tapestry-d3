@@ -2421,7 +2421,7 @@ function checkPermission(node, permissionType) {
         return node.nodeType === "root";
     }
 
-    if (node.permissions["public"] && node.permissions["public"].includes(permissionType)) {
+    if (node.permissions.public && node.permissions.public.includes(permissionType)) {
         return node.nodeType === "root";
     }
 
@@ -2435,53 +2435,6 @@ function checkPermission(node, permissionType) {
     // // TODO Check user's group id
 
     return false;
-}
-
-// Wrap function specifically for SVG text
-// Found on https://bl.ocks.org/mbostock/7555321
-function wrapText(text, width) {
-    width /= FONT_ADJUST;
-    text.each(function (d) {
-        var text = d3.select(this),
-            words = text.text().split(/\s+/).reverse(),
-            word,
-            lines = [],
-            currentLine = [],
-            lineNumber = 0,
-            lineHeight = 1.1 * FONT_ADJUST, // ems
-            tspan = text.text(null)
-                .append("tspan")
-                .attr("class", "line" + d.id)
-                .attr("x", 0)
-                .attr("y", 0);
-
-        while (word = words.pop()) {
-            currentLine.push(word);
-            tspan.text(currentLine.join(" "));
-            if (tspan.node().getComputedTextLength() > width) {
-                currentLine.pop(); // Pop the last word off of the previous line
-                lines.push(currentLine);
-                tspan.text(currentLine.join(" "));
-                currentLine = [word]; // line now becomes a new array
-                lineNumber++;
-                tspan = text.append("tspan")
-                    .attr("class", "line" + d.id)
-                    .attr("x", 0) //0 because it keeps it in the center
-                    .attr("y", function() {
-                        return ++lineNumber * lineHeight + "em";
-                    })
-                    .text(word);
-            }
-        }
-
-        var midLineIndex = Math.floor(lineNumber / 4);
-        var tspans = document.getElementsByClassName("line" + d.id);
-        var i = 0;
-        while (tspans[i] !== undefined) {
-            tspans[i].setAttribute("y", (i - midLineIndex) * lineHeight + "em");
-            i++;
-        }
-    });
 }
 
 // For saving the coordinates of all the nodes prior to transitioning to play-mode
