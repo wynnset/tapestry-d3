@@ -2095,11 +2095,13 @@ function setLinkTypes(rootId) {
 /* For setting the "unlocked" field of nodes.typeData in dataset or a specific node (if a parameter is passed in) */
 function setUnlocked(childIndex) {
     if (typeof childIndex === 'undefined') {
+        console.log("yo");
         var parentIndex;
         for (var i = 0; i < dataset.links.length; i++) {
             childIndex = findNodeIndex(dataset.links[i].target.id);
             parentIndex = findNodeIndex(dataset.links[i].source.id);
             // TODO move unlocked out of typeData
+            
             if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
                 dataset.nodes[childIndex].typeData.unlocked = true;
                 jQuery.post(USER_NODE_UNLOCKED_URL, {
@@ -2114,6 +2116,7 @@ function setUnlocked(childIndex) {
     }
     else {
         // TODO move unlocked out of typeData
+        console.log("yoyo");
         dataset.nodes[childIndex].typeData.unlocked = true;
         jQuery.post(USER_NODE_UNLOCKED_URL, {
             "post_id": tapestryWpPostId,
