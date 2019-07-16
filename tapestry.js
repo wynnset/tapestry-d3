@@ -83,6 +83,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 
             jQuery.get(USER_NODE_PROGRESS_URL, { "post_id": tapestryWpPostId }, function(result) {
                 if (result && !isEmptyObject(result)) {
+                    console.log(result);
                     setDatasetProgress(JSON.parse(result));
                     updateViewedProgress(); // update viewed progress because async fetch of dataset
                 }
@@ -1971,7 +1972,7 @@ function updateViewedValue(id, amountViewedTime, duration) {
                         "node_id": id,
                         "progress_value": amountViewed
                     };
-                    jQuery.post(USER_NODE_PROGRESS_URL, progData, function(result) {})
+                    jQuery.post(USER_NODE_PROGRESS_URL, progData, function() {})
                     .fail(function(e) {
                         console.error("Error with adding progress data");
                         console.error(e);
@@ -1983,7 +1984,7 @@ function updateViewedValue(id, amountViewedTime, duration) {
                         "post_id": tapestryWpPostId,
                         "json": JSON.stringify(h5pVideoSettings)
                     };
-                    jQuery.post(TAPESTRY_H5P_SETTINGS_URL, h5pData, function(result) {})
+                    jQuery.post(TAPESTRY_H5P_SETTINGS_URL, h5pData, function() {})
                     .fail(function(e) {
                         console.error("Error with adding h5p video settings");
                         console.error(e);
@@ -1996,7 +1997,6 @@ function updateViewedValue(id, amountViewedTime, duration) {
             Cookies.set("progress-data-"+tapestrySlug, progressObj);
             Cookies.set("h5p-video-settings", h5pVideoSettings);
         }
-
     }
 }
 
@@ -2014,16 +2014,21 @@ function getDatasetProgress() {
 }
 
 function setDatasetProgress(progressObj) {
+    console.log("init");
     
     if (progressObj.length < 1) {
         return false;
     }
     
     for (var id in progressObj) {
+
+        console.log("progress object: ", progressObj[id]);
         
         var amountViewed = progressObj[id].progress;
         var amountUnviewed = 1.00 - amountViewed;
         var unlocked = progressObj[id].unlocked;
+        console.log(progressObj[id].unlocked);
+        console.log(unlocked);
     
         var index = findNodeIndex(id);
         
@@ -2031,7 +2036,7 @@ function setDatasetProgress(progressObj) {
             //Update the dataset with new values
             dataset.nodes[index].typeData.progress[0].value = amountViewed;
             dataset.nodes[index].typeData.progress[1].value = amountUnviewed;
-            dataset.nodes[index].typeData.unlocked = unlocked;
+              dataset.nodes[index].typeData.unlocked = unlocked ? true : false;
         }
     
     }
@@ -2106,7 +2111,8 @@ function setUnlocked(childIndex) {
                 dataset.nodes[childIndex].typeData.unlocked = true;
                 jQuery.post(USER_NODE_UNLOCKED_URL, {
                         "post_id": tapestryWpPostId,
-                        "node_id": childIndex
+                        "node_id": childIndex,
+//                        "unlocked": true
                     }).fail(function(e) {
                         console.error("Error with update node's unlock property");
                         console.error(e);
@@ -2118,9 +2124,13 @@ function setUnlocked(childIndex) {
         // TODO move unlocked out of typeData
         console.log("yoyo");
         dataset.nodes[childIndex].typeData.unlocked = true;
+        // jQuery.get(USER_NODE_UNLOCKED_URL, function (result){
+        //     console.log("URL " + result);
+        // });
         jQuery.post(USER_NODE_UNLOCKED_URL, {
             "post_id": tapestryWpPostId,
-            "node_id": childIndex
+            "node_id": childIndex,
+//            "unlocked": true
         }).fail(function(e) {
             console.error("Error with update node's unlock property");
             console.error(e);
