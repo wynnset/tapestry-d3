@@ -67,8 +67,9 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
         dataset.nodes[0].typeData.unlocked = true;
+        console.log(dataset.nodes[0].typeData.unlocked?'unnn':'locked');
     }
-    originalDataset = result;
+    originalDataset = dataset;
     saveCoordinates();
 
     //---------------------------------------------------
@@ -2029,7 +2030,6 @@ function setDatasetProgress(progressObj) {
         var amountUnviewed = 1.00 - amountViewed;
         var unlocked = progressObj[id].unlocked;
         console.log(progressObj[id].unlocked);
-    //    console.log(unlocked);
     
         var index = findNodeIndex(id);
         
@@ -2039,9 +2039,7 @@ function setDatasetProgress(progressObj) {
             dataset.nodes[index].typeData.progress[1].value = amountUnviewed;
               dataset.nodes[index].typeData.unlocked = unlocked ? true : false;
         }
-    
     }
-    
     return true;
 }
 
@@ -2106,37 +2104,43 @@ function setUnlocked(childIndex) {
         console.log(dataset);
         var parentIndex;
         for (var i = 0; i < dataset.links.length; i++) {
+            
             childIndex = findNodeIndex(dataset.links[i].target.id);
             parentIndex = findNodeIndex(dataset.links[i].source.id);
             // TODO move unlocked out of typeData
-            
+
             if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
                 dataset.nodes[childIndex].typeData.unlocked = true;
-                jQuery.post(USER_NODE_UNLOCKED_URL, {
-                        "post_id": tapestryWpPostId,
-                        "node_id": dataset.nodes[childIndex].id
-//                        "unlocked": true
-                    }).fail(function(e) {
-                        console.error("Error with update node's unlock property");
-                        console.error(e);
-                    });
+                console.log("typea",typeof dataset.nodes[childIndex].typeData.unlocked);
+
+//                 jQuery.post(USER_NODE_UNLOCKED_URL, {
+//                         "post_id": tapestryWpPostId,
+//                         "node_id": dataset.nodes[childIndex].id
+// //                        "unlocked": true
+//                     }).fail(function(e) {
+//                         console.error("Error with update node's unlock property");
+//                         console.error(e);
+//                     });
             }
         }
     }
     else {
-        console.log(dataset);
-        dataset.nodes[0].typeData.unlocked = true;
-        jQuery.post(USER_NODE_UNLOCKED_URL, {
-            "post_id": tapestryWpPostId,
-            "node_id": dataset.nodes[0].id
-    //            "unlocked": true
-        }).done(function() {
-            console.log("completed at parent node ");
-        })
-        .fail(function(e) {
-            console.error("Error with update node's unlock property at parent node");
-            console.error(e);
-        });    
+        if (dataset.rootId === dataset.nodes[findNodeIndex(rootId)].id) {
+            console.log("made true");
+            dataset.nodes[childIndex].typeData.unlocked = true;
+        }
+    //     console.log(dataset);
+    //     dataset.nodes[0].typeData.unlocked = true;
+    //     jQuery.post(USER_NODE_UNLOCKED_URL, {
+    //         "post_id": tapestryWpPostId,
+    //         "node_id": dataset.nodes[0].id
+    // //            "unlocked": true
+    //     })
+    //     .fail(function(e) {
+    //         console.error("Error with update node's unlock property at parent node");
+    //         console.error(e);
+    //     });    
+
         // TODO move unlocked out of typeData
         console.log("yoyo");
         console.log(dataset);
@@ -2148,9 +2152,12 @@ function setUnlocked(childIndex) {
             "post_id": tapestryWpPostId,
             "node_id": dataset.nodes[childIndex].id
 //            "unlocked": true
-        }).fail(function(e) {
+        }).fail(function(jqXHR, textStatus, errorThrown) {
             console.error("Error with update node's unlock property");
-            console.error(e);
+            console.error(jqXHR);
+            console.error(textStatus);
+            console.error(errorThrown);
+
         });
     }
     setAccessibleStatus();
@@ -2178,7 +2185,7 @@ function setAccessibleStatus(node, depth, parentNodeId, parentIsAccessible = tru
         // Do not traverse up the parent
         if (parentNodeId != thisNode.id) {
             // If a node is accessible, only if it's unlocked and its parent is accessible
-            var isAccessible = thisNode.typeData.unlocked && parentIsAccessible;
+            var isAccessible = (thisNode.typeData.unlocked && parentIsAccessible) || (typeof thisNode.typeData.unlocked == "undefined" && parentIsAccessible);
             dataset.nodes[findNodeIndex(thisNode.id)].accessible = isAccessible;
             if (depth > 0) {
                 // Keep going deeper in
@@ -2191,7 +2198,10 @@ function setAccessibleStatus(node, depth, parentNodeId, parentIsAccessible = tru
 // ALL the checks for whether a certain node is viewable
 function getViewable(node) {
 
+  //  if (node.typeData.unlocked === "1") return true;
+
     // TODO: CHECK 1: If user is authorized to view it
+    // if ()
 
     // CHECK 2: Always show root node
     if (node.nodeType === "root") return true;
