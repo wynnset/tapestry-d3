@@ -258,8 +258,13 @@ div.modal {
 .textNodeButton {
     transition: all 0.25s ease;
     cursor: pointer;
-    color: #666666;
+    color: white;
     overflow: hidden;
+    border-radius: 100%;
+}
+
+.textNodeButton i {
+    background-color: #666666;
     border-radius: 100%;
 }
 
@@ -270,10 +275,10 @@ div.modal {
 }
 
 .textNodeButton {
-    font-size: 55px;
-    background: #fff;
+    font-size: 45px;
+    background: #666666;
     border: solid 1px #fff;
-    padding: 2px;
+    padding: 2px 5px 0px 8px;
 }
 
 /* EDIT NODE BUTTON */
