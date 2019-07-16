@@ -280,8 +280,10 @@ function createRootNodeButton(dataset) {
         }
 
         $("#root-node-btn").on("click", function(e) {
+            // Populate title
             $('#createNewNodeModalLabel').text("Add root node");
             $("#submit-add-new-node").hide();
+            $("#submit-edit-node").hide();
             $("#submit-add-root-node").show();
             $("#appearsat-section").hide();
             // Show the modal
@@ -294,24 +296,24 @@ function createRootNodeButton(dataset) {
 // Insert the modal template
 //--------------------------------------------------
 
-var modalDiv = document.createElement("div");
-modalDiv.id = "tapeestry-modal-div";
-document.getElementById(TAPESTRY_CONTAINER_ID).append(modalDiv);
-$("#tapeestry-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, statusTxt, xhr){
+var modalAddDiv = document.createElement("div");
+modalAddDiv.id = "tapestry-add-modal-div";
+document.getElementById(TAPESTRY_CONTAINER_ID).append(modalAddDiv);
+$("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, statusTxt, xhr){
     if (statusTxt == "success") {
 
         // Adding Root Node
         $("#submit-add-root-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
-            tapestryAddNewNode(formData, true);
+            tapestryAddNewNode(formData, false, true);
         });
 
         // Adding New Nodes
         $("#submit-add-new-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
-            tapestryAddNewNode(formData);
+            tapestryAddNewNode(formData, false);
         });
 
         $("#mediaFormat").on("change", function(){
@@ -339,11 +341,18 @@ $("#tapeestry-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, statusT
         $("#cancel-add-new-node").on("click", function() {
             tapestryHideAddNodeModal();
         });
+
+        $("#submit-edit-node").on("click", function(e) {
+            e.preventDefault(); // cancel the actual submit
+            var formData = $("form").serializeArray();
+            tapestryAddNewNode(formData, true);
+        });
+
     }
 });
 
-// Function for adding a new node
-function tapestryAddNewNode(formData, isRoot) {
+// Adds node if no nodeId, edits if no nodeId
+function tapestryAddNewNode(formData, isEdit, isRoot) {
 
     if (typeof isRoot == 'undefined') {
         isRoot = false;
@@ -381,10 +390,16 @@ function tapestryAddNewNode(formData, isRoot) {
         "fy": getBrowserHeight()
     };
 
-    if (!isRoot) {
-        // Just put the node right under the current node
+    // Node ID exists, so edit case
+    if (isEdit) {
         newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx;
-        newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
+        newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy;
+    } else {
+        if (!isRoot) {
+            // Just put the node right under the current node
+            newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx;
+            newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
+        }
     }
 
     var appearsAt = 0;
@@ -433,41 +448,52 @@ function tapestryAddNewNode(formData, isRoot) {
                 break;
         }
     }
+    if (!isEdit) {
+        // Save to database, first save node then the link
+        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
+            // only add link if it's for adding new node and not root node
+            // Add new node to dataset after getting the id
+            newNodeEntry.id = result.id;
+            dataset.nodes.push(newNodeEntry);
 
-    // Save to database, first save node then the link
-    jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
-        // only add link if it's for adding new node and not root node
-        // Add new node to dataset after getting the id
-        newNodeEntry.id = result.id;
-        dataset.nodes.push(newNodeEntry);
+            if (!isRoot) {
+                // Get ID from callback and set it as target's id
+                var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
 
-        if (!isRoot) {
-            // Get ID from callback and set it as target's id
-            var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
+                jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
 
-            jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
+                    // Add the new link to the dataset
+                    dataset.links.push(newLink);
 
-                // Add the new link to the dataset
-                dataset.links.push(newLink);
-
+                    tapestryHideAddNodeModal();
+                    redrawTapestryWithNewNode();
+                }).fail(function(e) {
+                    console.error("Error with adding new link", e);
+                });
+            } else {
+                // Redraw root node
+                dataset.rootId = result.id;
                 tapestryHideAddNodeModal();
-                redrawTapestryWithNewNode();
-            }).fail(function(e) {
-                console.error("Error with adding new link", e);
-            });
-        } else {
-            // Redraw root node
-            dataset.rootId = result.id;
-            tapestryHideAddNodeModal();
-            root = dataset.rootId; // need to set root to newly created node
+                root = dataset.rootId; // need to set root to newly created node
 
-            redrawTapestryWithNewNode(true);
-            $("#root-node-container").hide(); // hide the root node button after creating it.
-        }
-    }).fail(function(e) {
-        console.error("Error with adding new node");
-        console.error(e);
-    });
+                redrawTapestryWithNewNode(true);
+                $("#root-node-container").hide(); // hide the root node button after creating it.
+            }
+        }).fail(function(e) {
+            console.error("Error with adding new node");
+            console.error(e);
+        });
+    } else {
+        // Call endpoint for editing node
+        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root, JSON.stringify(newNodeEntry), function(result){
+            newNodeEntry.id = result.id;
+            dataset.nodes[findNodeIndex(root)] = newNodeEntry;
+            redrawTapestryWithNewNode();
+            tapestryHideAddNodeModal();
+        }).fail(function(e) {
+            console.error("Error editing node", e);
+        });
+    }
 }
 
 function tapestryHideAddNodeModal() {
@@ -1010,6 +1036,7 @@ function rebuildNodeContents() {
     // Remove elements and add them back in
     nodes.selectAll("text").remove();
     nodes.selectAll(".mediaButton").remove();
+    nodes.selectAll(".editNodeButton").remove();
     nodes.selectAll(".addNodeButton").remove();
     nodes.selectAll("path").remove();
     setTimeout(function(){
@@ -1115,7 +1142,7 @@ function buildPathAndButton() {
         })
         .attr("width", "60px")
         .attr("height", "62px")
-        .attr("x", -27)
+        .attr("x", -50)
         .attr("y", function (d) {
             return NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30;
         })
@@ -1124,10 +1151,74 @@ function buildPathAndButton() {
         })
         .attr("class", "addNodeButton");
 
+    // Append editNodeButton
+    nodes
+        .filter(function (d) {
+            return d.nodeType !== "" && tapestryWpUserId;
+        })
+        .append("svg:foreignObject")
+        .html(function (d) {
+            return '<i id="editNodeIcon' + d.id + '"' +
+                ' class=" fas fa-pen-square' + ' editNodeIcon"' +
+                ' data-id="' + d.id + '"><\/i>';
+        })
+        .attr("id", function (d) {
+            return "editNodeIcon" + d.id;
+        })
+        .attr("data-id", function (d) {
+            return d.id;
+        })
+        .attr("width", "60px")
+        .attr("height", "62px")
+        .attr("x", 10)
+        .attr("y", function (d) {
+            return NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30;
+        })
+        .attr("style", function (d) {
+            return d.nodeType === "grandchild" || d.nodeType === "child" ? "visibility: hidden" : "visibility: visible";
+        })
+        .attr("class", "editNodeButton");
+
+    $('.editNodeButton > i').click(function(){
+        // Add in the title for the modal
+        $('#createNewNodeModalLabel').text("Edit node: " + dataset.nodes[findNodeIndex(root)].title);
+        $("#submit-add-root-node").hide();
+        $("#submit-add-new-node").hide();
+        $("#submit-edit-node").show();
+        $("#appearsat-section").hide();
+
+        // Load the values into input
+        $("#add-node-title-input").val(dataset.nodes[findNodeIndex(root)].title);
+        $("#add-node-thumbnail-input").val(dataset.nodes[findNodeIndex(root)].imageURL);
+        if (dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
+            $("#mediaFormat").val("mp4");
+            $("#mp4-mediaURL-input").val(dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
+            $("#mp4-mediaDuration-input").val(dataset.nodes[findNodeIndex(root)].mediaDuration);
+            $("#contents-details").show();
+            $("#mp4-content").show();
+            $("#h5p-content").hide();
+        } else if (dataset.nodes[findNodeIndex(root)].mediaForm === "h5p") {
+            $("#mediaFormat").val("h5p");
+            $("#h5p-mediaURL-input").val(dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
+            $("#h5p-mediaDuration-input").val(dataset.nodes[findNodeIndex(root)].mediaDuration);
+            $("#contents-details").show();
+            $("#mp4-content").hide();
+            $("#h5p-content").show();
+        } else {
+            $("#contents-details").hide();
+            $("#mp4-content").hide();
+            $("#h5p-content").hide();
+        }
+
+        // Show the modal
+        $("#createNewNodeModal").modal();
+    });
+
     $('.addNodeButton > i').click(function(){
         // Set up the title of the form
         $('#createNewNodeModalLabel').text("Add new sub-topic to " + dataset.nodes[findNodeIndex(root)].title);
-        $("#submit-add-root-node").hide();	
+        $("#submit-add-root-node").hide();
+        $("#submit-edit-node").hide();
         $("#submit-add-new-node").show();
         // Show the modal
         $("#createNewNodeModal").modal();
