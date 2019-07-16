@@ -1218,9 +1218,15 @@ function buildPathAndButton() {
         })
         .append("svg:foreignObject")
         .html(function (d) {
-            return '<i id="textNodeIcon' + d.id + '"' +
+            return '<i id="textNodeIcon' + d.id + '"' + 
                 ' class="' + getIconClass("bars") + ' textNodeIcon"' +
-                ' data-id="' + d.id + '"><\/i>';
+                ' data-id="' + d.id + '"' + 
+                ' data-format="' + d.mediaFormat + '"' + 
+                ' data-media-type="' + d.mediaType + '"' + 
+                ' data-thumb="' + d.imageURL + '"' + 
+                ' data-url=""' + 
+                ' data-media-width="' + d.typeData.mediaWidth + '"' + 
+                ' data-media-height="' + d.typeData.mediaHeight + '"><\/i>';
         })
         .attr("id", function (d) {
             return "textNodeButton" + d.id;
@@ -1239,10 +1245,10 @@ function buildPathAndButton() {
         })
         .attr("class", "textNodeButton");
     
-    $('.textNodeButton').click(function(){
+    $('.textNodeButton > i').click(function(){
         var thisBtn = $(this)[0];
         root = thisBtn.dataset.id;
-        setupTextLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
+        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
     });
 
     // Append addNodeButton
@@ -1450,19 +1456,25 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     }).appendTo('body');
 
     var top = lightboxDimensions.adjustedOn === "width" ? ((getBrowserHeight() - height) / 2) + $(this).scrollTop() : (NORMAL_RADIUS * 1.5) + (NORMAL_RADIUS * 0.1);
-    $('<div id="spotlight-content" data-media-format="' + mediaFormat + '"><\/div>').css({
+    $('<div id="spotlight-content" data-media-format="' + mediaFormat + '" data-media-type="' + mediaType + '"><\/div>').css({
         top: top,
         left: (getBrowserWidth() - width) / 2,
         width: width,
         height: height,
         opacity: 0
     }).appendTo('body');
-    $('#spotlight-content').draggable({
-        delay: 10,
-        distance: 8
-    });
 
-    media.appendTo('#spotlight-content');
+    if (mediaType === "video") {
+
+        $('#spotlight-content').draggable({
+            delay: 10,
+            distance: 8
+        });
+        media.appendTo('#spotlight-content');
+
+    } else if (mediaType === "text") {
+        $('#spotlight-content').append(generateTextNodeHTML(dataset.nodes[findNodeIndex(root)].title, dataset.nodes[findNodeIndex(root)].typeData.textContent));
+    }
 
     $('<a class="lightbox-close">X</a>')
         .css({
@@ -1855,6 +1867,9 @@ function exitViewMode() {
 }
 
 function setupTextLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
+    console.log(id);
+    console.log(mediaType);
+    console.log(width);
     // Adjust the width and height here before passing it into setup media
     var lightboxDimensions = getLightboxDimensions(height, width);
 
@@ -1862,7 +1877,7 @@ function setupTextLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) 
     height = lightboxDimensions.height;
 
     $('<div id="spotlight-overlay"><\/div>').on("click", function(){
-        closeLightbox(id, mediaType);
+        closeTextLightbox(id, mediaType);
     }).appendTo('body');
 
     var top = lightboxDimensions.adjustedOn === "width" ? ((getBrowserHeight() - height) / 2) + $(this).scrollTop() : (NORMAL_RADIUS * 1.5) + (NORMAL_RADIUS * 0.1);
@@ -1884,7 +1899,7 @@ function setupTextLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) 
             cursor: "pointer"
         })
         .on("click", function() {
-            closeLightbox(id, mediaType);
+            closeTextLightbox(id, mediaType);
         })
         .appendTo('#text-node-paragraph-content');
 
@@ -1925,6 +1940,19 @@ function generateTextNodeHTML(title, str) {
     }
     return lightboxContent;
 }
+
+// function closeTextLightbox(id, mediaType) {
+    	
+//     $('#spotlight-overlay').remove();
+//     $('#spotlight-content').css('opacity', 0);
+
+//     // wait for css animation before removing it
+//     setTimeout(function () {
+//         $('#text-node-paragraph-content').remove();
+//     }, 1000);
+
+//     recordAnalyticsEvent('user', 'close', 'lightbox', id);
+// }
 
 /****************************************************
  * HELPER FUNCTIONS

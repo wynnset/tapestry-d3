@@ -151,10 +151,21 @@ div.modal {
     border-radius: 40px;
     overflow: hidden;
 }
+
+#spotlight-content[data-media-type=text] {
+    outline: none;
+    overflow: scroll;
+}
+
+#spotlight-content[data-media-type=text] > *{
+    background: white;
+}
+
 #spotlight-content > * {
     background: #000;
     outline: none;
 }
+
 #spotlight-content[data-media-format=mp4] > * {
     width: 100%;
     height: auto;
