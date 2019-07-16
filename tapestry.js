@@ -489,7 +489,7 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
                 break;
         }
     }
-    console.log(newNodeEntry);
+
     if (!isEdit) {
         // Save to database, first save node then the link
         jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
@@ -1214,7 +1214,6 @@ function buildPathAndButton() {
     // Append text node button
     nodes
         .filter(function (d) {
-            console.log(d);
             return getViewable(d) && d.mediaType === "text";
         })
         .append("svg:foreignObject")
@@ -1242,6 +1241,7 @@ function buildPathAndButton() {
     
     $('.textNodeButton').click(function(){
         var thisBtn = $(this)[0];
+        root = thisBtn.dataset.id;
         setupTextLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
     });
 
@@ -1863,26 +1863,23 @@ function setupTextLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) 
 
     $('<div id="spotlight-overlay"><\/div>').on("click", function(){
         closeLightbox(id, mediaType);
-        console.log("test");
     }).appendTo('body');
 
     var top = lightboxDimensions.adjustedOn === "width" ? ((getBrowserHeight() - height) / 2) + $(this).scrollTop() : (NORMAL_RADIUS * 1.5) + (NORMAL_RADIUS * 0.1);
-    $('<div id="spotlight-content"><\/div>').css({
+    $('<div id="text-node-paragraph-content"><\/div>').css({
         top: top,
         left: (getBrowserWidth() - width) / 2,
         width: width,
         height: height,
-        opacity: 0
+        opacity: 0,
+        "background-color": "white",
     }).appendTo('body');
-    $('#spotlight-content').draggable({
+    $('#text-node-paragraph-content').draggable({
         delay: 10,
         distance: 8
     });
 
-    var media  = document.createElement("div");
-    media.id = "tester";
-    media.innerHTML = '<div>TEST<\/div>';
-   $('#spotlight-content').append(media);
+    $('#text-node-paragraph-content').append(generateTextNodeHTML(dataset.nodes[findNodeIndex(root)].title, dataset.nodes[findNodeIndex(root)].typeData.textContent));
 
     $('<a class="lightbox-close">X</a>')
         .css({
@@ -1894,13 +1891,42 @@ function setupTextLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) 
             closeLightbox(id, mediaType);
             exitViewMode();
         })
-        .appendTo('#spotlight-content');
+        .appendTo('#text-node-paragraph-content');
 
     setTimeout(function(){
-        $('#spotlight-content').css({
+        $('#text-node-paragraph-content').css({
             opacity: 1
         });
     }, 1000);
+}
+
+function generateTextNodeHTML(title, str) {
+    var lightboxContent = document.createElement("div");
+
+    var titleSection = document.createElement("div");
+    titleSection.setAttribute("id", "text-light-box-title");
+
+    var titleText = document.createElement("p");
+    titleText.appendChild(document.createTextNode(title));
+    titleSection.append(titleText);
+    lightboxContent.append(titleSection);
+
+    if (str) {
+        var paragraphSection = document.createElement("div");
+        paragraphArray = str.split("\n");
+        for (var i = 0; i < paragraphArray.length; i++) {
+            if (paragraphArray[i] !== "") {
+                var paraDiv = document.createElement("div");
+                var para = document.createElement("p");
+                var textnode = document.createTextNode(paragraphArray[i]);
+                para.appendChild(textnode);
+                paraDiv.appendChild(para);
+                paragraphSection.appendChild(paraDiv);
+            }
+        }
+        lightboxContent.appendChild(paragraphSection);
+    }
+    return lightboxContent;
 }
 
 /****************************************************
