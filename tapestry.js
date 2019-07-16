@@ -2101,6 +2101,7 @@ function setLinkTypes(rootId) {
 function setUnlocked(childIndex) {
     if (typeof childIndex === 'undefined') {
         console.log("yo");
+        console.log(dataset);
         var parentIndex;
         for (var i = 0; i < dataset.links.length; i++) {
             childIndex = findNodeIndex(dataset.links[i].target.id);
@@ -2111,7 +2112,7 @@ function setUnlocked(childIndex) {
                 dataset.nodes[childIndex].typeData.unlocked = true;
                 jQuery.post(USER_NODE_UNLOCKED_URL, {
                         "post_id": tapestryWpPostId,
-                        "node_id": childIndex,
+                        "node_id": dataset.nodes[childIndex].id
 //                        "unlocked": true
                     }).fail(function(e) {
                         console.error("Error with update node's unlock property");
@@ -2123,13 +2124,14 @@ function setUnlocked(childIndex) {
     else {
         // TODO move unlocked out of typeData
         console.log("yoyo");
+        console.log(dataset);
         dataset.nodes[childIndex].typeData.unlocked = true;
         // jQuery.get(USER_NODE_UNLOCKED_URL, function (result){
         //     console.log("URL " + result);
         // });
         jQuery.post(USER_NODE_UNLOCKED_URL, {
             "post_id": tapestryWpPostId,
-            "node_id": childIndex,
+            "node_id": dataset.nodes[childIndex].id
 //            "unlocked": true
         }).fail(function(e) {
             console.error("Error with update node's unlock property");
