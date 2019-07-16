@@ -311,7 +311,31 @@ $("#tapeestry-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, statusT
         $("#submit-add-new-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
-            tapestryAddNewNode(formData);
+            console.log(formData);
+            console.log($("#node-text-area").val().split("\n"));
+            //tapestryAddNewNode(formData);
+        });
+
+        $("#mediaType").on("change", function() {
+            var selectedType = $(this).val();
+            switch(selectedType)
+            {
+                case "video":
+                    $("#mediaFormat").show();
+                    $("#media-format-label").show();
+                    $("#text-area-container").hide();
+                    break;
+                case "text":
+                    $("#mediaFormat").hide();
+                    $("#media-format-label").hide();
+                    $("#text-area-container").show();
+                    break;
+                default:
+                    $("#mediaFormat").hide();
+                    $("#media-format-label").hide();
+                    $("#text-area-container").hide();
+                    break;
+            }
         });
 
         $("#mediaFormat").on("change", function(){
