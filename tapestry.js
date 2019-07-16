@@ -13,6 +13,7 @@ var // declared constants
     GRANDCHILD_RADIUS_DIFF = -100,
     TRANSITION_DURATION = 800,
     NODE_TEXT_RATIO = 5/6,
+    COLOR_ACTIVE = "#11a6d8",
     COLOR_STROKE = "#072d42",
     COLOR_GRANDCHILD = "#CCC",
     COLOR_LINK = "#999",
@@ -39,7 +40,6 @@ var // declared variables
     h5pVideoSettings = {},
     tapestryDepth = 2;                              // Default depth of Tapestry
 
-
 // FLAGS
 var inViewMode = false;                             // Flag for when we're in view mode
 
@@ -47,6 +47,21 @@ var // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
     innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
     outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2);
+
+/****************************************************
+ * EDIT-RELATED VARIABLES
+ ****************************************************/
+
+var 
+    linkToDragStarted = false, 
+    nodeLinkLine,
+    linkToNode, linkFromNode;
+
+    // Create the linking line
+    nodeLinkLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+    nodeLinkLine.setAttribute('id','tapestry-node-link-line');
+    nodeLinkLine.setAttribute("stroke", COLOR_ACTIVE);
+    nodeLinkLine.setAttribute("stroke-width", LINK_THICKNESS);
 
 /****************************************************
  * INITIALIZATION
@@ -150,10 +165,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     links = createLinks();
     nodes = createNodes();
 
-    filterLinks();
-    filterNodes();
-    buildNodeContents();
-
+    filterTapestry(true);
     
     //---------------------------------------------------
     // 4. UPDATE SVG DIMENSIONS AND START THE GRAPH
@@ -161,6 +173,14 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     
     // Ensure tapestry size fits well into the browser and start force
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+
+
+    //---------------------------------------------------
+    // 5. SET UP EDITING STUFF
+    //---------------------------------------------------
+
+    // Attach the link line to the tapestry SVG (it won't appear for now)
+    $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
 }).fail(function(e) {
@@ -217,10 +237,8 @@ tapestryDepthSlider.onchange = function() {
 
     setNodeTypes(root);
     setLinkTypes(root);
-    filterLinks();
-    filterNodes();
 
-    rebuildNodeContents();
+    filterTapestry();
 };
 
 tapestryControlsDiv.appendChild(depthSliderWrapper);
@@ -241,9 +259,7 @@ setAttributes(viewLockedCheckbox,{
     id: "tapestry-view-locked-checkbox"
 });
 viewLockedCheckbox.onchange = function() {
-    filterNodes();
-    filterLinks();
-    rebuildNodeContents();
+    filterTapestry();
 };
 
 // Create label element
@@ -280,8 +296,10 @@ function createRootNodeButton(dataset) {
         }
 
         $("#root-node-btn").on("click", function(e) {
+            // Populate title
             $('#createNewNodeModalLabel').text("Add root node");
             $("#submit-add-new-node").hide();
+            $("#submit-edit-node").hide();
             $("#submit-add-root-node").show();
             $("#appearsat-section").hide();
             // Show the modal
@@ -294,24 +312,24 @@ function createRootNodeButton(dataset) {
 // Insert the modal template
 //--------------------------------------------------
 
-var modalDiv = document.createElement("div");
-modalDiv.id = "tapeestry-modal-div";
-document.getElementById(TAPESTRY_CONTAINER_ID).append(modalDiv);
-$("#tapeestry-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, statusTxt, xhr){
+var modalAddDiv = document.createElement("div");
+modalAddDiv.id = "tapestry-add-modal-div";
+document.getElementById(TAPESTRY_CONTAINER_ID).append(modalAddDiv);
+$("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, statusTxt, xhr){
     if (statusTxt == "success") {
 
         // Adding Root Node
         $("#submit-add-root-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
-            tapestryAddNewNode(formData, true);
+            tapestryAddNewNode(formData, false, true);
         });
 
         // Adding New Nodes
         $("#submit-add-new-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
-            tapestryAddNewNode(formData);
+            tapestryAddNewNode(formData, false);
         });
 
         $("#mediaFormat").on("change", function(){
@@ -338,6 +356,12 @@ $("#tapeestry-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, statusT
 
         $("#cancel-add-new-node").on("click", function() {
             tapestryHideAddNodeModal();
+        });
+        
+        $("#submit-edit-node").on("click", function(e) {
+            e.preventDefault(); // cancel the actual submit
+            var formData = $("form").serializeArray();
+            tapestryAddNewNode(formData, true);
         });
 
         // Permissions Options
@@ -518,8 +542,8 @@ function appendPermissionsRow(id, type) {
     });
 }
 
-// Function for adding a new node
-function tapestryAddNewNode(formData, isRoot) {
+// Adds node if no nodeId, edits if no nodeId
+function tapestryAddNewNode(formData, isEdit, isRoot) {
 
     if (typeof isRoot == 'undefined') {
         isRoot = false;
@@ -557,10 +581,16 @@ function tapestryAddNewNode(formData, isRoot) {
         "fy": getBrowserHeight()
     };
 
-    if (!isRoot) {
-        // Just put the node right under the current node
+    // Node ID exists, so edit case
+    if (isEdit) {
         newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx;
-        newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
+        newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy;
+    } else {
+        if (!isRoot) {
+            // Just put the node right under the current node
+            newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx;
+            newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
+        }
     }
 
     var appearsAt = 0;
@@ -644,50 +674,64 @@ function tapestryAddNewNode(formData, isRoot) {
 
     newNodeEntry.permissions = permissionData;
 
-    // Save to database, first save node then the link
-    jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
-        // only add link if it's for adding new node and not root node
-        // Add new node to dataset after getting the id
-        newNodeEntry.id = result.id;
-        dataset.nodes.push(newNodeEntry);
+    if (!isEdit) {
 
-        if (!isRoot) {
-            // Get ID from callback and set it as target's id
-            var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
+        // Save to database, first save node then the link
+        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
+            // only add link if it's for adding new node and not root node
+            // Add new node to dataset after getting the id
+            newNodeEntry.id = result.id;
+            dataset.nodes.push(newNodeEntry);
 
-            jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
+            if (!isRoot) {
+                // Get ID from callback and set it as target's id
+                var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
 
-                // Add the new link to the dataset
-                dataset.links.push(newLink);
-                tapestryHideAddNodeModal();
-                redrawTapestryWithNewNode();
-            }).fail(function(e) {
-                console.error("Error with adding new link", e);
-            });
-        } else {
-            var newId = result.id;
-            $.ajax({
-                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + newId + "/permissions",
-                method: 'PUT',
-                data: JSON.stringify(permissionData),
-                success: function(result) {
-                    // Redraw root node
-                    dataset.rootId = newId;
+                jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify(newLink), function(result) {
+
+                    // Add the new link to the dataset
+                    dataset.links.push(newLink);
+
                     tapestryHideAddNodeModal();
-                    root = dataset.rootId; // need to set root to newly created node
-
-                    redrawTapestryWithNewNode(true);
-                    $("#root-node-container").hide(); // hide the root node button after creating it.
-                },
-                error: function(e) {
-                    console.error("Error with adding permission to root node", e);
-                }
-            });
-        }
-    }).fail(function(e) {
-        console.error("Error with adding new node");
-        console.error(e);
-    });
+                    redrawTapestryWithNewNode();
+                }).fail(function(e) {
+                    console.error("Error with adding new link", e);
+                });
+            } else {
+                var newId = result.id;
+                $.ajax({
+                    url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + newId + "/permissions",
+                    method: 'PUT',
+                    data: JSON.stringify(permissionData),
+                    success: function(result) {
+                        // Redraw root node
+                        dataset.rootId = newId;
+                        tapestryHideAddNodeModal();
+                        root = dataset.rootId; // need to set root to newly created node
+    
+                        redrawTapestryWithNewNode(true);
+                        $("#root-node-container").hide(); // hide the root node button after creating it.
+                    },
+                    error: function(e) {
+                        console.error("Error with adding permission to root node", e);
+                    }
+                });
+            }
+        }).fail(function(e) {
+            console.error("Error with adding new node");
+            console.error(e);
+        });
+    } else {
+        // Call endpoint for editing node
+        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root, JSON.stringify(newNodeEntry), function(result){
+            newNodeEntry.id = result.id;
+            dataset.nodes[findNodeIndex(root)] = newNodeEntry;
+            redrawTapestryWithNewNode();
+            tapestryHideAddNodeModal();
+        }).fail(function(e) {
+            console.error("Error editing node", e);
+        });
+    }
 }
 
 function tapestryHideAddNodeModal() {
@@ -721,15 +765,9 @@ function redrawTapestryWithNewNode(isRoot) {
     links = createLinks();
     nodes = createNodes();
 
-    filterLinks();
-    if (!isRoot) {
-        filterNodes();
-    }
-    // Rebuild everything to include the new node
     buildNodeContents();
-    if (!isRoot) {
-        rebuildNodeContents();
-    }
+    filterTapestry();
+    
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
 }
 
@@ -801,6 +839,31 @@ function tapestryValidateNewNode(formData, isRoot) {
     return errMsg;
 }
 
+// To establish two way connections
+function addLink(source, target, value, appearsAt) {
+    if (target === source) {
+        console.log("addLink aborting: cannot connect node to itself");
+        return;
+    }
+
+    for (var i = 0; i < dataset.links.length; i++) {
+        // Check if link in dataset exists
+        if ((dataset.links[i].source.id === source && dataset.links[i].target.id === target) || (dataset.links[i].source.id === target && dataset.links[i].target.id === source)) {
+            alert("Link already exists");
+            return;
+        }
+    }
+
+    jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/links", JSON.stringify({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt }), function(result) {
+        dataset.links.push({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt });
+        redrawTapestryWithNewNode();
+
+    }).fail(function(e) {
+        alert("Sorry, there was a problem adding the new link");
+        console.error("Error with adding new link", e);
+    });
+}
+
 /****************************************************
  * D3 RELATED FUNCTIONS
  ****************************************************/
@@ -843,10 +906,8 @@ function resizeNodes(id) {
     getChildren(id);
     setNodeTypes(id);
     setLinkTypes(id);
-    filterLinks();
-    filterNodes();
 
-    rebuildNodeContents();
+    filterTapestry();
 
     /* Restart force */
     startForce();
@@ -983,65 +1044,73 @@ function createNodes() {
                     });
 }
 
-// TODO: Get rid of this function (use buildNodeContents and rebuildNodeContents instead)
-function filterLinks() {
-    var linksToHide = links.filter(function (d) {
-        var sourceId, targetId;
-        if (typeof d.source === 'number' && typeof d.target === 'number') {
-            sourceId = d.source;
-            targetId = d.target;
-        } else if (typeof d.source === 'object' && typeof d.target === 'object') {
-            sourceId = d.source.id;
-            targetId = d.target.id;
-        }
+/**
+ * This function re-examines the tapestry, restructures it if necessary, and hides/shows elements based on the dataset
+ * @param {boolean} freshBuild If true, calls buildNodeContents() after done; otherwise calls rebuildNodeContents()
+ */
+function filterTapestry(freshBuild=false) {
 
-        var shouldRender = false;
-        var targetIndex = findNodeIndex(targetId);
-        if ((sourceId === root || targetId === root) && getViewable(dataset.nodes[targetIndex])) {
-            shouldRender = true;
-        } else if ((getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) && !inViewMode && getViewable(dataset.nodes[targetIndex])) {
-            shouldRender = true;
-        }
-        return !shouldRender;
-    });
+    // Show Links
 
     var linksToShow = links.filter(function (d) {
-        var sourceId, targetId;
-        if (typeof d.source === 'number' && typeof d.target === 'number') {
-            sourceId = d.source;
-            targetId = d.target;
-        } else if (typeof d.source === 'object' && typeof d.target === 'object') {
-            sourceId = d.source.id;
-            targetId = d.target.id;
-        }
-
-        var shouldRender = false;
-        var targetIndex = findNodeIndex(targetId);
-        if ((sourceId === root || targetId === root) && getViewable(dataset.nodes[targetIndex])) {
-            shouldRender = true;
-        } else if ((getChildren(root, tapestryDepth - 1).indexOf(sourceId) > -1 || getChildren(root, tapestryDepth - 1).indexOf(targetId) > -1) && !inViewMode && getViewable(dataset.nodes[targetIndex])) {
-            shouldRender = true;
-        }
-        return shouldRender;
+        return ( getViewable(getNodeById(d.target.id)) && getViewable(getNodeById(d.source.id)) );
     });
 
     linksToShow
-        .style("display", "block");
-
-    linksToHide
-        .transition()
-        .duration(TRANSITION_DURATION)
-        .style("opacity", "0");
-
-    linksToShow
+        .style("display", "block")
         .transition()
         .duration(TRANSITION_DURATION)
         .style("opacity", "1");
+
+    // Hide Links
+
+    var linksToHide = links.filter(function (d) {
+        return !( getViewable(getNodeById(d.target.id)) && getViewable(getNodeById(d.source.id)) );
+    });
+
+    linksToHide
+        .transition()
+        .duration(TRANSITION_DURATION/2)
+        .style("opacity", "0");
     
     setTimeout(function(){
         linksToHide
             .style("display", "block");
+    }, TRANSITION_DURATION/2);
+
+    // Show Nodes
+
+    var nodesToShow = nodes.filter(function (d) {
+        return getViewable(d);
+    });
+
+    nodesToShow
+        .style("display", "block")
+        .transition()
+        .duration(TRANSITION_DURATION/2)
+        .style("opacity", "1");
+    
+    // Hide Nodes
+
+    var nodesToHide = nodes.filter(function (d) {
+        return !getViewable(d);
+    });
+
+    nodesToHide
+        .transition()
+        .duration(TRANSITION_DURATION)
+        .style("opacity", "0");
+
+    setTimeout(function(){
+        nodesToHide.style("display", "block");
     }, TRANSITION_DURATION);
+    
+    if (freshBuild) {
+        buildNodeContents();
+    }
+    else {
+        rebuildNodeContents();
+    }
 }
 
 /* Draws the components that make up node */
@@ -1143,6 +1212,16 @@ function buildNodeContents() {
     /* Add path and button */
     buildPathAndButton();
 
+    nodes.on("mouseover", function(thisNode){
+        if (linkToDragStarted) {
+            linkToNode = thisNode;
+        }
+    }).on("mouseout", function(){
+        if (linkToDragStarted) {
+            linkToNode = undefined;
+        }
+    });
+
     /* Add dragging and node selection functionality to the node */
     nodes.call(d3.drag()
         .on("start", dragstarted)
@@ -1237,6 +1316,7 @@ function rebuildNodeContents() {
     // Remove elements and add them back in
     nodes.selectAll("text").remove();
     nodes.selectAll(".mediaButton").remove();
+    nodes.selectAll(".editNodeButton").remove();
     nodes.selectAll(".addNodeButton").remove();
     nodes.selectAll("path").remove();
     setTimeout(function(){
@@ -1275,6 +1355,9 @@ function buildPathAndButton() {
         .append('foreignObject')
         .attr("width", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
         .attr("height", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
+        .attr("style", function (d) {
+            return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
+        })
         .attr("x", -NORMAL_RADIUS * NODE_TEXT_RATIO)
         .attr("y", -NORMAL_RADIUS * NODE_TEXT_RATIO)
         .append("xhtml:div")
@@ -1331,7 +1414,7 @@ function buildPathAndButton() {
         })
         .append("svg:foreignObject")
         .html(function (d) {
-            return '<i id="addNodeIcon' + d.id + '"' +
+            return '<i  title="Click to add node or drag to another node to link" id="addNodeIcon' + d.id + '"' +
                 ' class="' + getIconClass("add") + ' addNodeIcon"' +
                 ' data-id="' + d.id + '"><\/i>';
         })
@@ -1343,20 +1426,111 @@ function buildPathAndButton() {
         })
         .attr("width", "60px")
         .attr("height", "62px")
-        .attr("x", -27)
+        .attr("x", -50)
         .attr("y", function (d) {
             return NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30;
         })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" || d.nodeType === "child" ? "visibility: hidden" : "visibility: visible";
         })
-        .attr("class", "addNodeButton");
+        .attr("class", "addNodeButton")
+        .call(d3.drag()
+            .on('start',function(thisNode){
+                linkFromNode = thisNode;
+            })
+            .on('drag',function(){  
+                linkToDragStarted = true;
+                nodeLinkLine.setAttribute('x1',linkFromNode.x);
+                nodeLinkLine.setAttribute('y1',linkFromNode.y + MAX_RADIUS - 10);
+                nodeLinkLine.setAttribute('x2',d3.event.x);
+                nodeLinkLine.setAttribute('y2',d3.event.y + MAX_RADIUS - 10);
+            })
+            .on('end',function(){
+                if (typeof linkToNode != "undefined" && linkFromNode.id != linkToNode.id) {
+                    if (confirm('Link from ' + linkFromNode.title + ' to ' + linkToNode.title + "?")) {
+                        addLink(linkFromNode.id, linkToNode.id, 1, '');
+                    }
+                }
+                // Reset everything
+                linkToDragStarted = false;
+                linkFromNode = undefined;
+                linkToNode = undefined;
+                nodeLinkLine.removeAttribute('x1');
+                nodeLinkLine.removeAttribute('y1');
+                nodeLinkLine.removeAttribute('x2');
+                nodeLinkLine.removeAttribute('y2');
+            })
+        );
 
     $('.addNodeButton > i').click(function(){
         // Set up the title of the form
         $('#createNewNodeModalLabel').text("Add new sub-topic to " + dataset.nodes[findNodeIndex(root)].title);
-        $("#submit-add-root-node").hide();	
+        $("#submit-add-root-node").hide();
+        $("#submit-edit-node").hide();
         $("#submit-add-new-node").show();
+        // Show the modal
+        $("#createNewNodeModal").modal();
+    });
+
+    // Append editNodeButton
+    nodes
+        .filter(function (d) {
+            return d.nodeType !== "" && tapestryWpUserId;
+        })
+        .append("svg:foreignObject")
+        .html(function (d) {
+            return '<i id="editNodeIcon' + d.id + '"' +
+                ' class=" fas fa-pen-square' + ' editNodeIcon"' +
+                ' data-id="' + d.id + '"><\/i>';
+        })
+        .attr("id", function (d) {
+            return "editNodeIcon" + d.id;
+        })
+        .attr("data-id", function (d) {
+            return d.id;
+        })
+        .attr("width", "60px")
+        .attr("height", "62px")
+        .attr("x", 10)
+        .attr("y", function (d) {
+            return NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30;
+        })
+        .attr("style", function (d) {
+            return d.nodeType === "grandchild" || d.nodeType === "child" ? "visibility: hidden" : "visibility: visible";
+        })
+        .attr("class", "editNodeButton");
+
+    $('.editNodeButton > i').click(function(){
+        // Add in the title for the modal
+        $('#createNewNodeModalLabel').text("Edit node: " + dataset.nodes[findNodeIndex(root)].title);
+        $("#submit-add-root-node").hide();
+        $("#submit-add-new-node").hide();
+        $("#submit-edit-node").show();
+        $("#appearsat-section").hide();
+
+        // Load the values into input
+        $("#add-node-title-input").val(dataset.nodes[findNodeIndex(root)].title);
+        $("#add-node-thumbnail-input").val(dataset.nodes[findNodeIndex(root)].imageURL);
+        if (dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
+            $("#mediaFormat").val("mp4");
+            $("#mp4-mediaURL-input").val(dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
+            $("#mp4-mediaDuration-input").val(dataset.nodes[findNodeIndex(root)].mediaDuration);
+            $("#contents-details").show();
+            $("#mp4-content").show();
+            $("#h5p-content").hide();
+        } else if (dataset.nodes[findNodeIndex(root)].mediaForm === "h5p") {
+            $("#mediaFormat").val("h5p");
+            $("#h5p-mediaURL-input").val(dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
+            $("#h5p-mediaDuration-input").val(dataset.nodes[findNodeIndex(root)].mediaDuration);
+            $("#contents-details").show();
+            $("#mp4-content").hide();
+            $("#h5p-content").show();
+        } else {
+            $("#contents-details").hide();
+            $("#mp4-content").hide();
+            $("#h5p-content").hide();
+        }
+
         // Show the modal
         $("#createNewNodeModal").modal();
     });
@@ -1577,9 +1751,7 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
                     for (var i = 0; i < childrenData.length; i++) {
                         if (Math.abs(childrenData[i].appearsAt - video.currentTime) <= NODE_UNLOCK_TIMEFRAME && video.paused === false && !dataset.nodes[childrenData[i].nodeIndex].typeData.unlocked) {
                             setUnlocked(childrenData[i].nodeIndex);
-                            filterLinks();
-                            filterNodes();
-                            rebuildNodeContents();
+                            filterTapestry();
                         }
                     }
                     updateViewedValue(id, video.currentTime, video.duration);
@@ -1733,11 +1905,8 @@ function changeToViewMode(lightboxDimensions) {
         }
     });
 
-    filterLinks();
-    filterNodes();
-    if (adjustedRadiusRatio < 1) {
-        rebuildNodeContents();
-    }
+    filterTapestry();
+
     startForce();
 }
 
@@ -1838,54 +2007,13 @@ function exitViewMode() {
         .attr("cy", function(d) { return d.fy; });
 
     inViewMode = false;
-    filterLinks();
-    filterNodes();
+
+    filterTapestry();
     updateTapestrySize();
     if (adjustedRadiusRatio < 1) {
         setAdjustedRadiusRatio(null, null);  //Values set to null because we don't really care; Function should just return 1
-        rebuildNodeContents();
     }
     startForce();
-}
-
-// Helper function for hiding/showing grandchild nodes when entering/exiting view mode
-function filterNodes() {
-    var nodesToHide = nodes.filter(function (d) {
-        var shouldRender = false;
-        if (!getViewable(d)) {
-            shouldRender = false;
-        } else {
-            shouldRender = true;
-        }
-        return !shouldRender;
-    });
-
-    var nodesToShow = nodes.filter(function (d) {
-        var shouldRender = false;
-        if (!getViewable(d)) {
-            shouldRender = false;
-        } else {
-            shouldRender = true;
-        }
-        return shouldRender;
-    });
-
-    nodesToShow
-        .style("display", "block");
-
-    nodesToHide
-        .transition()
-        .duration(TRANSITION_DURATION)
-        .style("opacity", "0");
-
-    nodesToShow
-        .transition()
-        .duration(TRANSITION_DURATION)
-        .style("opacity", "1");
-
-    setTimeout(function(){
-        nodesToHide.style("display", "block");
-    }, TRANSITION_DURATION);
 }
 
 /****************************************************

@@ -195,7 +195,6 @@ div.modal {
 
 .imageOverlay {
     opacity: 0.5;
-    transition: 0.2s all;
 }
 
 .node .expandGrandchildren {
@@ -204,15 +203,10 @@ div.modal {
 
 .node:hover .expandGrandchildren {
     transform: scale(1.2);
-    transition: 0.2s all;
 }
 
 .node:hover .imageOverlay {
     opacity: 0;
-}
-
-text {
-    transition: 0.2s all;
 }
 
 .node:hover text {
@@ -258,6 +252,40 @@ text {
     box-shadow: 0 0 0 2px #666 inset;
 }
 
+
+/* EDIT NODE BUTTON */
+.editNodeButton {
+    transition: all 0.25s ease;
+    cursor: pointer;
+    color: #666666;
+    overflow: hidden;
+    border-radius: 100%;
+    border: solid 4px #fff;
+}
+
+.editNodeButton:hover,
+.editNodeButton:active {
+    transform: scale(1.15) translate(0, -21px);
+    color: #11a6d8;
+}
+
+#cancel-edit-node {
+    color: white;
+    background-color: #dc3545;
+}
+
+#submit-edit-node {
+    color: white;
+}
+
+.editNodeButton > i {
+    font-size: 63px;
+    background: #fff;
+    border: solid 1px #fff;
+    padding: 2px;
+    margin: -8px 0 0 -5px;
+}
+
 /* ADD NODE BUTTON */
 .addNodeButton {
     transition: all 0.25s ease;
@@ -267,12 +295,12 @@ text {
     border-radius: 100%;
 }
 
+
 .addNodeButton:hover,
 .addNodeButton:active {
     transform: scale(1.15) translate(0, -21px);
     color: #11a6d8;
 }
-
 .addNodeButton > i:not(.mediaButtonLoading) {
     font-size: 55px;
     background: #fff;
