@@ -1866,50 +1866,6 @@ function exitViewMode() {
     startForce();
 }
 
-function setupTextLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
-    console.log(id);
-    console.log(mediaType);
-    console.log(width);
-    // Adjust the width and height here before passing it into setup media
-    var lightboxDimensions = getLightboxDimensions(height, width);
-
-    width = lightboxDimensions.width;
-    height = lightboxDimensions.height;
-
-    $('<div id="spotlight-overlay"><\/div>').on("click", function(){
-        closeTextLightbox(id, mediaType);
-    }).appendTo('body');
-
-    var top = lightboxDimensions.adjustedOn === "width" ? ((getBrowserHeight() - height) / 2) + $(this).scrollTop() : (NORMAL_RADIUS * 1.5) + (NORMAL_RADIUS * 0.1);
-    $('<div id="text-node-paragraph-content"><\/div>').css({
-        top: top,
-        left: (getBrowserWidth() - width) / 2,
-        width: width,
-        height: height,
-        opacity: 0,
-        "background-color": "white",
-    }).appendTo('body');
-
-    $('#text-node-paragraph-content').append(generateTextNodeHTML(dataset.nodes[findNodeIndex(root)].title, dataset.nodes[findNodeIndex(root)].typeData.textContent));
-
-    $('<a class="lightbox-close">X</a>')
-        .css({
-            background: "none",
-            "box-shadow": "none",
-            cursor: "pointer"
-        })
-        .on("click", function() {
-            closeTextLightbox(id, mediaType);
-        })
-        .appendTo('#text-node-paragraph-content');
-
-    setTimeout(function(){
-        $('#text-node-paragraph-content').css({
-            opacity: 1
-        });
-    }, 1000);
-}
-
 function generateTextNodeHTML(title, str) {
     var lightboxContent = document.createElement("div");
 
@@ -1940,19 +1896,6 @@ function generateTextNodeHTML(title, str) {
     }
     return lightboxContent;
 }
-
-// function closeTextLightbox(id, mediaType) {
-    	
-//     $('#spotlight-overlay').remove();
-//     $('#spotlight-content').css('opacity', 0);
-
-//     // wait for css animation before removing it
-//     setTimeout(function () {
-//         $('#text-node-paragraph-content').remove();
-//     }, 1000);
-
-//     recordAnalyticsEvent('user', 'close', 'lightbox', id);
-// }
 
 /****************************************************
  * HELPER FUNCTIONS
