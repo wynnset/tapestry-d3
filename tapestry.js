@@ -1874,10 +1874,6 @@ function setupTextLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) 
         opacity: 0,
         "background-color": "white",
     }).appendTo('body');
-    $('#text-node-paragraph-content').draggable({
-        delay: 10,
-        distance: 8
-    });
 
     $('#text-node-paragraph-content').append(generateTextNodeHTML(dataset.nodes[findNodeIndex(root)].title, dataset.nodes[findNodeIndex(root)].typeData.textContent));
 
@@ -1889,7 +1885,6 @@ function setupTextLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) 
         })
         .on("click", function() {
             closeLightbox(id, mediaType);
-            exitViewMode();
         })
         .appendTo('#text-node-paragraph-content');
 
@@ -1913,11 +1908,13 @@ function generateTextNodeHTML(title, str) {
 
     if (str) {
         var paragraphSection = document.createElement("div");
+        paragraphSection.setAttribute("id", "text-light-box-paragraph")
         paragraphArray = str.split("\n");
         for (var i = 0; i < paragraphArray.length; i++) {
             if (paragraphArray[i] !== "") {
                 var paraDiv = document.createElement("div");
                 var para = document.createElement("p");
+                para.setAttribute("id", "text-light-box-paragraph-text")
                 var textnode = document.createTextNode(paragraphArray[i]);
                 para.appendChild(textnode);
                 paraDiv.appendChild(para);

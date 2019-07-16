@@ -183,7 +183,7 @@ div.modal {
     transition-timing-function: ease-in;
     border: solid 1px #999;
     border-radius: 40px;
-    overflow: hidden;
+    overflow: scroll;
 }
 
 #text-light-box-title {
@@ -204,6 +204,17 @@ div.modal {
     left: 50%;
     -ms-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
+}
+
+#text-light-box-paragraph {
+    font: 14px/1.7 "Source Sans Pro", sans-serif;
+    font-size: 16px;
+    color: #47425d;
+}
+
+#text-light-box-paragraph-text {
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
 .progress-meter .background {
