@@ -1151,9 +1151,10 @@ function buildPathAndButton() {
         })
         .attr("class", "addNodeButton");
 
+    // Append editNodeButton
     nodes
         .filter(function (d) {
-            return d.nodeType !== "";
+            return d.nodeType !== "" && tapestryWpUserId;
         })
         .append("svg:foreignObject")
         .html(function (d) {
