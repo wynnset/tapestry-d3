@@ -1494,29 +1494,31 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
         });
     }, 1000);
 
-    var loadEvent = 'load';
-    if (mediaFormat == "mp4") {
-        loadEvent = "loadstart";
+    if (mediaType === "video") {
+        var loadEvent = 'load';
+        if (mediaFormat == "mp4") {
+            loadEvent = "loadstart";
+        }
+        
+        media.on(loadEvent, function() {
+            changeToViewMode(lightboxDimensions);
+            window.setTimeout(function(){
+                height = $('#spotlight-content > *').outerHeight();
+                width = $('#spotlight-content > *').outerWidth();
+
+                $('#spotlight-content').css({
+                    width: width,
+                    height: height,
+                    transitionDuration: "0.2s"
+                });
+            }, 2000);
+            window.setTimeout(function(){
+                $('#spotlight-content').css({
+                    transitionDuration: "1s"
+                });
+            }, 200);
+        });
     }
-
-    media.on(loadEvent, function() {
-        changeToViewMode(lightboxDimensions);
-        window.setTimeout(function(){
-            height = $('#spotlight-content > *').outerHeight();
-            width = $('#spotlight-content > *').outerWidth();
-
-            $('#spotlight-content').css({
-                width: width,
-                height: height,
-                transitionDuration: "0.2s"
-            });
-        }, 2000);
-        window.setTimeout(function(){
-            $('#spotlight-content').css({
-                transitionDuration: "1s"
-            });
-        }, 200);
-    });
 }
 
 function getLightboxDimensions(videoHeight, videoWidth) {
