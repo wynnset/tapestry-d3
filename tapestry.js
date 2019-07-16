@@ -329,7 +329,6 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         $("#submit-add-new-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
-<<<<<<< HEAD
             console.log(formData);
             console.log($("#node-text-area").val().split("\n"));
             //tapestryAddNewNode(formData);
@@ -355,9 +354,6 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
                     $("#text-area-container").hide();
                     break;
             }
-=======
-            tapestryAddNewNode(formData, false);
->>>>>>> master
         });
 
         $("#mediaFormat").on("change", function(){
