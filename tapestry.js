@@ -1860,15 +1860,14 @@ function setupTextLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) 
 
     width = lightboxDimensions.width;
     height = lightboxDimensions.height;
-    var media = setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height);
 
     $('<div id="spotlight-overlay"><\/div>').on("click", function(){
         closeLightbox(id, mediaType);
-        exitViewMode();
+        console.log("test");
     }).appendTo('body');
 
     var top = lightboxDimensions.adjustedOn === "width" ? ((getBrowserHeight() - height) / 2) + $(this).scrollTop() : (NORMAL_RADIUS * 1.5) + (NORMAL_RADIUS * 0.1);
-    $('<div id="spotlight-content" data-media-format="' + mediaFormat + '"><\/div>').css({
+    $('<div id="spotlight-content"><\/div>').css({
         top: top,
         left: (getBrowserWidth() - width) / 2,
         width: width,
@@ -1880,7 +1879,10 @@ function setupTextLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) 
         distance: 8
     });
 
-    media.appendTo('#spotlight-content');
+    var media  = document.createElement("div");
+    media.id = "tester";
+    media.innerHTML = '<div>TEST<\/div>';
+   $('#spotlight-content').append(media);
 
     $('<a class="lightbox-close">X</a>')
         .css({
@@ -1899,30 +1901,6 @@ function setupTextLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) 
             opacity: 1
         });
     }, 1000);
-
-    var loadEvent = 'load';
-    if (mediaFormat == "mp4") {
-        loadEvent = "loadstart";
-    }
-
-    media.on(loadEvent, function() {
-        changeToViewMode(lightboxDimensions);
-        window.setTimeout(function(){
-            height = $('#spotlight-content > *').outerHeight();
-            width = $('#spotlight-content > *').outerWidth();
-
-            $('#spotlight-content').css({
-                width: width,
-                height: height,
-                transitionDuration: "0.2s"
-            });
-        }, 2000);
-        window.setTimeout(function(){
-            $('#spotlight-content').css({
-                transitionDuration: "1s"
-            });
-        }, 200);
-    });
 }
 
 /****************************************************

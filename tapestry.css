@@ -271,7 +271,7 @@ div.modal {
 .textNodeButton:hover,
 .textNodeButton:active {
     transform: scale(1.15) translate(0, 21px);
-    color: #11a6d8;
+    background-color: #11a6d8;
 }
 
 .textNodeButton {
