@@ -85,6 +85,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
                 if (result && !isEmptyObject(result)) {
                     console.log(result);
                     setDatasetProgress(JSON.parse(result));
+                    console.log('dataset',dataset);
                     updateViewedProgress(); // update viewed progress because async fetch of dataset
                 }
             }).fail(function(e) {
@@ -2028,7 +2029,7 @@ function setDatasetProgress(progressObj) {
         var amountUnviewed = 1.00 - amountViewed;
         var unlocked = progressObj[id].unlocked;
         console.log(progressObj[id].unlocked);
-        console.log(unlocked);
+    //    console.log(unlocked);
     
         var index = findNodeIndex(id);
         
@@ -2099,6 +2100,7 @@ function setLinkTypes(rootId) {
 
 /* For setting the "unlocked" field of nodes.typeData in dataset or a specific node (if a parameter is passed in) */
 function setUnlocked(childIndex) {
+
     if (typeof childIndex === 'undefined') {
         console.log("yo");
         console.log(dataset);
@@ -2122,6 +2124,19 @@ function setUnlocked(childIndex) {
         }
     }
     else {
+        console.log(dataset);
+        dataset.nodes[0].typeData.unlocked = true;
+        jQuery.post(USER_NODE_UNLOCKED_URL, {
+            "post_id": tapestryWpPostId,
+            "node_id": dataset.nodes[0].id
+    //            "unlocked": true
+        }).done(function() {
+            console.log("completed at parent node ");
+        })
+        .fail(function(e) {
+            console.error("Error with update node's unlock property at parent node");
+            console.error(e);
+        });    
         // TODO move unlocked out of typeData
         console.log("yoyo");
         console.log(dataset);
