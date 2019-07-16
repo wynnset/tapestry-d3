@@ -253,6 +253,29 @@ div.modal {
 }
 
 
+/* TEXT NODE BUTTON */
+
+.textNodeButton {
+    transition: all 0.25s ease;
+    cursor: pointer;
+    color: #666666;
+    overflow: hidden;
+    border-radius: 100%;
+}
+
+.textNodeButton:hover,
+.textNodeButton:active {
+    transform: scale(1.15) translate(0, 21px);
+    color: #11a6d8;
+}
+
+.textNodeButton {
+    font-size: 55px;
+    background: #fff;
+    border: solid 1px #fff;
+    padding: 2px;
+}
+
 /* EDIT NODE BUTTON */
 .editNodeButton {
     transition: all 0.25s ease;
