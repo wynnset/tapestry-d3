@@ -387,7 +387,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         // Event for when user exits modal without clicking cancel
         $('#createNewNodeModal').on('hidden.bs.modal', function () {
             tapestryHideAddNodeModal();
-        })
+        });
 
         $("#cancel-add-new-node").on("click", function() {
             tapestryHideAddNodeModal();
@@ -2177,13 +2177,13 @@ function generateTextNodeHTML(title, str) {
 
     if (str) {
         var paragraphSection = document.createElement("div");
-        paragraphSection.setAttribute("id", "text-light-box-paragraph")
+        paragraphSection.setAttribute("id", "text-light-box-paragraph");
         paragraphArray = str.split("\n");
         for (var i = 0; i < paragraphArray.length; i++) {
             if (paragraphArray[i] !== "") {
                 var paraDiv = document.createElement("div");
                 var para = document.createElement("p");
-                para.setAttribute("id", "text-light-box-paragraph-text")
+                para.setAttribute("id", "text-light-box-paragraph-text");
                 var textnode = document.createTextNode(paragraphArray[i]);
                 para.appendChild(textnode);
                 paraDiv.appendChild(para);
