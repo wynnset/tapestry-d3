@@ -341,21 +341,18 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
             switch(selectedType)
             {
                 case "video":
-                    $("#mediaFormat").show();
-                    $("#media-format-label").show();
+                    $("#media-format-section").show();
                     $("#text-area-container").hide();
                     break;
                 case "text":
-                    $("#mediaFormat").hide();
-                    $("#media-format-label").hide();
+                    $("#media-format-section").hide();
                     $("#text-area-container").show();
                     $("#contents-details").hide();
                     $("#mp4-content").hide();
                     $("#h5p-content").hide();
                     break;
                 default:
-                    $("#mediaFormat").hide();
-                    $("#media-format-label").hide();
+                    $("#media-format-section").hide();
                     $("#text-area-container").hide();
                     $("#contents-details").hide();
                     $("#mp4-content").hide();
@@ -793,9 +790,8 @@ function tapestryHideAddNodeModal() {
     // Reset all selections for dropdowns
     $("#mediaType").val("default");
     $("#mediaFormat").val("default");
-    
-    $("#mediaFormat").hide();
-    $("#media-format-label").hide();
+
+    $("#media-format-section").hide();
     $("#text-area-container").hide();
     $("#contents-details").hide();
     $("#mp4-content").hide();
@@ -1617,24 +1613,34 @@ function buildPathAndButton() {
         // Load the values into input
         $("#add-node-title-input").val(dataset.nodes[findNodeIndex(root)].title);
         $("#add-node-thumbnail-input").val(dataset.nodes[findNodeIndex(root)].imageURL);
-        if (dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
-            $("#mediaFormat").val("mp4");
-            $("#mp4-mediaURL-input").val(dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
-            $("#mp4-mediaDuration-input").val(dataset.nodes[findNodeIndex(root)].mediaDuration);
-            $("#contents-details").show();
-            $("#mp4-content").show();
-            $("#h5p-content").hide();
-        } else if (dataset.nodes[findNodeIndex(root)].mediaForm === "h5p") {
-            $("#mediaFormat").val("h5p");
-            $("#h5p-mediaURL-input").val(dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
-            $("#h5p-mediaDuration-input").val(dataset.nodes[findNodeIndex(root)].mediaDuration);
-            $("#contents-details").show();
-            $("#mp4-content").hide();
-            $("#h5p-content").show();
-        } else {
-            $("#contents-details").hide();
-            $("#mp4-content").hide();
-            $("#h5p-content").hide();
+
+        if (dataset.nodes[findNodeIndex(root)].mediaType === "text") {
+            $("#mediaType").val("text");
+            // Show a populate text area
+            $("#text-area-container").show();
+            $("#node-text-area").val(dataset.nodes[findNodeIndex(root)].typeData.textContent);
+        } else if (dataset.nodes[findNodeIndex(root)].mediaType === "video") {
+            $("#mediaType").val("video");
+            $("#media-format-section").show();
+            if (dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
+                $("#mediaFormat").val("mp4");
+                $("#mp4-mediaURL-input").val(dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
+                $("#mp4-mediaDuration-input").val(dataset.nodes[findNodeIndex(root)].mediaDuration);
+                $("#contents-details").show();
+                $("#mp4-content").show();
+                $("#h5p-content").hide();
+            } else if (dataset.nodes[findNodeIndex(root)].mediaFormat === "h5p") {
+                $("#mediaFormat").val("h5p");
+                $("#h5p-mediaURL-input").val(dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
+                $("#h5p-mediaDuration-input").val(dataset.nodes[findNodeIndex(root)].mediaDuration);
+                $("#contents-details").show();
+                $("#mp4-content").hide();
+                $("#h5p-content").show();
+            } else {
+                $("#contents-details").hide();
+                $("#mp4-content").hide();
+                $("#h5p-content").hide();
+            }
         }
 
         // Show the modal
