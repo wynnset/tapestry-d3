@@ -612,7 +612,6 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
 
     // Node ID exists, so edit case
     if (isEdit) {
-        console.log(dataset.nodes[findNodeIndex(root)]);
         newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx;
         newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy;
     } else {
