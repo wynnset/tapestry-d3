@@ -1541,6 +1541,18 @@ function buildPathAndButton() {
             $("#h5p-content").hide();
         }
 
+        // Permissions table
+        console.log(dataset.nodes[findNodeIndex(root)]);
+        if (dataset.nodes[findNodeIndex(root)].permissions && dataset.nodes[findNodeIndex(root)].permissions.length > 0) {
+            for (var i = 0; i < dataset.nodes[findNodeIndex(root)].permissions.length; i++) {
+                if (dataset.nodes[findNodeIndex(root)].permissions[i] === "public") {
+
+                } else if (dataset.nodes[findNodeIndex(root)].permissions[i].includes("user")) {
+                    appendPermissionsRow(extractDigitsFromString(dataset.nodes[findNodeIndex(root)].permissions[i]), "user");
+                }
+            }
+        }
+
         // Show the modal
         $("#createNewNodeModal").modal();
     });
