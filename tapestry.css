@@ -612,3 +612,7 @@ body {font-family: Arial, Helvetica, sans-serif;}
 input[type="checkbox"][disabled] {
     cursor: not-allowed;
 }
+
+#mediaFormat[disabled], #mediaType[disabled]{
+    cursor: not-allowed;
+}

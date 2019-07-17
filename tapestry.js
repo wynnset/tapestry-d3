@@ -790,6 +790,10 @@ function tapestryHideAddNodeModal() {
     // Reset all selections for dropdowns
     $("#mediaType").val("default");
     $("#mediaFormat").val("default");
+    // Enable media type and format because edit disables it
+    $("#mediaType").attr('disabled', false);
+    $("#mediaFormat").attr('disabled', false);
+
 
     $("#media-format-section").hide();
     $("#text-area-container").hide();
@@ -1609,6 +1613,10 @@ function buildPathAndButton() {
         $("#submit-add-new-node").hide();
         $("#submit-edit-node").show();
         $("#appearsat-section").hide();
+
+        // Disable media type and format because there's more things to consider
+        $("#mediaType").attr('disabled','disabled');
+        $("#mediaFormat").attr('disabled','disabled');
 
         // Load the values into input
         $("#add-node-title-input").val(dataset.nodes[findNodeIndex(root)].title);
