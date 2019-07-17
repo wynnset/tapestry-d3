@@ -616,3 +616,7 @@ input[type="checkbox"][disabled] {
 #mediaFormat[disabled], #mediaType[disabled]{
     cursor: not-allowed;
 }
+
+#locked-container {
+    margin-bottom: 10px;
+}

@@ -350,6 +350,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
                     $("#contents-details").hide();
                     $("#mp4-content").hide();
                     $("#h5p-content").hide();
+                    $("#mediaFormat").val("default");
                     break;
                 default:
                     $("#media-format-section").hide();
@@ -383,6 +384,11 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
             }
         });
 
+        // Event for when user exits modal without clicking cancel
+        $('#createNewNodeModal').on('hidden.bs.modal', function () {
+            tapestryHideAddNodeModal();
+        })
+
         $("#cancel-add-new-node").on("click", function() {
             tapestryHideAddNodeModal();
         });
@@ -391,6 +397,15 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
             tapestryAddNewNode(formData, true);
+        });
+
+        $("#lock-node-checkbox").on("change", function(e) {
+            e.preventDefault();
+            if($(this).is(":checked")) {
+                $("#appears-at-label").show();
+            } else {
+                $("#appears-at-label").hide();
+            }
         });
 
         // Permissions Options
@@ -772,6 +787,7 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
     }
 }
 
+// Resets the add/edit modal to default state
 function tapestryHideAddNodeModal() {
     // Clear all text fields
     $("#createNewNodeModalBody input[type='text']").val("");
@@ -793,6 +809,10 @@ function tapestryHideAddNodeModal() {
     // Enable media type and format because edit disables it
     $("#mediaType").attr('disabled', false);
     $("#mediaFormat").attr('disabled', false);
+
+    // Uncheck lock node label and hide appears at input
+    $("#lock-node-checkbox").prop('checked', false);
+    $("#appears-at-label").hide();
 
 
     $("#media-format-section").hide();
