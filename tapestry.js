@@ -361,15 +361,190 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         $("#cancel-add-new-node").on("click", function() {
             tapestryHideAddNodeModal();
         });
-
+        
         $("#submit-edit-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
             tapestryAddNewNode(formData, true);
         });
 
+        // Permissions Options
+
+        // Enable others when read is on, disable when read is off
+        $("#public-read-checkbox").change(function() {
+            if ($(this).is(":checked")) {
+                $('.public-checkbox').each(function() {
+                    if($(this).prop('disabled')) {
+                        $(this).prop('disabled', false);
+                    }
+                });
+                $(".user-checkbox").each(function() {
+                    if (this.name === "read") {
+                        $(this).prop("checked", true);
+                        $(this).prop("disabled", true);
+                    }
+                });
+            } else {
+                // Disable other permissinos for public
+                $('.public-checkbox').each(function() {
+                    if (this.id !== "public-read-checkbox") {
+                        $(this).prop('checked', false);
+                        $(this).prop('disabled', true);
+                    }
+                });
+                // Enable all checkboxes
+                $(".user-checkbox").each(function() {
+                    $(this).prop("disabled", false);
+                });
+            }
+        });
+
+        $("#public-add-checkbox").change(function() {
+            if ($(this).is(":checked")) {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "add") {
+                        $(this).prop("checked", true);
+                        $(this).prop("disabled", true);
+                    }
+                });
+            } else {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "add") {
+                        $(this).prop("disabled", false);
+                    }
+                });
+            }
+        });
+
+        $("#public-edit-checkbox").change(function() {
+            if ($(this).is(":checked")) {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "edit") {
+                        $(this).prop("checked", true);
+                        $(this).prop("disabled", true);
+                    }
+                });
+            } else {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "edit") {
+                        $(this).prop("disabled", false);
+                    }
+                });
+            }
+        });
+
+        $("#public-add-sub-checkbox").change(function() {
+            if ($(this).is(":checked")) {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "add_submit") {
+                        $(this).prop("checked", true);
+                        $(this).prop("disabled", true);
+                    }
+                });
+            } else {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "add_submit") {
+                        $(this).prop("disabled", false);
+                    }
+                });
+            }
+        });
+
+        $("#public-edit-sub-checkbox").change(function() {
+            if ($(this).is(":checked")) {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "edit_submit") {
+                        $(this).prop("checked", true);
+                        $(this).prop("disabled", true);
+                    }
+                });
+            } else {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "edit_submit") {
+                        $(this).prop("disabled", false);
+                    }
+                });
+            }
+        });
+
+        $("#public-approve-checkbox").change(function() {
+            if ($(this).is(":checked")) {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "approve") {
+                        $(this).prop("checked", true);
+                        $(this).prop("disabled", true);
+                    }
+                });
+            } else {
+                $(".user-checkbox").each(function() {
+                    if (this.name === "approve") {
+                        $(this).prop("disabled", false);
+                    }
+                });
+            }
+        });
+
+
+        $("#user-permissions-btn").click(function() {
+            var userId = $("#user-number-input").val();
+            if (userId && onlyContainsDigits(userId) && $("#user-" + userId + "-editcell").val() != "") {
+                appendPermissionsRow(userId, "user");
+                $("#user-number-input").val("");
+            } else {
+                alert("Enter valid user id");
+            }
+        });
+
+        // $("#group-permissions-btn").click(function() {
+        //     var groupId = $("#group-number-input").val();
+        //     if (groupId && onlyContainsDigits(groupId) && $("#group-" + groupId + "-editcell").val() != "") {
+        //         appendPermissionsRow(groupId, "group");
+        //         $("#group-number-input").val("");
+        //     } else {
+        //         alert("Enter valid group id");
+        //     }
+        // });
+
     }
 });
+
+// Type is either "user" or "group"  
+function appendPermissionsRow(id, type) {
+    $('#permissions-table').append(
+        '<tr class="permissions-dynamic-row">' +
+        '<td>' + capitalizeFirstLetter(type) + " " + id + '</td>' +
+        '<td id="' + type + "-" + id + "-editcell" + '"' + '></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-checkbox" name="add" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-edit-checkbox" name="edit" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-submit-checkbox" name="add_submit" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox"+ '"' + 'id="user-' + id +'-edit-submit-checkbox" name="edit_submit" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-approve-checkbox" name="approve" type="checkbox"></td>' +
+        '</tr>'
+    );
+    $('<input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-read-checkbox" name="read" type="checkbox" checked>').on("change", function() {
+        if ($(this).is(":checked")) {
+            $("." + type + "-" + id + "-checkbox").each(function() {
+                if($(this).prop('disabled')) {
+                    $(this).prop('disabled', false);
+                }
+            });
+        } else {
+            $("." + type + "-" + id + "-checkbox").each(function() {
+                if (this.id !== "user-" + id + "-read-checkbox") {
+                    $(this).prop('checked', false);
+                    $(this).prop('disabled', true);
+                }
+            });
+        }
+    }).appendTo("#" + type + "-" + id + "-editcell");
+
+    $('.public-checkbox').each(function() {
+        if ($(this).is(":checked")) {
+            $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('checked', true);
+            $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('disabled', true);
+        }
+    });
+}
 
 // Adds node if no nodeId, edits if no nodeId
 function tapestryAddNewNode(formData, isEdit, isRoot) {
@@ -468,7 +643,43 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
                 break;
         }
     }
+
+    var permissionData = {
+        "public": []
+    };
+
+    $('.public-checkbox').each(function() {
+        if ($(this).is(":checked")) {
+            permissionData.public.push(this.name);
+        }
+    });
+
+    $('.user-checkbox').each(function() {
+        if ($(this).is(":checked")) {
+            var userId = extractDigitsFromString(this.id);
+            if (permissionData["user-" + userId]) {
+                permissionData["user-" + userId].push(this.name);
+            } else {
+                permissionData["user-" + userId] = [this.name];
+            }
+        }
+    });
+
+    $('.group-checkbox').each(function() {
+        if ($(this).is(":checked")) {
+            var groupId = extractDigitsFromString(this.id);
+            if (permissionData["group-" + groupId]) {
+                permissionData["group-" + groupId].push(this.name);
+            } else {
+                permissionData["group-" + groupId] = [this.name];
+            }
+        }
+    });
+
+    newNodeEntry.permissions = permissionData;
+
     if (!isEdit) {
+
         // Save to database, first save node then the link
         jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
             // only add link if it's for adding new node and not root node
@@ -491,13 +702,24 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
                     console.error("Error with adding new link", e);
                 });
             } else {
-                // Redraw root node
-                dataset.rootId = result.id;
-                tapestryHideAddNodeModal();
-                root = dataset.rootId; // need to set root to newly created node
-
-                redrawTapestryWithNewNode(true);
-                $("#root-node-container").hide(); // hide the root node button after creating it.
+                var newId = result.id;
+                $.ajax({
+                    url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + newId + "/permissions",
+                    method: 'PUT',
+                    data: JSON.stringify(permissionData),
+                    success: function(result) {
+                        // Redraw root node
+                        dataset.rootId = newId;
+                        tapestryHideAddNodeModal();
+                        root = dataset.rootId; // need to set root to newly created node
+    
+                        redrawTapestryWithNewNode(true);
+                        $("#root-node-container").hide(); // hide the root node button after creating it.
+                    },
+                    error: function(e) {
+                        console.error("Error with adding permission to root node", e);
+                    }
+                });
             }
         }).fail(function(e) {
             console.error("Error with adding new node");
@@ -525,6 +747,13 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
 function tapestryHideAddNodeModal() {
     $("#createNewNodeModalBody input[type='text']").val("");
     $("#createNewNodeModalBody input[type='url']").val("");
+    $(".permissions-dynamic-row").remove(); // remove the dynamically created permission rows
+    // Uncheck all public permissions except read
+    $('.public-checkbox').each(function() {
+        if ($(this).is(":checked") && this.name !== "read") {
+            $(this).prop('checked', false);
+        }
+    });
     $("#createNewNodeModal").modal("hide");
     $("#appearsat-section").show();
 }
@@ -1190,7 +1419,8 @@ function buildPathAndButton() {
     // Append addNodeButton
     nodes
         .filter(function (d) {
-            return d.nodeType === "root" && tapestryWpUserId;
+            // return d.nodeType === "root";
+            return checkPermission(d, "add");
         })
         .append("svg:foreignObject")
         .html(function (d) {
@@ -1953,7 +2183,9 @@ function addDepthToNodes(id, depth, visited) {
 
     var depthAt = 0;
 
-    dataset.nodes[findNodeIndex(id)].depth = depth;
+    if (dataset.nodes[findNodeIndex(id)] && dataset.nodes[findNodeIndex(id)].depth) {
+        dataset.nodes[findNodeIndex(id)].depth = depth;
+    }
     var children = getChildren(id, 1);
 
     var childLevel;
@@ -2325,6 +2557,28 @@ function getViewable(node) {
     return true;
 }
 
+function checkPermission(node, permissionType) {
+    // If admin, give permissinos to add and edit
+    if (tapestryWpIsAdmin) {
+        return node.nodeType === "root";
+    }
+
+    if (node.permissions.public && node.permissions.public.includes(permissionType)) {
+        return node.nodeType === "root";
+    }
+
+    if (tapestryWpUserId && tapestryWpUserId !== "") {
+        const userIndex = "user-" + tapestryWpUserId;
+        if (node.permissions[userIndex] && node.permissions[userIndex].includes(permissionType)) {
+            return node.nodeType === "root";
+        }
+    }
+
+    // // TODO Check user's group id
+
+    return false;
+}
+
 // For saving the coordinates of all the nodes prior to transitioning to play-mode
 function saveCoordinates() {
     for (var i in dataset.nodes) {
@@ -2494,9 +2748,17 @@ function isEmptyObject(obj) {
     return true;
 }
 
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 function onlyContainsDigits(string) {
     var regex = new RegExp(/^\d+$/); 
     return regex.test(string);
+}
+
+function extractDigitsFromString(string) {
+    return string.replace(/[^0-9]/g,'');
 }
 
 // Capture click events anywhere inside or outside tapestry
