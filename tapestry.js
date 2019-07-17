@@ -82,6 +82,10 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
         dataset.nodes[0].typeData.unlocked = true;
     }
+    for (var i=0; i < dataset.nodes.length; i++) {
+        dataset.nodes[i].fx = dataset.nodes[i].coordinates.x;
+        dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
+    }
     originalDataset = result;
     saveCoordinates();
 
@@ -227,7 +231,7 @@ depthSliderWrapper.appendChild(tapestryDepthSlider);
 
 // Hide depth slider if depth is less than 3 
 function hideShowDepthSlider() {
-    depthSliderWrapper.style.display = (findMaxDepth(root) >= 3) ? "block" : "none";
+    depthSliderWrapper.style.display = (findMaxDepth(root) >= 2) ? "block" : "none";
 }
 hideShowDepthSlider(); // run it now (we will also run it later when tapestry is modified)
 
@@ -501,13 +505,19 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
         });
     } else {
         // Call endpoint for editing node
-        jQuery.post(apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root, JSON.stringify(newNodeEntry), function(result){
-            newNodeEntry.id = result.id;
-            dataset.nodes[findNodeIndex(root)] = newNodeEntry;
-            redrawTapestryWithNewNode();
-            tapestryHideAddNodeModal();
-        }).fail(function(e) {
-            console.error("Error editing node", e);
+        $.ajax({
+            url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root,
+            method: 'PUT',
+            data: JSON.stringify(newNodeEntry),
+            success: function(result) {
+                newNodeEntry.id = result.id;
+                dataset.nodes[findNodeIndex(root)] = newNodeEntry;
+                redrawTapestryWithNewNode();
+                tapestryHideAddNodeModal();
+            },
+            error: function(e) {
+                console.error("Error editing node", e);
+            }
         });
     }
 }
@@ -2264,6 +2274,10 @@ function setUnlocked(childIndex) {
  * @param {integer} depth 
  */
 function setAccessibleStatus(node, depth, parentNodeId, parentIsAccessible = true){
+
+    if (dataset.nodes.length == 0) {
+        return;
+    }
 
     // If no node passed in, assume root node
     if (typeof node == "undefined") {
