@@ -776,8 +776,10 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
 }
 
 function tapestryHideAddNodeModal() {
+    // Clear all text fields
     $("#createNewNodeModalBody input[type='text']").val("");
     $("#createNewNodeModalBody input[type='url']").val("");
+    // Remove Text Area for text node 
     $("#node-text-area").val("");
     $(".permissions-dynamic-row").remove(); // remove the dynamically created permission rows
     // Uncheck all public permissions except read
@@ -787,6 +789,11 @@ function tapestryHideAddNodeModal() {
         }
     });
     $("#createNewNodeModal").modal("hide");
+
+    // Reset all selections for dropdowns
+    $("#mediaType").val("default");
+    $("#mediaFormat").val("default");
+    
     $("#mediaFormat").hide();
     $("#media-format-label").hide();
     $("#text-area-container").hide();
@@ -1558,12 +1565,15 @@ function buildPathAndButton() {
             })
         );
 
-    $('.addNodeButton > i').click(function(){
+    $('.addNodeButton').click(function(){
         // Set up the title of the form
         $('#createNewNodeModalLabel').text("Add new sub-topic to " + dataset.nodes[findNodeIndex(root)].title);
         $("#submit-add-root-node").hide();
         $("#submit-edit-node").hide();
         $("#submit-add-new-node").show();
+        if (dataset.nodes[findNodeIndex(root)].mediaType !== "video") {
+            $("#appearsat-section").hide();
+        }
         // Show the modal
         $("#createNewNodeModal").modal();
     });
@@ -1596,7 +1606,7 @@ function buildPathAndButton() {
         })
         .attr("class", "editNodeButton");
 
-    $('.editNodeButton > i').click(function(){
+    $('.editNodeButton').click(function(){
         // Add in the title for the modal
         $('#createNewNodeModalLabel').text("Edit node: " + dataset.nodes[findNodeIndex(root)].title);
         $("#submit-add-root-node").hide();
