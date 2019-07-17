@@ -612,6 +612,7 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
 
     // Node ID exists, so edit case
     if (isEdit) {
+        console.log(dataset.nodes[findNodeIndex(root)]);
         newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx;
         newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy;
     } else {
@@ -1409,7 +1410,7 @@ function buildPathAndButton() {
     /* Create the node titles */
     nodes
         .filter(function (d){
-            return d.depth < tapestryDepth;
+            return getViewable(d);
         })
         .append('foreignObject')
         .attr("width", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
