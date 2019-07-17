@@ -345,11 +345,17 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
                     $("#mediaFormat").hide();
                     $("#media-format-label").hide();
                     $("#text-area-container").show();
+                    $("#contents-details").hide();
+                    $("#mp4-content").hide();
+                    $("#h5p-content").hide();
                     break;
                 default:
                     $("#mediaFormat").hide();
                     $("#media-format-label").hide();
                     $("#text-area-container").hide();
+                    $("#contents-details").hide();
+                    $("#mp4-content").hide();
+                    $("#h5p-content").hide();
                     break;
             }
         });
@@ -541,7 +547,14 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
 function tapestryHideAddNodeModal() {
     $("#createNewNodeModalBody input[type='text']").val("");
     $("#createNewNodeModalBody input[type='url']").val("");
+    $("#node-text-area").val("");
     $("#createNewNodeModal").modal("hide");
+    $("#mediaFormat").hide();
+    $("#media-format-label").hide();
+    $("#text-area-container").hide();
+    $("#contents-details").hide();
+    $("#mp4-content").hide();
+    $("#h5p-content").hide();
     $("#appearsat-section").show();
 }
 

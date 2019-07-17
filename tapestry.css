@@ -144,6 +144,7 @@ div.modal {
     z-index: 100;
     background-position: 0 0;
     background-size: cover;
+    background-color: white;
     opacity: 1;
     transition: all 1s;
     transition-timing-function: ease-in;
