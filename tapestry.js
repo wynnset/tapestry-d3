@@ -433,7 +433,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
             }
         });
 
-        $("#public-add-sub-checkbox").change(function() {
+        $("#public-add-submit-checkbox").change(function() {
             if ($(this).is(":checked")) {
                 $(".user-checkbox").each(function() {
                     if (this.name === "add_submit") {
@@ -450,7 +450,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
             }
         });
 
-        $("#public-edit-sub-checkbox").change(function() {
+        $("#public-edit-submit-checkbox").change(function() {
             if ($(this).is(":checked")) {
                 $(".user-checkbox").each(function() {
                     if (this.name === "edit_submit") {
@@ -1542,13 +1542,21 @@ function buildPathAndButton() {
         }
 
         // Permissions table
-        console.log(dataset.nodes[findNodeIndex(root)]);
-        if (dataset.nodes[findNodeIndex(root)].permissions && dataset.nodes[findNodeIndex(root)].permissions.length > 0) {
-            for (var i = 0; i < dataset.nodes[findNodeIndex(root)].permissions.length; i++) {
-                if (dataset.nodes[findNodeIndex(root)].permissions[i] === "public") {
-
-                } else if (dataset.nodes[findNodeIndex(root)].permissions[i].includes("user")) {
-                    appendPermissionsRow(extractDigitsFromString(dataset.nodes[findNodeIndex(root)].permissions[i]), "user");
+        if (dataset.nodes[findNodeIndex(root)].permissions) {
+            for (var key in dataset.nodes[findNodeIndex(root)].permissions) {
+                if (key === "public") {
+                    for (var i = 0; i < dataset.nodes[findNodeIndex(root)].permissions[key].length; i++) {
+                        $("#public-" + dataset.nodes[findNodeIndex(root)].permissions[key][i].replace("_", "-") + "-checkbox").prop("checked", true);
+                    }
+                } else if (key.includes("user")) {
+                    // Append row, creates ones that public already has
+                    appendPermissionsRow(extractDigitsFromString(key), "user");
+                    // Add the ones that aren't in public now
+                    for (var i = 0; i < dataset.nodes[findNodeIndex(root)].permissions[key].length; i++) {
+                        if (dataset.nodes[findNodeIndex(root)].permissions["public"] && !dataset.nodes[findNodeIndex(root)].permissions["public"].includes(dataset.nodes[findNodeIndex(root)].permissions[key][i])) {
+                            $("#" + key + "-" + dataset.nodes[findNodeIndex(root)].permissions[key][i].replace("_", "-") + "-checkbox").prop("checked", true);
+                        }
+                    }
                 }
             }
         }
