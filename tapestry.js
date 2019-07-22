@@ -562,6 +562,7 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
     // Add the node data first
     var newNodeEntry = {
         "type": "tapestry_node",
+        "description": "",
         "status": "publish",
         "nodeType": "",
         "title": "",
@@ -644,6 +645,10 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
         }
     }
 
+    // Add description to new node
+    newNodeEntry.description = $("#node-description-area").val();
+
+    // Add permissions to new node
     var permissionData = {
         "public": []
     };
@@ -754,6 +759,7 @@ function tapestryHideAddNodeModal() {
             $(this).prop('checked', false);
         }
     });
+    $("#node-description-area").val("");
     $("#createNewNodeModal").modal("hide");
     $("#appearsat-section").show();
 }
@@ -845,6 +851,10 @@ function tapestryValidateNewNode(formData, isRoot) {
         } else {
             errMsg += "Please enter correct media format \n";
         }
+    }
+
+    if ($("#node-description-area").val() && $("#node-description-area").val().length > 250) {
+        errMsg += "Please enter a description under 250 characters \n";
     }
     return errMsg;
 }
@@ -1521,6 +1531,12 @@ function buildPathAndButton() {
         // Load the values into input
         $("#add-node-title-input").val(dataset.nodes[findNodeIndex(root)].title);
         $("#add-node-thumbnail-input").val(dataset.nodes[findNodeIndex(root)].imageURL);
+
+        // Load description
+        if (dataset.nodes[findNodeIndex(root)].description) {
+            $("#node-description-area").val(dataset.nodes[findNodeIndex(root)].description);
+        }
+
         if (dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
             $("#mediaFormat").val("mp4");
             $("#mp4-mediaURL-input").val(dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
@@ -1635,6 +1651,8 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     });
 
     media.appendTo('#spotlight-content');
+    // Append the footer to lightbox
+    $('#spotlight-content').append(createLightBoxFooter(dataset.nodes[findNodeIndex(root)].description));
 
     $('<a class="lightbox-close">X</a>')
         .css({
@@ -1662,8 +1680,8 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     media.on(loadEvent, function() {
         changeToViewMode(lightboxDimensions);
         window.setTimeout(function(){
-            height = $('#spotlight-content > *').outerHeight();
-            width = $('#spotlight-content > *').outerWidth();
+            height = $('#spotlight-content').outerHeight();
+            width = $('#spotlight-content').outerWidth();
 
             $('#spotlight-content').css({
                 width: width,
@@ -2024,6 +2042,15 @@ function exitViewMode() {
         setAdjustedRadiusRatio(null, null);  //Values set to null because we don't really care; Function should just return 1
     }
     startForce();
+}
+
+function createLightBoxFooter(description) {
+    var descriptionContent = document.createElement("div");
+    var descriptionText = document.createElement("p");
+    descriptionText.setAttribute("id", "node-description-text");
+    descriptionText.appendChild(document.createTextNode(description));
+    descriptionContent.append(descriptionText);
+    return descriptionContent;
 }
 
 /****************************************************
