@@ -1419,7 +1419,6 @@ function buildPathAndButton() {
     // Append addNodeButton
     nodes
         .filter(function (d) {
-            // return d.nodeType === "root";
             return checkPermission(d, "add");
         })
         .append("svg:foreignObject")
@@ -1485,7 +1484,7 @@ function buildPathAndButton() {
     // Append editNodeButton
     nodes
         .filter(function (d) {
-            return d.nodeType !== "" && tapestryWpUserId;
+            return checkPermission(d, "edit");
         })
         .append("svg:foreignObject")
         .html(function (d) {
