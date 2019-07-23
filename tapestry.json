@@ -31,7 +31,10 @@
                 "mediaWidth": 945,
                 "mediaHeight": 534,
                 "unlocked": true
-            }
+            },
+            "permissions": [],
+            "fx": 800,
+            "fy": 470
         },
         {
             "id": 2,
@@ -54,7 +57,10 @@
                 "mediaWidth": 945,
                 "mediaHeight": 534,
                 "unlocked": false
-            }
+            },
+            "permissions": [],
+            "fx": 450,
+            "fy": 150
         },
         {
             "id": 3,
@@ -77,7 +83,10 @@
                 "mediaWidth": 945,
                 "mediaHeight": 534,
                 "unlocked": false
-            }
+            },
+            "permissions": [],
+            "fx": 450,
+            "fy": 700
         },
         {
             "id": 4,
@@ -100,7 +109,10 @@
                 "mediaWidth": 945,
                 "mediaHeight": 534,
                 "unlocked": false
-            }
+            },
+            "permissions": [],
+            "fx": 100,
+            "fy": 470
         },
         {
             "id": 5,
@@ -123,7 +135,10 @@
                 "mediaWidth": 945,
                 "mediaHeight": 534,
                 "unlocked": false
-            }
+            },
+            "permissions": [],
+            "fx": 1200,
+            "fy": 470
         },
         {
             "id": 6,
@@ -146,7 +161,10 @@
                 "mediaWidth": 945,
                 "mediaHeight": 534,
                 "unlocked": false
-            }
+            },
+            "permissions": [],
+            "fx": 1550,
+            "fy": 150
         },
         {
             "id": 8,
@@ -169,7 +187,10 @@
                 "mediaWidth": 945,
                 "mediaHeight": 534,
                 "unlocked": false
-            }
+            },
+            "permissions": [],
+            "fx": 1880,
+            "fy": 470
         },
         {
             "id": 9,
@@ -192,7 +213,10 @@
                 "mediaWidth": 945,
                 "mediaHeight": 534,
                 "unlocked": false
-            }
+            },
+            "permissions": [],
+            "fx": 1550,
+            "fy": 700
         },
         {
             "id": 7,
@@ -215,7 +239,10 @@
                 "mediaWidth": 945,
                 "mediaHeight": 534,
                 "unlocked": false
-            }
+            },
+            "permissions": [],
+            "fx": 2100,
+            "fy": 700
         },
         {
             "id": 10,
@@ -238,7 +265,10 @@
                 "mediaWidth": 945,
                 "mediaHeight": 534,
                 "unlocked": false
-            }
+            },
+            "permissions": [],
+            "fx": 2100,
+            "fy": 150
         }
     ],
     "links": [
