@@ -39,6 +39,7 @@ var // declared variables
     rootNodeImageHeightDiff = 46,                   // originally 70
     h5pVideoSettings = {},
     tapestryDepth = 2;                              // Default depth of Tapestry
+    autoLayout = false;
 
 // FLAGS
 var inViewMode = false;                             // Flag for when we're in view mode
@@ -76,15 +77,24 @@ jQuery.ajaxSetup({
     }
 });
 
+//$.getJSON( jsonUrl, function(result){
+
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
         dataset.nodes[0].typeData.unlocked = true;
     }
-    for (var i=0; i < dataset.nodes.length; i++) {
-        dataset.nodes[i].fx = dataset.nodes[i].coordinates.x;
-        dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
+    if (!autoLayout) {
+        for (var i=0; i < dataset.nodes.length; i++) {
+            dataset.nodes[i].x = dataset.nodes[i].coordinates.x;
+            dataset.nodes[i].y = dataset.nodes[i].coordinates.y;
+        }
+    }
+    else if (autoLayout) {
+        for (var i=0; i < dataset.nodes.length; i++) {
+            console.log(dataset.nodes[i]);
+        }
     }
     originalDataset = result;
     saveCoordinates();
@@ -607,13 +617,13 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
 
     // Node ID exists, so edit case
     if (isEdit) {
-        newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx; // x
-        newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy; // y - ford
+        newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x; // x
+        newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y; // y - ford
     } else {
         if (!isRoot) {
             // Just put the node right under the current node
-            newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx; // x 
-            newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50; // y
+            newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x; // x 
+            newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50; // y
         }
     }
 
@@ -947,7 +957,7 @@ function resizeNodes(id) {
     filterTapestry();
 
     /* Restart force */
-    startForce();
+ //   startForce();
 }
 
 function ticked() {
@@ -2064,12 +2074,14 @@ function exitViewMode() {
         dataset.nodes[i].y = nodeCoordinates[id].y;
     }
 
+    if (autoLayout) {
     d3.selectAll('g.node')
         .each(function(d) {
             d.fixed = false;
             delete d.fx;
             delete d.fy;
         });
+    }
 
     d3.selectAll('g.node')
         .transition()
