@@ -2156,6 +2156,8 @@ function generateTextNodeHTML(title, str) {
                 para.appendChild(textnode);
                 paraDiv.appendChild(para);
                 paragraphSection.appendChild(paraDiv);
+            } else {
+                paragraphSection.appendChild(document.createElement("BR"));
             }
         }
         lightboxContent.appendChild(paragraphSection);
