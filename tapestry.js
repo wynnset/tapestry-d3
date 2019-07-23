@@ -647,7 +647,7 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
     }
 
     // Add description to new node
-    newNodeEntry.description = $("#node-description-area").val();
+    newNodeEntry.description = $("#tapestry-node-description-area").val();
 
     // Add permissions to new node
     var permissionData = {
@@ -760,7 +760,7 @@ function tapestryHideAddNodeModal() {
             $(this).prop('checked', false);
         }
     });
-    $("#node-description-area").val("");
+    $("#tapestry-node-description-area").val("");
     $("#createNewNodeModal").modal("hide");
     $("#appearsat-section").show();
 }
@@ -854,7 +854,7 @@ function tapestryValidateNewNode(formData, isRoot) {
         }
     }
 
-    if ($("#node-description-area").val() && $("#node-description-area").val().length > MAX_DESCRIPTION_LENGTH) {
+    if ($("#tapestry-node-description-area").val() && $("#tapestry-node-description-area").val().length > MAX_DESCRIPTION_LENGTH) {
         errMsg += "Please enter a description under 250 characters \n";
     }
     return errMsg;
@@ -1534,7 +1534,7 @@ function buildPathAndButton() {
 
         // Load description
         if (dataset.nodes[findNodeIndex(root)].description) {
-            $("#node-description-area").val(dataset.nodes[findNodeIndex(root)].description);
+            $("#tapestry-node-description-area").val(dataset.nodes[findNodeIndex(root)].description);
         }
 
         if (dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
@@ -2067,7 +2067,7 @@ function exitViewMode() {
 function createLightBoxFooter(description) {
     var descriptionContent = document.createElement("div");
     var descriptionText = document.createElement("p");
-    descriptionText.setAttribute("id", "node-description-text");
+    descriptionText.setAttribute("id", "tapestry-node-description-text");
     descriptionText.appendChild(document.createTextNode(description));
     descriptionContent.append(descriptionText);
     return descriptionContent;
