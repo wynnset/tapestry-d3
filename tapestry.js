@@ -326,60 +326,33 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         $("#submit-add-root-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
-            tapestryAddNewNode(formData, false, true);
+            tapestryAddEditNode(formData, false, true);
         });
 
         // Adding New Nodes
         $("#submit-add-new-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
-            tapestryAddNewNode(formData, false);
+            tapestryAddEditNode(formData, false);
         });
 
         $("#mediaType").on("change", function() {
+            $("#text-content").hide();
+            $("#mp4-content").hide();
+            $("#h5p-content").hide();
             var selectedType = $(this).val();
             switch(selectedType)
             {
                 case "video":
-                    $("#media-format-section").show();
-                    $("#text-area-container").hide();
-                    break;
-                case "text":
-                    $("#media-format-section").hide();
-                    $("#text-area-container").show();
-                    $("#contents-details").hide();
-                    $("#mp4-content").hide();
-                    $("#h5p-content").hide();
-                    $("#mediaFormat").val("default");
-                    break;
-                default:
-                    $("#media-format-section").hide();
-                    $("#text-area-container").hide();
-                    $("#contents-details").hide();
-                    $("#mp4-content").hide();
-                    $("#h5p-content").hide();
-                    break;
-            }
-        });
-
-        $("#mediaFormat").on("change", function(){
-            var selectedType = $(this).val();
-            switch(selectedType)
-            {
-                case "mp4":
-                    $("#contents-details").show();
                     $("#mp4-content").show();
-                    $("#h5p-content").hide();
                     break;
                 case "h5p":
-                    $("#contents-details").show();
-                    $("#mp4-content").hide();
                     $("#h5p-content").show();
                     break;
+                case "text":
+                    $("#text-content").show();
+                    break;
                 default:
-                    $("#contents-details").hide();
-                    $("#mp4-content").hide();
-                    $("#h5p-content").hide();
                     break;
             }
         });
@@ -396,7 +369,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         $("#submit-edit-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
-            tapestryAddNewNode(formData, true);
+            tapestryAddEditNode(formData, true);
         });
 
         $("#lock-node-checkbox").on("change", function(e) {
@@ -550,7 +523,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
 
 // Type is either "user" or "group"  
 function appendPermissionsRow(id, type) {
-    $('#permissions-table').append(
+    $('#permissions-table tbody').append(
         '<tr class="permissions-dynamic-row">' +
         '<td>' + capitalizeFirstLetter(type) + " " + id + '</td>' +
         '<td id="' + type + "-" + id + "-editcell" + '"' + '></td>' +
@@ -587,7 +560,7 @@ function appendPermissionsRow(id, type) {
 }
 
 // Adds node if no nodeId, edits if no nodeId
-function tapestryAddNewNode(formData, isEdit, isRoot) {
+function tapestryAddEditNode(formData, isEdit, isRoot) {
 
     if (typeof isRoot == 'undefined') {
         isRoot = false;
@@ -650,13 +623,18 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
                 newNodeEntry[fieldName] = fieldValue;
                 break;
             case "mediaType":
-                newNodeEntry[fieldName] = fieldValue;
                 if (fieldValue === "text") {
+                    newNodeEntry[fieldName] = fieldValue;
                     newNodeEntry.typeData.textContent = $("#node-text-area").val();
                 }
-                break;
-            case "mediaFormat":
-                newNodeEntry[fieldName] = fieldValue;
+                else if (fieldValue === "video") {
+                    newNodeEntry["mediaType"] = "video";
+                    newNodeEntry["mediaFormat"] = "mp4";
+                }
+                else if (fieldValue === "h5p") {
+                    newNodeEntry["mediaType"] = "video";
+                    newNodeEntry["mediaFormat"] = "h5p";
+                }
                 break;
             case "mp4-mediaURL":
                 if (fieldValue !== "") {
@@ -669,13 +647,13 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
                 }
                 break;
             case "mp4-mediaDuration":
-                    if (fieldValue !== "") {
-                        newNodeEntry.mediaDuration = parseInt(fieldValue);
-                    }
+                if (fieldValue !== "") {
+                    newNodeEntry.mediaDuration = parseInt(fieldValue);
+                }
                 break;
             case "h5p-mediaDuration":
                 if (fieldValue !== "") {
-                    newNodeEntry.typeData.mediaDuration = parseInt(fieldValue);
+                    newNodeEntry.mediaDuration = parseInt(fieldValue);
                 }
                 break;
             case "appearsAt":
@@ -805,19 +783,14 @@ function tapestryHideAddNodeModal() {
 
     // Reset all selections for dropdowns
     $("#mediaType").val("default");
-    $("#mediaFormat").val("default");
-    // Enable media type and format because edit disables it
-    $("#mediaType").attr('disabled', false);
-    $("#mediaFormat").attr('disabled', false);
+    // Enable media type because edit disables it
+    $("#mediaType").removeAttr('disabled');
 
     // Uncheck lock node label and hide appears at input
     $("#lock-node-checkbox").prop('checked', false);
     $("#appears-at-label").hide();
 
-
-    $("#media-format-section").hide();
-    $("#text-area-container").hide();
-    $("#contents-details").hide();
+    $("#text-content").hide();
     $("#mp4-content").hide();
     $("#h5p-content").hide();
     $("#appearsat-section").show();
@@ -879,41 +852,37 @@ function tapestryValidateNewNode(formData, isRoot) {
         }
 
         if ($("#mediaType").val() === "video") {
-            if ($("#mediaFormat").val() === "mp4") {
-                switch (fieldName) {
-                    case "mp4-mediaURL":
-                        if (fieldValue === "") {
-                            errMsg += "Please enter a MP4 video URL \n";
-                        }
-                        break;
-                    case "mp4-mediaDuration":
-                        if (!onlyContainsDigits(fieldValue)) {
-                            errMsg += "Please enter numeric value for media duration \n";
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            } else if ($("#mediaFormat").val() === "h5p") {
-                switch (fieldName) {
-                    case "h5p-mediaURL":
-                        if (fieldValue === "") {
-                            errMsg += "Please enter a H5P URL \n";
-                        }
-                        break;
-                    case "h5p-mediaDuration":
-                        if (!onlyContainsDigits(fieldValue)) {
-                            errMsg += "Please enter numeric value for media duration \n";
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            } else {
-                errMsg += "Please enter correct media format \n";
+            switch (fieldName) {
+                case "mp4-mediaURL":
+                    if (fieldValue === "") {
+                        errMsg += "Please enter a MP4 video URL \n";
+                    }
+                    break;
+                case "mp4-mediaDuration":
+                    if (!onlyContainsDigits(fieldValue)) {
+                        errMsg += "Please enter numeric value for media duration \n";
+                    }
+                    break;
+                default:
+                    break;
+            }
+        } else if ($("#mediaType").val() === "h5p") {
+            switch (fieldName) {
+                case "h5p-mediaURL":
+                    if (fieldValue === "") {
+                        errMsg += "Please enter a H5P URL \n";
+                    }
+                    break;
+                case "h5p-mediaDuration":
+                    if (!onlyContainsDigits(fieldValue)) {
+                        errMsg += "Please enter numeric value for media duration \n";
+                    }
+                    break;
+                default:
+                    break;
             }
         } else if ($("#mediaType").val() === "text") {
-            if ($("#node-text-area").val() === "" || !$("#node-text-area").val()) {
+            if (!$("#node-text-area").val()) {
                 errMsg += "Please enter valid text \n";
             }
         }
@@ -1039,7 +1008,7 @@ function dragged(d) {
 function dragended(d) {
     if (!d3.event.active) force.alphaTarget(0);
 
-    if (tapestryWpUserId) {
+    if (tapestryWpIsAdmin) {
         $.ajax({
             url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + d.id + "/coordinates",
             method: 'PUT',
@@ -1532,7 +1501,6 @@ function buildPathAndButton() {
     // Append addNodeButton
     nodes
         .filter(function (d) {
-            // return d.nodeType === "root";
             return checkPermission(d, "add");
         })
         .append("svg:foreignObject")
@@ -1601,7 +1569,7 @@ function buildPathAndButton() {
     // Append editNodeButton
     nodes
         .filter(function (d) {
-            return d.nodeType !== "" && tapestryWpUserId;
+            return d.nodeType !== "" && checkPermission(d, "add");
         })
         .append("svg:foreignObject")
         .html(function (d) {
@@ -1634,42 +1602,36 @@ function buildPathAndButton() {
         $("#submit-edit-node").show();
         $("#appearsat-section").hide();
 
-        // Disable media type and format because there's more things to consider
-        $("#mediaType").attr('disabled','disabled');
-        $("#mediaFormat").attr('disabled','disabled');
-
         // Load the values into input
         $("#add-node-title-input").val(dataset.nodes[findNodeIndex(root)].title);
         $("#add-node-thumbnail-input").val(dataset.nodes[findNodeIndex(root)].imageURL);
 
+        $("#mp4-content").hide();
+        $("#h5p-content").hide();
+        $("#text-content").hide();
+
         if (dataset.nodes[findNodeIndex(root)].mediaType === "text") {
             $("#mediaType").val("text");
-            // Show a populate text area
-            $("#text-area-container").show();
+            $("#text-content").show();
             $("#node-text-area").val(dataset.nodes[findNodeIndex(root)].typeData.textContent);
         } else if (dataset.nodes[findNodeIndex(root)].mediaType === "video") {
-            $("#mediaType").val("video");
-            $("#media-format-section").show();
             if (dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
-                $("#mediaFormat").val("mp4");
+                $("#mediaType").val("video");
                 $("#mp4-mediaURL-input").val(dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
                 $("#mp4-mediaDuration-input").val(dataset.nodes[findNodeIndex(root)].mediaDuration);
-                $("#contents-details").show();
                 $("#mp4-content").show();
-                $("#h5p-content").hide();
             } else if (dataset.nodes[findNodeIndex(root)].mediaFormat === "h5p") {
-                $("#mediaFormat").val("h5p");
+                $("#mediaType").val("h5p");
                 $("#h5p-mediaURL-input").val(dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
                 $("#h5p-mediaDuration-input").val(dataset.nodes[findNodeIndex(root)].mediaDuration);
-                $("#contents-details").show();
-                $("#mp4-content").hide();
                 $("#h5p-content").show();
-            } else {
-                $("#contents-details").hide();
-                $("#mp4-content").hide();
-                $("#h5p-content").hide();
             }
         }
+
+        // Disable media type (set it to hidden) because there's more things to consider
+        $("#mediaType").attr('disabled','disabled');
+        $("#hiddenMediaType").removeAttr('disabled');
+        $("#hiddenMediaType").val($("#mediaType").val());
 
         // Show the modal
         $("#createNewNodeModal").modal();
@@ -1991,7 +1953,7 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
                             break;
 
                         case h5pObj.Video.PAUSED:
-							
+                            
                             // Save the video settings
                             h5pVideoSettings = {
                                 'volume': h5pVideo.getVolume(),
@@ -2298,7 +2260,7 @@ function getTapestryDimensions() {
 
 /* Updates the size of the overall tapestry
 (ie: the area that encompasses the boundaries of the nodes)
- according to where the nodes are placed in the dataset */
+    according to where the nodes are placed in the dataset */
 function updateTapestrySize() {
     if (!inViewMode) {
         var nodeDimensions = getNodesDimensions(dataset);
@@ -2345,7 +2307,7 @@ function getBoundedCoord(coord, maxCoord) {
 }
 
 /* Add 'depth' parameter to each node recursively. 
-   The depth is determined by the number of levels from the root each node is. */
+    The depth is determined by the number of levels from the root each node is. */
 
 function addDepthToNodes(id, depth, visited) {
     visited.push(id);
@@ -2421,7 +2383,7 @@ function findMaxDepth(id) {
 }
 
 /* Find children based on depth. 
-   depth = 0 returns node + children, depth = 1 returns node + children + children's children, etc. */
+    depth = 0 returns node + children, depth = 1 returns node + children + children's children, etc. */
 
 function getChildren(id, depth) {
     if (typeof depth === 'undefined') {
@@ -2781,13 +2743,13 @@ function getChildrenData(parentId) {
 
 // Functionality for the X button that closes the media and the light-box
 function closeLightbox(id, mediaType) {
-    	
+        
     // Pause the H5P video before closing it. This will also trigger saving of the settings
     // TODO: Do this for HTML5 video as well
     // var h5pObj = document.getElementById('h5p').contentWindow.H5P;
     // if (h5pObj !== undefined && mediaType == "video") {
-		// var h5pVideo = h5pObj.instances[0].video;
-		// h5pVideo.pause();
+        // var h5pVideo = h5pObj.instances[0].video;
+        // h5pVideo.pause();
     // }
 
     if (document.getElementById('h5p') !== null) {

@@ -585,28 +585,44 @@ body {font-family: Arial, Helvetica, sans-serif;}
     color: #11a6d8;
 }
 
+.lightbox-form-section {
+    border-top: solid 1px #DDD;
+    margin: 20px -32px;
+    padding: 5px 32px;
+}
+
+.lightbox-form-section > h4 {
+    margin: 2rem 0;
+}
+
+#contents-details {
+    margin-top: 1rem;
+}
+
 /* Permissions Labels */
-#permissions-details {
-    margin-top: 10%;
-}
 
-#user-permissions-btn, #group-permissions-btn {
-    border-radius: 100px 100px 100px 100px;
+#permissions-details > table td {
+    border-color: #ddd;
+    background: #eee;
+}
+#permissions-details > table th {
+    border-color: #eee;
+    background: #fafafa;
+}
+#permissions-details > table tfoot td {
+    background: #ddd;
+}
+#permissions-details input#user-number-input {
+    width: 70px;
+}
+#user-permissions-btn, 
+#group-permissions-btn {
+    padding: 4px 1rem;
     color: white;
-}
-
-.permissions-btn-panel {
-    margin-top: 5%;
 }
 
 .permissions-plus {
     margin-right: 4px;
-}
-
-#permissions-details {
-    font-size: 15px;
-    font-weight: 500;
-    font-family: Arial, Helvetica, sans-serif;
 }
 
 input[type="checkbox"][disabled] {
