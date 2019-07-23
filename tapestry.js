@@ -303,9 +303,9 @@ function createRootNodeButton(dataset) {
         $("#root-node-btn").on("click", function(e) {
             // Populate title
             $('#createNewNodeModalLabel').text("Add root node");
-            $("#tapestry-submit-add-new-node").hide();
-            $("#tapestry-submit-edit-node").hide();
-            $("#tapestry-submit-add-root-node").show();
+            $("#submit-add-new-node").hide();
+            $("#submit-edit-node").hide();
+            $("#submit-add-root-node").show();
             $("#appearsat-section").hide();
             // Show the modal
             $("#createNewNodeModal").modal();
@@ -324,14 +324,14 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
     if (statusTxt == "success") {
 
         // Adding Root Node
-        $("#tapestry-submit-add-root-node").on("click", function(e) {
+        $("#submit-add-root-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
             tapestryAddNewNode(formData, false, true);
         });
 
         // Adding New Nodes
-        $("#tapestry-submit-add-new-node").on("click", function(e) {
+        $("#submit-add-new-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
             tapestryAddNewNode(formData, false);
@@ -359,11 +359,11 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
             }
         });
 
-        $("#tapestry-cancel-add-new-node").on("click", function() {
+        $("#cancel-add-new-node").on("click", function() {
             tapestryHideAddNodeModal();
         });
         
-        $("#tapestry-submit-edit-node").on("click", function(e) {
+        $("#submit-edit-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
             tapestryAddNewNode(formData, true);
@@ -1485,9 +1485,9 @@ function buildPathAndButton() {
     $('.addNodeButton > i').click(function(){
         // Set up the title of the form
         $('#createNewNodeModalLabel').text("Add new sub-topic to " + dataset.nodes[findNodeIndex(root)].title);
-        $("#tapestry-submit-add-root-node").hide();
-        $("#tapestry-submit-edit-node").hide();
-        $("#tapestry-submit-add-new-node").show();
+        $("#submit-add-root-node").hide();
+        $("#submit-edit-node").hide();
+        $("#submit-add-new-node").show();
         // Show the modal
         $("#createNewNodeModal").modal();
     });
@@ -1523,9 +1523,9 @@ function buildPathAndButton() {
     $('.editNodeButton > i').click(function(){
         // Add in the title for the modal
         $('#createNewNodeModalLabel').text("Edit node: " + dataset.nodes[findNodeIndex(root)].title);
-        $("#tapestry-submit-add-root-node").hide();
-        $("#tapestry-submit-add-new-node").hide();
-        $("#tapestry-submit-edit-node").show();
+        $("#submit-add-root-node").hide();
+        $("#submit-add-new-node").hide();
+        $("#submit-edit-node").show();
         $("#appearsat-section").hide();
 
         // Load the values into input
