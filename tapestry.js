@@ -1419,25 +1419,38 @@ function buildPathAndButton() {
                 return "<p>" + d.title + "</p>";
             });
 
-    // Append mediaButton
+    // Append mediaButton or textNodeButton
     nodes
         .filter(function (d) {
-            return getViewable(d) && d.mediaType === "video";
+            return getViewable(d);
         })
         .append("svg:foreignObject")
         .html(function (d) {
-            return '<i id="mediaButtonIcon' + d.id + '"' + 
-                ' class="' + getIconClass(d.mediaType, 'play') + ' mediaButtonIcon"' +
+            var mediaHTML = "";
+            if (d.mediaType === "video") {
+                mediaHTML += '<i id="mediaButtonIcon' + d.id + '"' +
+                    ' class="' + getIconClass(d.mediaType, 'play') + ' mediaButtonIcon"' +
+                    ' data-url="' + d.typeData.mediaURL + '"';
+            } else if (d.mediaType === "text") {
+                mediaHTML += '<i id="textNodeIcon' + d.id + '"' +
+                    ' class="' + getIconClass("bars") + ' textNodeIcon"'
+                    + ' data-url=""';
+            }
+            mediaHTML +=
                 ' data-id="' + d.id + '"' + 
                 ' data-format="' + d.mediaFormat + '"' + 
                 ' data-media-type="' + d.mediaType + '"' + 
                 ' data-thumb="' + d.imageURL + '"' + 
-                ' data-url="' + d.typeData.mediaURL + '"' + 
                 ' data-media-width="' + d.typeData.mediaWidth + '"' + 
                 ' data-media-height="' + d.typeData.mediaHeight + '"><\/i>';
+            return mediaHTML;
         })
         .attr("id", function (d) {
-            return "mediaButton" + d.id;
+            if (d.mediaType === "video") {
+                return "mediaButton" + d.id;
+            } else if (d.mediaType === "text") {
+                return "textNodeButton" + d.id;
+            }
         })
         .attr("data-id", function (d) {
             return d.id;
@@ -1451,7 +1464,13 @@ function buildPathAndButton() {
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
         })
-        .attr("class", "mediaButton");
+        .attr("class", function(d) {
+            if (d.mediaType === "video") {
+                return "mediaButton";
+            } else if (d.mediaType === "text") {
+                return "textNodeButton";
+            }
+        });
 
     $('.mediaButton > i').click(function(){
         var thisBtn = $(this)[0];
@@ -1459,40 +1478,6 @@ function buildPathAndButton() {
         recordAnalyticsEvent('user', 'open', 'lightbox', thisBtn.dataset.id);
     });
 
-    // Append text node button
-    nodes
-        .filter(function (d) {
-            return getViewable(d) && d.mediaType === "text";
-        })
-        .append("svg:foreignObject")
-        .html(function (d) {
-            return '<i id="textNodeIcon' + d.id + '"' + 
-                ' class="' + getIconClass("bars") + ' textNodeIcon"' +
-                ' data-id="' + d.id + '"' + 
-                ' data-format="' + d.mediaFormat + '"' + 
-                ' data-media-type="' + d.mediaType + '"' + 
-                ' data-thumb="' + d.imageURL + '"' + 
-                ' data-url=""' + 
-                ' data-media-width="' + d.typeData.mediaWidth + '"' + 
-                ' data-media-height="' + d.typeData.mediaHeight + '"><\/i>';
-        })
-        .attr("id", function (d) {
-            return "textNodeButton" + d.id;
-        })
-        .attr("data-id", function (d) {
-            return d.id;
-        })
-        .attr("width", "60px")
-        .attr("height", "62px")
-        .attr("x", -27)
-        .attr("y", function (d) {
-            return -NORMAL_RADIUS * adjustedRadiusRatio - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);
-        })
-        .attr("style", function (d) {
-            return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
-        })
-        .attr("class", "textNodeButton");
-    
     $('.textNodeButton > i').click(function(){
         var thisBtn = $(this)[0];
         root = thisBtn.dataset.id;
