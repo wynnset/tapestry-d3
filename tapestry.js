@@ -433,7 +433,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
             }
         });
 
-        $("#public-add-sub-checkbox").change(function() {
+        $("#public-add-submit-checkbox").change(function() {
             if ($(this).is(":checked")) {
                 $(".user-checkbox").each(function() {
                     if (this.name === "add_submit") {
@@ -450,7 +450,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
             }
         });
 
-        $("#public-edit-sub-checkbox").change(function() {
+        $("#public-edit-submit-checkbox").change(function() {
             if ($(this).is(":checked")) {
                 $(".user-checkbox").each(function() {
                     if (this.name === "edit_submit") {
@@ -1419,7 +1419,6 @@ function buildPathAndButton() {
     // Append addNodeButton
     nodes
         .filter(function (d) {
-            // return d.nodeType === "root";
             return checkPermission(d, "add");
         })
         .append("svg:foreignObject")
@@ -1485,7 +1484,7 @@ function buildPathAndButton() {
     // Append editNodeButton
     nodes
         .filter(function (d) {
-            return d.nodeType !== "" && tapestryWpUserId;
+            return checkPermission(d, "edit");
         })
         .append("svg:foreignObject")
         .html(function (d) {
@@ -1539,6 +1538,26 @@ function buildPathAndButton() {
             $("#contents-details").hide();
             $("#mp4-content").hide();
             $("#h5p-content").hide();
+        }
+
+        // Permissions table
+        if (dataset.nodes[findNodeIndex(root)].permissions) {
+            for (var key in dataset.nodes[findNodeIndex(root)].permissions) {
+                if (key === "public") {
+                    for (var i = 0; i < dataset.nodes[findNodeIndex(root)].permissions[key].length; i++) {
+                        $("#public-" + dataset.nodes[findNodeIndex(root)].permissions[key][i].replace("_", "-") + "-checkbox").prop("checked", true);
+                    }
+                } else if (key.includes("user")) {
+                    // Append row, creates ones that public already has
+                    appendPermissionsRow(extractDigitsFromString(key), "user");
+                    // Add the ones that aren't in public now
+                    for (var j = 0; j < dataset.nodes[findNodeIndex(root)].permissions[key].length; j++) {
+                        if (dataset.nodes[findNodeIndex(root)].permissions.public && !dataset.nodes[findNodeIndex(root)].permissions.public.includes(dataset.nodes[findNodeIndex(root)].permissions[key][j])) {
+                            $("#" + key + "-" + dataset.nodes[findNodeIndex(root)].permissions[key][j].replace("_", "-") + "-checkbox").prop("checked", true);
+                        }
+                    }
+                }
+            }
         }
 
         // Show the modal
