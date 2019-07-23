@@ -23,7 +23,8 @@ var // declared constants
     NODE_UNLOCK_TIMEFRAME = 2; // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
     TAPESTRY_PROGRESS_URL = apiUrl + "/users/progress",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings",
-    ADD_NODE_MODAL_URL = addNodeModalUrl;
+    ADD_NODE_MODAL_URL = addNodeModalUrl,
+    MAX_DESCRIPTION_LENGTH = 250;
 
 var // declared variables
     dataset, root, svg, links, nodes,               // Basics
@@ -302,9 +303,9 @@ function createRootNodeButton(dataset) {
         $("#root-node-btn").on("click", function(e) {
             // Populate title
             $('#createNewNodeModalLabel').text("Add root node");
-            $("#submit-add-new-node").hide();
-            $("#submit-edit-node").hide();
-            $("#submit-add-root-node").show();
+            $("#Tapestry-submit-add-new-node").hide();
+            $("#Tapestry-submit-edit-node").hide();
+            $("#Tapestry-submit-add-root-node").show();
             $("#appearsat-section").hide();
             // Show the modal
             $("#createNewNodeModal").modal();
@@ -323,14 +324,14 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
     if (statusTxt == "success") {
 
         // Adding Root Node
-        $("#submit-add-root-node").on("click", function(e) {
+        $("#Tapestry-submit-add-root-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
             tapestryAddNewNode(formData, false, true);
         });
 
         // Adding New Nodes
-        $("#submit-add-new-node").on("click", function(e) {
+        $("#Tapestry-submit-add-new-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
             tapestryAddNewNode(formData, false);
@@ -358,11 +359,11 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
             }
         });
 
-        $("#cancel-add-new-node").on("click", function() {
+        $("#Tapestry-cancel-add-new-node").on("click", function() {
             tapestryHideAddNodeModal();
         });
         
-        $("#submit-edit-node").on("click", function(e) {
+        $("#Tapestry-submit-edit-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
             tapestryAddNewNode(formData, true);
@@ -853,7 +854,7 @@ function tapestryValidateNewNode(formData, isRoot) {
         }
     }
 
-    if ($("#node-description-area").val() && $("#node-description-area").val().length > 250) {
+    if ($("#node-description-area").val() && $("#node-description-area").val().length > MAX_DESCRIPTION_LENGTH) {
         errMsg += "Please enter a description under 250 characters \n";
     }
     return errMsg;
@@ -1484,9 +1485,9 @@ function buildPathAndButton() {
     $('.addNodeButton > i').click(function(){
         // Set up the title of the form
         $('#createNewNodeModalLabel').text("Add new sub-topic to " + dataset.nodes[findNodeIndex(root)].title);
-        $("#submit-add-root-node").hide();
-        $("#submit-edit-node").hide();
-        $("#submit-add-new-node").show();
+        $("#Tapestry-submit-add-root-node").hide();
+        $("#Tapestry-submit-edit-node").hide();
+        $("#Tapestry-submit-add-new-node").show();
         // Show the modal
         $("#createNewNodeModal").modal();
     });
@@ -1522,9 +1523,9 @@ function buildPathAndButton() {
     $('.editNodeButton > i').click(function(){
         // Add in the title for the modal
         $('#createNewNodeModalLabel').text("Edit node: " + dataset.nodes[findNodeIndex(root)].title);
-        $("#submit-add-root-node").hide();
-        $("#submit-add-new-node").hide();
-        $("#submit-edit-node").show();
+        $("#Tapestry-submit-add-root-node").hide();
+        $("#Tapestry-submit-add-new-node").hide();
+        $("#Tapestry-submit-edit-node").show();
         $("#appearsat-section").hide();
 
         // Load the values into input
