@@ -279,7 +279,7 @@ div.modal {
     background-color: #dc3545;
 }
 
-#Tapestry-submit-edit-node {
+#tapestry-submit-edit-node {
     color: white;
 }
 
@@ -452,11 +452,11 @@ body {font-family: Arial, Helvetica, sans-serif;}
     opacity: 0.8;
 }
 
-#Tapestry-submit-add-new-node, #Tapestry-submit-add-root-node {
+#tapestry-submit-add-new-node, #tapestry-submit-add-root-node {
     color: white;
 }
 
-#Tapestry-cancel-add-new-node {
+#tapestry-cancel-add-new-node {
     color: white;
     background-color: #dc3545;
 }
