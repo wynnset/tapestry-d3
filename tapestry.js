@@ -77,7 +77,6 @@ jQuery.ajaxSetup({
 });
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
-    console.log(result);
     dataset = result;
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
@@ -338,7 +337,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         });
 
         $("#mediaType").on("change", function() {
-            $("#text-content").hide();
+            $("#tapestry-text-content").hide();
             $("#mp4-content").hide();
             $("#h5p-content").hide();
             var selectedType = $(this).val();
@@ -351,7 +350,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
                     $("#h5p-content").show();
                     break;
                 case "text":
-                    $("#text-content").show();
+                    $("#tapestry-text-content").show();
                     break;
                 default:
                     break;
@@ -373,7 +372,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
             tapestryAddEditNode(formData, true);
         });
 
-        $("#lock-node-checkbox").on("change", function(e) {
+        $("#tapestry-lock-node-checkbox").on("change", function(e) {
             e.preventDefault();
             if($(this).is(":checked")) {
                 $("#appears-at-label").show();
@@ -626,7 +625,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
             case "mediaType":
                 if (fieldValue === "text") {
                     newNodeEntry[fieldName] = fieldValue;
-                    newNodeEntry.typeData.textContent = $("#node-text-area").val();
+                    newNodeEntry.typeData.textContent = $("#tapestry-node-text-area").val();
                 }
                 else if (fieldValue === "video") {
                     newNodeEntry["mediaType"] = "video";
@@ -772,7 +771,7 @@ function tapestryHideAddNodeModal() {
     $("#createNewNodeModalBody input[type='text']").val("");
     $("#createNewNodeModalBody input[type='url']").val("");
     // Remove Text Area for text node 
-    $("#node-text-area").val("");
+    $("#tapestry-node-text-area").val("");
     $(".permissions-dynamic-row").remove(); // remove the dynamically created permission rows
     // Uncheck all public permissions except read
     $('.public-checkbox').each(function() {
@@ -788,10 +787,10 @@ function tapestryHideAddNodeModal() {
     $("#mediaType").removeAttr('disabled');
 
     // Uncheck lock node label and hide appears at input
-    $("#lock-node-checkbox").prop('checked', false);
+    $("#tapestry-lock-node-checkbox").prop('checked', false);
     $("#appears-at-label").hide();
 
-    $("#text-content").hide();
+    $("#tapestry-text-content").hide();
     $("#mp4-content").hide();
     $("#h5p-content").hide();
     $("#appearsat-section").show();
@@ -883,7 +882,7 @@ function tapestryValidateNewNode(formData, isRoot) {
                     break;
             }
         } else if ($("#mediaType").val() === "text") {
-            if (!$("#node-text-area").val()) {
+            if (!$("#tapestry-node-text-area").val()) {
                 errMsg += "Please enter valid text \n";
             }
         }
@@ -1594,12 +1593,12 @@ function buildPathAndButton() {
 
         $("#mp4-content").hide();
         $("#h5p-content").hide();
-        $("#text-content").hide();
+        $("#tapestry-text-content").hide();
 
         if (dataset.nodes[findNodeIndex(root)].mediaType === "text") {
             $("#mediaType").val("text");
-            $("#text-content").show();
-            $("#node-text-area").val(dataset.nodes[findNodeIndex(root)].typeData.textContent);
+            $("#tapestry-text-content").show();
+            $("#tapestry-node-text-area").val(dataset.nodes[findNodeIndex(root)].typeData.textContent);
         } else if (dataset.nodes[findNodeIndex(root)].mediaType === "video") {
             if (dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
                 $("#mediaType").val("video");
