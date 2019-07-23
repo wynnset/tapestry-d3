@@ -1551,9 +1551,9 @@ function buildPathAndButton() {
                     // Append row, creates ones that public already has
                     appendPermissionsRow(extractDigitsFromString(key), "user");
                     // Add the ones that aren't in public now
-                    for (var i = 0; i < dataset.nodes[findNodeIndex(root)].permissions[key].length; i++) {
-                        if (dataset.nodes[findNodeIndex(root)].permissions["public"] && !dataset.nodes[findNodeIndex(root)].permissions["public"].includes(dataset.nodes[findNodeIndex(root)].permissions[key][i])) {
-                            $("#" + key + "-" + dataset.nodes[findNodeIndex(root)].permissions[key][i].replace("_", "-") + "-checkbox").prop("checked", true);
+                    for (var j = 0; j < dataset.nodes[findNodeIndex(root)].permissions[key].length; j++) {
+                        if (dataset.nodes[findNodeIndex(root)].permissions.public && !dataset.nodes[findNodeIndex(root)].permissions.public.includes(dataset.nodes[findNodeIndex(root)].permissions[key][j])) {
+                            $("#" + key + "-" + dataset.nodes[findNodeIndex(root)].permissions[key][j].replace("_", "-") + "-checkbox").prop("checked", true);
                         }
                     }
                 }
