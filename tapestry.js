@@ -38,8 +38,10 @@ var // declared variables
     nodeImageWidth = 520,                           // originally 780
     rootNodeImageHeightDiff = 46,                   // originally 70
     h5pVideoSettings = {},
-    tapestryDepth = 2;                              // Default depth of Tapestry
-    autoLayout = false;
+    tapestryDepth = 2,                              // Default depth of Tapestry
+    autoLayout = false,
+    linkForce,
+    collideForce;
 
 // FLAGS
 var inViewMode = false;                             // Flag for when we're in view mode
@@ -85,17 +87,14 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
         dataset.nodes[0].typeData.unlocked = true;
     }
-    if (!autoLayout) {
-        for (var i=0; i < dataset.nodes.length; i++) {
-            dataset.nodes[i].x = dataset.nodes[i].coordinates.x;
-            dataset.nodes[i].y = dataset.nodes[i].coordinates.y;
-        }
-    }
-    else if (autoLayout) {
-        for (var i=0; i < dataset.nodes.length; i++) {
-            console.log(dataset.nodes[i]);
-        }
-    }
+ //   if (!autoLayout) {
+
+ //   }
+    // else if (autoLayout) {
+    //     for (var i=0; i < dataset.nodes.length; i++) {
+    //         console.log(dataset.nodes[i]);
+    //     }
+    // }
     originalDataset = result;
     saveCoordinates();
 
@@ -197,10 +196,6 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     //---------------------------------------------------
 
     // Remove fx & fy remnant upon refresh
-    d3.selectAll('g.node').each(function(d){
-        delete d.fx;
-        delete d.fy;
-    });
 
     startForce();
     
@@ -309,6 +304,33 @@ if (tapestryWpUserId) {
     // Append the new element in its wrapper to the tapestry container
     tapestryControlsDiv.appendChild(viewLockedCheckboxWrapper);
 }
+
+//--------------------------------------------------
+// Checkbox to turn on autolayout
+//--------------------------------------------------
+
+// Create wrapper div
+var autoLayoutCheckboxWrapper = document.createElement("div");
+autoLayoutCheckboxWrapper.id = "tapestry-autolayout-checkbox-wrapper";
+
+// Create input element
+var autoLayoutCheckbox = document.createElement("input");
+setAttributes(autoLayoutCheckbox,{
+    type:"checkbox",
+    value:"1",
+    id: "tapestry-autolayout-checkbox"
+});
+autoLayoutCheckbox.onchange = function() {
+    autoLayout = !autoLayout;
+    startForce();
+};
+
+// Create label element
+//var 
+
+autoLayoutCheckboxWrapper.appendChild(autoLayoutCheckbox);
+
+tapestryControlsDiv.appendChild(autoLayoutCheckboxWrapper);
 
 /****************************************************
  * ADD EDITOR ELEMENTS
@@ -911,41 +933,96 @@ function addLink(source, target, value, appearsAt) {
 /* Define forces that will determine the layout of the graph */
 function startForce() {
 
-    var nodes = dataset.nodes;
+    if (autoLayout) {
+
+        d3.selectAll('g.node').each(function(d){
+            delete d.fx;
+            delete d.fy;
+        });
+        
+
+        var nodes = dataset.nodes;
+        var tapestryDimensions = getTapestryDimensions();
+
+        simulation = d3.forceSimulation(nodes)
+
+            // "charge" and forceManyBody determine the the repulsion/attraction strength
+            .force("charge", d3.forceManyBody().strength(-4000))
+
+            // establish links, the function sets IDs as endpoints, rather than indexes
+            .force("link", d3.forceLink(dataset.links).id(function(d) {
+                return d.id;
+            }))
+
+            // slow down the nodes from spinning
+            .velocityDecay(0.99)
+
+            // "center" determines where the center of gravity is
+            .force("center", d3.forceCenter()
+                .x(tapestryDimensions.width / 2)
+                .y(tapestryDimensions.height / 2))
+
+            // determines the minimum distance that nodes are allowed to be positioned at
+            .force("collision", d3.forceCollide().radius(function (d) {
+                if (root === d.id) {
+                    return MAX_RADIUS;
+                }
+                else {
+                    return (MAX_RADIUS - 25);
+                }
+            }));
+
+        simulation
+            .nodes(dataset.nodes)
+            .on("tick", ticked);
+    } 
+    else {
+        startForce2();
+    }
+    
+}
+
+/* Define forces that will determine the layout of the graph */
+function startForce2() {
+
+    for (var i=0; i < dataset.nodes.length; i++) {
+        dataset.nodes[i].fx = dataset.nodes[i].coordinates.x;
+        dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
+    }
+
+    // d3.selectAll('g.node').each(function(d){
+    //     d.fx = d.x;
+    //     d.fy = d.y;
+    // });
+
     var tapestryDimensions = getTapestryDimensions();
 
-    simulation = d3.forceSimulation(nodes)
-
-        // "charge" and forceManyBody determine the the repulsion/attraction strength
-        .force("charge", d3.forceManyBody().strength(-4000))
-
-        // establish links, the function sets IDs as endpoints, rather than indexes
-        .force("link", d3.forceLink(dataset.links).id(function(d) {
+    linkForce = d3.forceLink()
+        .id(function (d) {
             return d.id;
-        }))
+        });
 
-        // slow down the nodes from spinning
-        .velocityDecay(0.99)
+    collideForce = d3.forceCollide(
+        function (d) {
+            return getRadius(d) * 1.2;
+        });
 
-        // "center" determines where the center of gravity is
-        .force("center", d3.forceCenter()
-            .x(tapestryDimensions.width / 2)
-            .y(tapestryDimensions.height / 2))
-
-        // determines the minimum distance that nodes are allowed to be positioned at
-        .force("collision", d3.forceCollide().radius(function (d) {
-            if (root === d.id) {
-                return MAX_RADIUS;
-            }
-            else {
-                return (MAX_RADIUS - 25);
-            }
-        }));
+    simulation = d3.forceSimulation()
+        .force("link", linkForce)
+        .force("collide", collideForce)
+        .force("charge", d3.forceManyBody().strength(-5000))
+        .force("center", d3.forceCenter(tapestryDimensions.width/ 2, tapestryDimensions.height / 2));
 
     simulation
         .nodes(dataset.nodes)
         .on("tick", ticked);
-    
+
+    simulation
+        .force("link")
+        .links(dataset.links);
+
+    d3.select({}).transition().duration(TRANSITION_DURATION);
+
 }
 
 //Resize all nodes, where id is now the root
@@ -993,16 +1070,28 @@ function ticked() {
 function dragstarted(d) {
     var tapestryDimensions = getTapestryDimensions();
     if (!d3.event.active) simulation.alphaTarget(0.2).restart();
-    
-    d.x = getBoundedCoord(d.x, tapestryDimensions.width);
-    d.y = getBoundedCoord(d.y, tapestryDimensions.height);
+
+    if (autoLayout) {
+        d.x = getBoundedCoord(d.x, tapestryDimensions.width);
+        d.y = getBoundedCoord(d.y, tapestryDimensions.height);
+    } else {
+        d.fx = getBoundedCoord(d.x, tapestryDimensions.width);
+        d.fy = getBoundedCoord(d.y, tapestryDimensions.height);
+    }
+
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
 function dragged(d) {
-    d.x = d3.event.x;
-    d.y = d3.event.y;
+    if (autoLayout) {
+        d.x = d3.event.x;
+        d.y = d3.event.y;
+    } else {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+    }
+
 }
 
 function dragended(d) {
@@ -1014,8 +1103,14 @@ function dragended(d) {
             method: 'PUT',
             data: JSON.stringify({x: d.x, y: d.y}),
             success: function(result) {
-                d.x = d.x;
-                d.y = d.y;
+                if (autoLayout) {
+                    d.x = d.x;
+                    d.y = d.y;
+                } else {
+                    d.fx = d.x;
+                    d.fy = d.y;
+                }
+
             },
             error: function(e) {
                 console.error("Error saving coordinates of nodes");
@@ -2094,6 +2189,7 @@ function exitViewMode() {
     if (adjustedRadiusRatio < 1) {
         setAdjustedRadiusRatio(null, null);  //Values set to null because we don't really care; Function should just return 1
     }
+    startForce();
 }
 
 /****************************************************
