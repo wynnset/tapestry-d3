@@ -305,33 +305,6 @@ if (tapestryWpUserId) {
     tapestryControlsDiv.appendChild(viewLockedCheckboxWrapper);
 }
 
-//--------------------------------------------------
-// Checkbox to turn on autolayout
-//--------------------------------------------------
-
-// Create wrapper div
-var autoLayoutCheckboxWrapper = document.createElement("div");
-autoLayoutCheckboxWrapper.id = "tapestry-autolayout-checkbox-wrapper";
-
-// Create input element
-var autoLayoutCheckbox = document.createElement("input");
-setAttributes(autoLayoutCheckbox,{
-    type:"checkbox",
-    value:"1",
-    id: "tapestry-autolayout-checkbox"
-});
-autoLayoutCheckbox.onchange = function() {
-    autoLayout = !autoLayout;
-    startForce();
-};
-
-// Create label element
-//var 
-
-autoLayoutCheckboxWrapper.appendChild(autoLayoutCheckbox);
-
-tapestryControlsDiv.appendChild(autoLayoutCheckboxWrapper);
-
 /****************************************************
  * ADD EDITOR ELEMENTS
  ****************************************************/
@@ -612,40 +585,75 @@ function tapestryAddNewNode(formData, isEdit, isRoot) {
     }
 
     // Add the node data first
-    var newNodeEntry = {
-        "type": "tapestry_node",
-        "status": "publish",
-        "nodeType": "",
-        "title": "",
-        "imageURL": "",
-        "mediaType": "video",
-        "mediaFormat": "",
-        "mediaDuration": 0,
-        "typeId": 1,
-        "group": 1,
-        "typeData": {
-            "progress": [
-                {"group": "viewed", "value": 0},
-                {"group": "unviewed", "value": 1}
-            ],
-            "mediaURL": "",
-            "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
-            "mediaHeight": 600,
-            "unlocked": true
-        },
-        "x": getBrowserWidth(),
-        "y": getBrowserHeight()
-    };
+    if (autoLayout) {
+        var newNodeEntry = {
+            "type": "tapestry_node",
+            "status": "publish",
+            "nodeType": "",
+            "title": "",
+            "imageURL": "",
+            "mediaType": "video",
+            "mediaFormat": "",
+            "mediaDuration": 0,
+            "typeId": 1,
+            "group": 1,
+            "typeData": {
+                "progress": [
+                    {"group": "viewed", "value": 0},
+                    {"group": "unviewed", "value": 1}
+                ],
+                "mediaURL": "",
+                "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
+                "mediaHeight": 600,
+                "unlocked": true
+            },
+            "x": getBrowserWidth(),
+            "y": getBrowserHeight()
+        };
+    } else {
+        var newNodeEntry = {
+            "type": "tapestry_node",
+            "status": "publish",
+            "nodeType": "",
+            "title": "",
+            "imageURL": "",
+            "mediaType": "video",
+            "mediaFormat": "",
+            "mediaDuration": 0,
+            "typeId": 1,
+            "group": 1,
+            "typeData": {
+                "progress": [
+                    {"group": "viewed", "value": 0},
+                    {"group": "unviewed", "value": 1}
+                ],
+                "mediaURL": "",
+                "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
+                "mediaHeight": 600,
+                "unlocked": true
+            },
+            "fx": getBrowserWidth(),
+            "fy": getBrowserHeight()
+        };
+    }
 
     // Node ID exists, so edit case
-    if (isEdit) {
+    if (isEdit && autoLayout) {
         newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x; // x
         newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y; // y - ford
-    } else {
-        if (!isRoot) {
+    } else if (isEdit && !autoLayout) {
+        console.log("entered isEdit loop");
+        newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].x; // x
+        newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].y; // y - ford
+    }
+    else {
+        if (!isRoot && autoLayout) {
             // Just put the node right under the current node
             newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x; // x 
             newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50; // y
+        } else if (!isRoot && !autoLayout) {
+            newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].x; // x 
+            newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].y + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50; // y
         }
     }
 
@@ -939,7 +947,6 @@ function startForce() {
             delete d.fx;
             delete d.fy;
         });
-        
 
         var nodes = dataset.nodes;
         var tapestryDimensions = getTapestryDimensions();
@@ -986,8 +993,10 @@ function startForce() {
 function startForce2() {
 
     for (var i=0; i < dataset.nodes.length; i++) {
-        dataset.nodes[i].fx = dataset.nodes[i].coordinates.x;
-        dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
+        if (dataset.nodes[i].coordinates) {
+            dataset.nodes[i].fx = dataset.nodes[i].coordinates.x;
+            dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
+        }
     }
 
     // d3.selectAll('g.node').each(function(d){
@@ -1072,6 +1081,7 @@ function dragstarted(d) {
     if (!d3.event.active) simulation.alphaTarget(0.2).restart();
 
     if (autoLayout) {
+        console.log("tapdim", tapestryDimensions);
         d.x = getBoundedCoord(d.x, tapestryDimensions.width);
         d.y = getBoundedCoord(d.y, tapestryDimensions.height);
     } else {
@@ -2076,7 +2086,7 @@ function changeToViewMode(lightboxDimensions) {
 
     filterTapestry();
 
-    startForce();
+  //  startForce();
 }
 
 function getViewModeCoordinates(lightboxDimensions, children) {
@@ -2085,58 +2095,115 @@ function getViewModeCoordinates(lightboxDimensions, children) {
     var nodeSpace = (nodeRadius * 2);
 
     var coordinates = [];
-
-    for (var i = 0; i < children.length; i++) {
-        if (children.length <= 2) {
-            if (lightboxDimensions.adjustedOn === "width") {
-                if (i % 2 === 0) {
-                    coordinates[children[i]] = {
-                        "x": 0,
-                        "y": getTapestryDimensions().height / 2
-                    };
+    if (autoLayout) {
+        for (var i = 0; i < children.length; i++) {
+            if (children.length <= 2) {
+                if (lightboxDimensions.adjustedOn === "width") {
+                    if (i % 2 === 0) {
+                        coordinates[children[i]] = {
+                            "x": 0,
+                            "y": getTapestryDimensions().height / 2
+                        };
+                    } else {
+                        coordinates[children[i]] = {
+                            "x": screenToSVG(getBrowserWidth(), 0).x - nodeSpace,
+                            "y": getTapestryDimensions().height / 2
+                        };
+                    }
                 } else {
-                    coordinates[children[i]] = {
-                        "x": screenToSVG(getBrowserWidth(), 0).x - nodeSpace,
-                        "y": getTapestryDimensions().height / 2
-                    };
+                    if (i % 2 === 0) {
+                        coordinates[children[i]] = {
+                            "x": getTapestryDimensions().width / 2,
+                            "y": 0
+                        };
+                    } else {
+                        coordinates[children[i]] = {
+                            "x": getTapestryDimensions().width / 2,
+                            "y": getTapestryDimensions().height - nodeSpace
+                        };
+                    }
                 }
             } else {
-                if (i % 2 === 0) {
-                    coordinates[children[i]] = {
-                        "x": getTapestryDimensions().width / 2,
-                        "y": 0
-                    };
+                if (lightboxDimensions.adjustedOn === "width") {
+                    if (i % 2 === 0) {
+                        coordinates[children[i]] = {
+                            "x": 0,
+                            "y": Math.min(screenToSVG(0, getBrowserHeight() * (i / (children.length - 1))).y + nodeRadius, getTapestryDimensions().height - nodeSpace)
+                        };
+                    } else {
+                        coordinates[children[i]] = {
+                            "x": screenToSVG(getBrowserWidth(), 0).x - nodeSpace,
+                            "y": Math.min(screenToSVG(0, getBrowserHeight() * ((i-1) / (children.length - 1))).y + nodeRadius, getTapestryDimensions().height - nodeSpace)
+                        };
+                    }
                 } else {
-                    coordinates[children[i]] = {
-                        "x": getTapestryDimensions().width / 2,
-                        "y": getTapestryDimensions().height - nodeSpace
-                    };
+                    if (i % 2 === 0) {
+                        coordinates[children[i]] = {
+                            "x": Math.min(getTapestryDimensions().width * (i / (children.length - 1)) + nodeRadius, getTapestryDimensions().width - (nodeSpace * 2)),
+                            "y": 0
+                        };
+                    } else {
+                        coordinates[children[i]] = {
+                            "x": Math.min(getTapestryDimensions().width * ((i - 1) / (children.length - 1)) + nodeRadius, getTapestryDimensions().width - (nodeSpace * 2)),
+                            "y": screenToSVG(0, (NORMAL_RADIUS * 1.5) + (NORMAL_RADIUS * 0.1) + $("#spotlight-content").height() + $(".mediaButtonIcon").height()).y
+                        };
+                    }
                 }
             }
-        } else {
-            if (lightboxDimensions.adjustedOn === "width") {
-                if (i % 2 === 0) {
-                    coordinates[children[i]] = {
-                        "x": 0,
-                        "y": Math.min(screenToSVG(0, getBrowserHeight() * (i / (children.length - 1))).y + nodeRadius, getTapestryDimensions().height - nodeSpace)
-                    };
+        }
+    } else {
+        for (var i = 0; i < children.length; i++) {
+            if (children.length <= 2) {
+                if (lightboxDimensions.adjustedOn === "width") {
+                    if (i % 2 === 0) {
+                        coordinates[children[i]] = {
+                            "fx": 0,
+                            "fy": getTapestryDimensions().height / 2
+                        };
+                    } else {
+                        coordinates[children[i]] = {
+                            "fx": screenToSVG(getBrowserWidth(), 0).x - nodeSpace,
+                            "fy": getTapestryDimensions().height / 2
+                        };
+                    }
                 } else {
-                    coordinates[children[i]] = {
-                        "x": screenToSVG(getBrowserWidth(), 0).x - nodeSpace,
-                        "y": Math.min(screenToSVG(0, getBrowserHeight() * ((i-1) / (children.length - 1))).y + nodeRadius, getTapestryDimensions().height - nodeSpace)
-                    };
+                    if (i % 2 === 0) {
+                        coordinates[children[i]] = {
+                            "fx": getTapestryDimensions().width / 2,
+                            "fy": 0
+                        };
+                    } else {
+                        coordinates[children[i]] = {
+                            "fx": getTapestryDimensions().width / 2,
+                            "fy": getTapestryDimensions().height - nodeSpace
+                        };
+                    }
                 }
             } else {
-                if (i % 2 === 0) {
-                    coordinates[children[i]] = {
-                        "x": Math.min(getTapestryDimensions().width * (i / (children.length - 1)) + nodeRadius, getTapestryDimensions().width - (nodeSpace * 2)),
-                        "y": 0
-                    };
+                if (lightboxDimensions.adjustedOn === "width") {
+                    if (i % 2 === 0) {
+                        coordinates[children[i]] = {
+                            "fx": 0,
+                            "fy": Math.min(screenToSVG(0, getBrowserHeight() * (i / (children.length - 1))).y + nodeRadius, getTapestryDimensions().height - nodeSpace)
+                        };
+                    } else {
+                        coordinates[children[i]] = {
+                            "fx": screenToSVG(getBrowserWidth(), 0).x - nodeSpace,
+                            "fy": Math.min(screenToSVG(0, getBrowserHeight() * ((i-1) / (children.length - 1))).y + nodeRadius, getTapestryDimensions().height - nodeSpace)
+                        };
+                    }
                 } else {
-                    coordinates[children[i]] = {
-                        "x": Math.min(getTapestryDimensions().width * ((i - 1) / (children.length - 1)) + nodeRadius, getTapestryDimensions().width - (nodeSpace * 2)),
-                        "y": screenToSVG(0, (NORMAL_RADIUS * 1.5) + (NORMAL_RADIUS * 0.1) + $("#spotlight-content").height() + $(".mediaButtonIcon").height()).y
-                    };
+                    if (i % 2 === 0) {
+                        coordinates[children[i]] = {
+                            "fx": Math.min(getTapestryDimensions().width * (i / (children.length - 1)) + nodeRadius, getTapestryDimensions().width - (nodeSpace * 2)),
+                            "fy": 0
+                        };
+                    } else {
+                        coordinates[children[i]] = {
+                            "fx": Math.min(getTapestryDimensions().width * ((i - 1) / (children.length - 1)) + nodeRadius, getTapestryDimensions().width - (nodeSpace * 2)),
+                            "fy": screenToSVG(0, (NORMAL_RADIUS * 1.5) + (NORMAL_RADIUS * 0.1) + $("#spotlight-content").height() + $(".mediaButtonIcon").height()).y
+                        };
+                    }
                 }
             }
         }
@@ -2163,19 +2230,28 @@ function setAdjustedRadiusRatio(adjustedOn, numChildren) {
 
 function exitViewMode() {
     // For reapplying the coordinates of all the nodes prior to transitioning to play-mode
-    for (var i in dataset.nodes) {
-        var id = dataset.nodes[i].id;
-        dataset.nodes[i].x = nodeCoordinates[id].x;
-        dataset.nodes[i].y = nodeCoordinates[id].y;
+
+    if (!autoLayout) {
+        d3.selectAll('g.node')
+        .each(function(d) {
+            d.fixed = true;
+            delete d.x;
+            delete d.y;
+        });
+        for (var i in dataset.nodes) {
+            var id = dataset.nodes[i].id;
+            dataset.nodes[i].fx = nodeCoordinates[id].x;
+            dataset.nodes[i].fy = nodeCoordinates[id].y;
+        }
     }
 
     if (autoLayout) {
-    d3.selectAll('g.node')
-        .each(function(d) {
-            d.fixed = false;
-            delete d.fx;
-            delete d.fy;
-        });
+        d3.selectAll('g.node')
+            .each(function(d) {
+                d.fixed = false;
+                delete d.fx;
+                delete d.fy;
+            });
     }
 
     d3.selectAll('g.node')
@@ -2189,7 +2265,7 @@ function exitViewMode() {
     if (adjustedRadiusRatio < 1) {
         setAdjustedRadiusRatio(null, null);  //Values set to null because we don't really care; Function should just return 1
     }
-    startForce();
+  //  startForce();
 }
 
 /****************************************************
@@ -2752,10 +2828,17 @@ function saveCoordinates() {
     for (var i in dataset.nodes) {
         var node = dataset.nodes[i];
         var id = node.id;
-        nodeCoordinates[id] = {
-            "x": node.x, // fx & fy - ford
-            "y": node.y
-        };
+        if (autoLayout) {
+            nodeCoordinates[id] = {
+                "x": node.x, // fx & fy - ford
+                "y": node.y
+            };
+        } else {
+            nodeCoordinates[id] = {
+                "fx": node.fx, // fx & fy - ford
+                "fy": node.fy
+            };
+        }
     }
 }
 
