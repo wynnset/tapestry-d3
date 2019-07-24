@@ -142,10 +142,6 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 
     // Do it now
     updateTapestrySize();
-    // Also do it whenever window is resized
-    $(window).resize(function(){
-        updateTapestrySize();
-    });
         
     //---------------------------------------------------
     // 3. SET NODES/LINKS AND CREATE THE SVG OBJECTS
@@ -881,10 +877,6 @@ function tapestryValidateNewNode(formData, isRoot) {
                 default:
                     break;
             }
-        } else if ($("#mediaType").val() === "text") {
-            if (!$("#tapestry-node-text-area").val()) {
-                errMsg += "Please enter valid text \n";
-            }
         }
     }
     return errMsg;
@@ -1367,7 +1359,6 @@ function rebuildNodeContents() {
     // Remove elements and add them back in
     nodes.selectAll("text").remove();
     nodes.selectAll(".mediaButton").remove();
-    nodes.selectAll(".textNodeButton").remove();
     nodes.selectAll(".editNodeButton").remove();
     nodes.selectAll(".addNodeButton").remove();
     nodes.selectAll("path").remove();
@@ -1418,7 +1409,7 @@ function buildPathAndButton() {
                 return "<p>" + d.title + "</p>";
             });
 
-    // Append mediaButton or textNodeButton
+    // Append mediaButton
     nodes
         .filter(function (d) {
             return getViewable(d);
@@ -1426,30 +1417,19 @@ function buildPathAndButton() {
         .append("svg:foreignObject")
         .html(function (d) {
             var mediaHTML = "";
-            if (d.mediaType === "video") {
-                mediaHTML += '<i id="mediaButtonIcon' + d.id + '"' +
-                    ' class="' + getIconClass(d.mediaType, 'play') + ' mediaButtonIcon"' +
-                    ' data-url="' + d.typeData.mediaURL + '"';
-            } else if (d.mediaType === "text") {
-                mediaHTML += '<i id="textNodeIcon' + d.id + '"' +
-                    ' class="' + getIconClass("bars") + ' textNodeIcon"'
-                    + ' data-url=""';
-            }
-            mediaHTML +=
+            mediaHTML += '<i id="mediaButtonIcon' + d.id + '"' +
+                ' class="' + getIconClass(d.mediaType, 'play') + ' mediaButtonIcon"' +
                 ' data-id="' + d.id + '"' + 
                 ' data-format="' + d.mediaFormat + '"' + 
                 ' data-media-type="' + d.mediaType + '"' + 
                 ' data-thumb="' + d.imageURL + '"' + 
+                ' data-url="' + (d.typeData.mediaURL ? d.typeData.mediaURL : '') + '"' +
                 ' data-media-width="' + d.typeData.mediaWidth + '"' + 
                 ' data-media-height="' + d.typeData.mediaHeight + '"><\/i>';
             return mediaHTML;
         })
         .attr("id", function (d) {
-            if (d.mediaType === "video") {
-                return "mediaButton" + d.id;
-            } else if (d.mediaType === "text") {
-                return "textNodeButton" + d.id;
-            }
+            return "mediaButton" + d.id;
         })
         .attr("data-id", function (d) {
             return d.id;
@@ -1463,24 +1443,12 @@ function buildPathAndButton() {
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
         })
-        .attr("class", function(d) {
-            if (d.mediaType === "video") {
-                return "mediaButton";
-            } else if (d.mediaType === "text") {
-                return "textNodeButton";
-            }
-        });
+        .attr("class", "mediaButton");
 
     $('.mediaButton > i').click(function(){
         var thisBtn = $(this)[0];
         setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
         recordAnalyticsEvent('user', 'open', 'lightbox', thisBtn.dataset.id);
-    });
-
-    $('.textNodeButton > i').click(function(){
-        var thisBtn = $(this)[0];
-        root = thisBtn.dataset.id;
-        setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
     });
 
     // Append addNodeButton
@@ -1727,17 +1695,11 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
         opacity: 0
     }).appendTo('body');
 
-    if (mediaType === "video") {
-
-        $('#spotlight-content').draggable({
-            delay: 10,
-            distance: 8
-        });
-        media.appendTo('#spotlight-content');
-
-    } else if (mediaType === "text") {
-        $('#spotlight-content').append(generateTextNodeHTML(dataset.nodes[findNodeIndex(root)].title, dataset.nodes[findNodeIndex(root)].typeData.textContent));
-    }
+    $('#spotlight-content').draggable({
+        delay: 10,
+        distance: 8
+    });
+    media.appendTo('#spotlight-content');
 
     $('<a class="lightbox-close">X</a>')
         .css({
@@ -1755,6 +1717,9 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
         $('#spotlight-content').css({
             opacity: 1
         });
+        if (mediaType != 'video') {
+            updateMediaIcon(id, mediaType);
+        }
     }, 1000);
 
     if (mediaType === "video") {
@@ -1842,7 +1807,10 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
 
     var childrenData = getChildrenData(id);
 
-    if (mediaFormat === "mp4") {
+    if (mediaType == "text") {
+        mediaEl = generateTextNodeHTML(dataset.nodes[index].title, dataset.nodes[index].typeData.textContent);
+    }
+    else if (mediaFormat === "mp4") {
 
         mediaEl = $('<video id="' + mediaFormat + '" controls><source id="video-source" src="' + mediaUrl + '" type="video/mp4"><\/video>');
         var video = mediaEl[0];
@@ -1892,7 +1860,8 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
 
         }, false);
         
-    } else if (mediaFormat === "h5p") {
+    } 
+    else if (mediaFormat === "h5p") {
 
         mediaEl = $('<iframe id="h5p" src="' + mediaUrl + '" width="' + width + '" height="' + height + '" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
         var iframe = mediaEl[0];
@@ -2145,23 +2114,18 @@ function generateTextNodeHTML(title, str) {
     if (str) {
         var paragraphSection = document.createElement("div");
         paragraphSection.setAttribute("id", "text-light-box-paragraph");
-        paragraphArray = str.split("\n");
+        paragraphArray = str.split("\n\n");
         for (var i = 0; i < paragraphArray.length; i++) {
-            if (paragraphArray[i] !== "") {
-                var paraDiv = document.createElement("div");
-                var para = document.createElement("p");
-                para.setAttribute("id", "text-light-box-paragraph-text");
-                var textnode = document.createTextNode(paragraphArray[i]);
-                para.appendChild(textnode);
-                paraDiv.appendChild(para);
-                paragraphSection.appendChild(paraDiv);
-            } else {
-                paragraphSection.appendChild(document.createElement("BR"));
-            }
+            var paraDiv = document.createElement("div");
+            var para = document.createElement("p");
+            para.setAttribute("id", "text-light-box-paragraph-text");
+            para.innerHTML = paragraphArray[i].replace('\n','<br>');
+            paraDiv.appendChild(para);
+            paragraphSection.appendChild(paraDiv);
         }
         lightboxContent.appendChild(paragraphSection);
     }
-    return lightboxContent;
+    return $(lightboxContent);
 }
 
 /****************************************************
@@ -2783,6 +2747,8 @@ function closeLightbox(id, mediaType) {
 // Updates the icon for the given media button
 function updateMediaIcon(id, mediaType, action) {
 
+    console.log('action',action)
+
     var buttonElementId = "#mediaButtonIcon" + id;
     var classStr = getIconClass(mediaType, action);
 
@@ -2797,13 +2763,15 @@ function getIconClass(mediaType, action) {
     var classStrEnd = '-circle';
     var classStr = '';
 
+    if (action == 'loading') {
+        return 'mediaButtonLoading';
+    }
+
     switch (mediaType) {
 
         case "video":
             if (action == 'pause')
                 classStr = classStrStart + 'pause' + classStrEnd;
-            else if (action == 'loading')
-                classStr = 'mediaButtonLoading';
             else
                 classStr = classStrStart + 'play' + classStrEnd;
             break;
@@ -2812,7 +2780,7 @@ function getIconClass(mediaType, action) {
             classStr = classStrStart + 'plus' + classStrEnd;
             break;
             
-        case "bars":
+        case "text":
             classStr = classStrStart + 'bars';
             break;
 

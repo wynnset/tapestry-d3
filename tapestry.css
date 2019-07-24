@@ -284,6 +284,16 @@ div.modal {
     padding: 2px;
 }
 
+.mediaButton > i[data-media-type="text"]:not(.mediaButtonLoading) {
+    background: #666;
+    color: #fff;
+    font-size: 35px;
+    padding: 12px;
+}
+.mediaButton:hover > i[data-media-type="text"]:not(.mediaButtonLoading) {
+    background: #11a6d8;
+}
+
 .mediaButtonLoading {
     color: transparent;
     background-image: url(https://beta.tapestry-tool.com/wp-content/uploads/2018/11/loading-eclipse.svg);
@@ -294,35 +304,6 @@ div.modal {
     height: 94%;
     background-size: 98%;
     box-shadow: 0 0 0 2px #666 inset;
-}
-
-
-/* TEXT NODE BUTTON */
-
-.textNodeButton {
-    transition: all 0.25s ease;
-    cursor: pointer;
-    color: white;
-    overflow: hidden;
-    border-radius: 100%;
-}
-
-.textNodeButton i {
-    background-color: #666666;
-    border-radius: 100%;
-}
-
-.textNodeButton:hover,
-.textNodeButton:active {
-    transform: scale(1.15) translate(0, 21px);
-    background-color: #11a6d8;
-}
-
-.textNodeButton {
-    font-size: 45px;
-    background: #666666;
-    border: solid 1px #fff;
-    padding: 2px 5px 0px 8px;
 }
 
 /* EDIT NODE BUTTON */
