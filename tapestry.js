@@ -143,9 +143,6 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     // Do it now
     updateTapestrySize();
     // Also do it whenever window is resized
-    $(window).resize(function(){
-        updateTapestrySize();
-    });
         
     //---------------------------------------------------
     // 3. SET NODES/LINKS AND CREATE THE SVG OBJECTS
