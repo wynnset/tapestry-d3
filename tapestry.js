@@ -2194,45 +2194,14 @@ function getNodesDimensions(dataset) {
 /* Gets the boundary of the tapestry */
 function getTapestryDimensions() {
 
+    var tapestryWidth = $('#'+TAPESTRY_CONTAINER_ID).outerWidth();
+    var tapestryHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
+
     var nodeDimensions = getNodesDimensions(originalDataset);
-    var tapestryWidth = nodeDimensions.x;
-    var tapestryHeight = nodeDimensions.y;
 
-    var tapestryViewportWidth = getBrowserWidth() - $('#'+TAPESTRY_CONTAINER_ID).offset().left;
-    var tapestryViewportHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
-
-    var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
-    var tapestryBrowserRatio = tapestryWidth / tapestryViewportWidth;
-
-    if (tapestryHeight > tapestryViewportHeight && tapestryAspectRatio < 1) {
-        tapestryWidth *= tapestryHeight/tapestryViewportHeight / tapestryBrowserRatio;
-    }
-
-    if (tapestryViewportHeight < tapestryHeight) {
-        var scaleRatio = tapestryViewportHeight / tapestryHeight;
-        tapestryWidth /= scaleRatio;
-    }
-
-    // var tapestryViewportWidth = getBrowserWidth() - $('#'+TAPESTRY_CONTAINER_ID).offset().left;
-    // var tapestryViewportHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
-
-    // Set to be at least the size of the browser
-    if (tapestryWidth < tapestryViewportWidth) {
-        tapestryWidth = tapestryViewportWidth;
-    }
-    if (tapestryHeight < tapestryViewportHeight) {
-        tapestryHeight = tapestryViewportHeight;
-    }
-
-    // Set to be at least the size of the SVG
-    if (document.getElementById("tapestry-svg") !== null) {
-        if (tapestryWidth < screenToSVG(tapestryViewportWidth, 0).x) {
-            tapestryWidth = screenToSVG(tapestryViewportWidth, 0).x;
-        }
-
-        if (tapestryHeight < screenToSVG(0, tapestryViewportHeight - $("#footer").height()).y) {
-            tapestryHeight = screenToSVG(0, tapestryViewportHeight - $("#footer").height()).y;
-        }
+    if (nodeDimensions.x > tapestryWidth || nodeDimensions.y > tapestryHeight) {
+        var tapestryWidth = nodeDimensions.x;
+        var tapestryHeight = nodeDimensions.y;
     }
 
     return {
