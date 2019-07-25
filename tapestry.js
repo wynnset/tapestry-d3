@@ -8,7 +8,7 @@ var // declared constants
     TAPESTRY_CONTAINER_ID = "tapestry",
     PROGRESS_THICKNESS = 20,
     LINK_THICKNESS = 6,
-    NORMAL_RADIUS = 140,
+    NORMAL_RADIUS = 70,
     ROOT_RADIUS_DIFF = 70,
     GRANDCHILD_RADIUS_DIFF = -100,
     TRANSITION_DURATION = 800,
@@ -949,6 +949,10 @@ function ticked() {
 
 function dragstarted(d) {
     var tapestryDimensions = getTapestryDimensions();
+    console.log("tapdim",tapestryDimensions);
+    console.log("browser height n width: ",getBrowserHeight(),getBrowserWidth())
+    console.log("dx n dy",d.x," ",d.y);
+
     if (!d3.event.active) force.alphaTarget(0.2).restart();
     d.fx = getBoundedCoord(d.x, tapestryDimensions.width);
     d.fy = getBoundedCoord(d.y, tapestryDimensions.height);
@@ -959,6 +963,10 @@ function dragstarted(d) {
 function dragged(d) {
     d.fx = d3.event.x;
     d.fy = d3.event.y;
+    // var newx = d3.event.x >= getBrowserWidth() ? getBrowserWidth() : d3.event.x
+    // var newy = d3.event.y >= getBrowserHeight() ? getBrowserHeight() : d3.event.y
+    // d.fx = newx
+    // d.fy = newy
 }
 
 function dragended(d) {
@@ -2081,15 +2089,21 @@ function getNodesDimensions(dataset) {
         // save max point so we can calculate our tapestry width and height
         if (dataset.nodes[index].fx > maxPointX) {
             maxPointX = dataset.nodes[index].fx;
+            if (maxPointX > getBrowserWidth() + MAX_RADIUS){
+                maxPointX = getBrowserWidth() + MAX_RADIUS;
+            }
         }
         if (dataset.nodes[index].fy > maxPointY) {
             maxPointY = dataset.nodes[index].fy;
+            if (maxPointX > getBrowserHeight() + MAX_RADIUS){
+                maxPointX = getBrowserHeight() + MAX_RADIUS;
+            }
         }
     }
 
     return {
-        'x': maxPointX + MAX_RADIUS,
-        'y': maxPointY + MAX_RADIUS
+        'x': maxPointX, //+ MAX_RADIUS,
+        'y': maxPointY //+ MAX_RADIUS
     };
 }
 
@@ -2097,10 +2111,13 @@ function getNodesDimensions(dataset) {
 function getTapestryDimensions() {
 
     var nodeDimensions = getNodesDimensions(originalDataset);
+    console.log("DNDNDNDNDNDNND",nodeDimensions);
     var tapestryWidth = nodeDimensions.x;
     var tapestryHeight = nodeDimensions.y;
 
     var tapestryViewportWidth = getBrowserWidth() - $('#'+TAPESTRY_CONTAINER_ID).offset().left;
+    console.log("all dat shit:  ",$('#'+TAPESTRY_CONTAINER_ID).offset())
+
     var tapestryViewportHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
 
     var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
@@ -2136,6 +2153,8 @@ function getTapestryDimensions() {
             tapestryHeight = screenToSVG(0, tapestryViewportHeight - $("#footer").height()).y;
         }
     }
+    console.log("truewidth: ",tapestryWidth,"truehieght: ",tapestryHeight);
+    console.log("width",getBrowserWidth(),"height",getBrowserHeight());
 
     return {
         'width': tapestryWidth,
