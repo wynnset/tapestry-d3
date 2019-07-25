@@ -874,6 +874,10 @@ function addLink(source, target, value, appearsAt) {
     });
 }
 
+$(".link-lines").click(function(e) {
+    console.log("click event");
+});
+
 /****************************************************
  * D3 RELATED FUNCTIONS
  ****************************************************/
@@ -1031,6 +1035,12 @@ function createLinks() {
                         else if (d.optional)
                             return CSS_OPTIONAL_LINK;
                         else return "";
+                    })
+                    .attr("class", function(d) {
+                        return "link-lines"
+                    })
+                    .on("click", function(d) {
+                        console.log("hello");
                     })
                     .attr("stroke-width", LINK_THICKNESS);
 }

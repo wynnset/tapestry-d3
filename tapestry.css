@@ -217,6 +217,10 @@ div.modal {
     stroke-opacity: 5;
 }
 
+.link-lines:hover {
+    color: red;
+}
+
 /* MEDIA BUTTON */
 
 .mediaButton {
