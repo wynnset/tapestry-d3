@@ -2232,6 +2232,13 @@ function getTapestryDimensions() {
     console.log("truewidth: ",tapestryWidth,"truehieght: ",tapestryHeight);
     console.log("width",getBrowserWidth(),"height",getBrowserHeight());
 
+    if (tapestryWidth > getBrowserWidth()) {
+        tapestryWidth = getBrowserWidth();
+    }
+    if (tapestryHeight > getBrowserHeight()) {
+        tapestryHeight = getBrowserHeight();
+    }
+
     return {
         'width': tapestryWidth,
         'height': tapestryHeight
