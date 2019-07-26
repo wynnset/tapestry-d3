@@ -89,11 +89,8 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     }
     originalDataset = result;
     saveCoordinates();
-    console.log(getNodesDimensions(dataset).x);
-    console.log(getNodesDimensions(dataset).y);
 
-    NODE_DIMENSIONS.x = getNodesDimensions(dataset).x;
-    NODE_DIMENSIONS.y = getNodesDimensions(dataset).y;
+    NODE_DIMENSIONS = getNodesDimensions(dataset);
 
     //---------------------------------------------------
     // 1. GET PROGRESS FROM COOKIE (IF ENABLED)
@@ -1006,8 +1003,10 @@ function dragstarted(d) {
 }
 
 function dragged(d) {
-    d.fx = d3.event.x;
-    d.fy = d3.event.y;
+    var tapestryDimensions = getTapestryDimensions();
+
+    d.fx = getBoundedCoord(d3.event.x,tapestryDimensions.width);
+    d.fy = getBoundedCoord(d3.event.y,tapestryDimensions.height);
 }
 
 function dragended(d) {
