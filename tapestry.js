@@ -6,11 +6,12 @@
 
 var // declared constants
     TAPESTRY_CONTAINER_ID = "tapestry",
-    PROGRESS_THICKNESS = 20/1.5,
+    BIGCON = 2,
+    PROGRESS_THICKNESS = 20/BIGCON,
     LINK_THICKNESS = 6,
-    NORMAL_RADIUS = 140/1.5,
-    ROOT_RADIUS_DIFF = 70/1.5,
-    GRANDCHILD_RADIUS_DIFF = -100/1.5,
+    NORMAL_RADIUS = 140/BIGCON,
+    ROOT_RADIUS_DIFF = 70/BIGCON,
+    GRANDCHILD_RADIUS_DIFF = -100/BIGCON,
     TRANSITION_DURATION = 800,
     NODE_TEXT_RATIO = 5/6,
     COLOR_ACTIVE = "#11a6d8",
@@ -24,8 +25,8 @@ var // declared constants
     TAPESTRY_PROGRESS_URL = apiUrl + "/users/progress",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings",
     ADD_NODE_MODAL_URL = addNodeModalUrl;
-    NODE_DIMENSIONS = {x : 1000,
-                       y : 500};
+    NODE_DIMENSIONS = {x : null,
+                       y : null};
 
 var // declared variables
     dataset, root, svg, links, nodes,               // Basics
@@ -37,8 +38,8 @@ var // declared variables
     tapestrySlug, 
     saveProgress = true, progressLastSaved = new Date(), // Saving Progress
     enablePopupNodes = false, inViewMode = false,   // Pop-up nodes
-    nodeImageHeight = 420/1.5,
-    nodeImageWidth = 780/1.5,
+    nodeImageHeight = 420/BIGCON,
+    nodeImageWidth = 780/BIGCON,
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {},
     tapestryDepth = 2;                              // Default depth of Tapestry
@@ -147,6 +148,12 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 
     // Do it now
     updateTapestrySize();
+
+    $(window).resize(function() {
+        var browserRatio = getBrowserWidth()/getBrowserHeight();
+        getTapestryDimensions(browserRatio);
+    })
+        
         
     //---------------------------------------------------
     // 3. SET NODES/LINKS AND CREATE THE SVG OBJECTS
@@ -999,15 +1006,8 @@ function dragstarted(d) {
 }
 
 function dragged(d) {
-    console.log(dataset);
-  //  console.log(dataset.nodes[2].x," AND ",dataset.nodes[2].y);
-    console.log("DIMESON",getTapestryDimensions());
     d.fx = d3.event.x;
     d.fy = d3.event.y;
-    // var newx = d3.event.x >= getBrowserWidth() ? getBrowserWidth() : d3.event.x
-    // var newy = d3.event.y >= getBrowserHeight() ? getBrowserHeight() : d3.event.y
-    // d.fx = newx
-    // d.fy = newy
 }
 
 function dragended(d) {
@@ -2186,7 +2186,10 @@ function getAspectRatio() {
     }
 }
 
-function getNodesDimensions(dataset) {
+function getNodesDimensions(dataset,ratio) {
+    if (typeof ratio === 'undefined') {
+        ratio = 1;
+    }
     var maxPointX = 0;
     var maxPointY = 0;
     for (var index in dataset.nodes) {
@@ -2206,28 +2209,25 @@ function getNodesDimensions(dataset) {
         }
     }
 
+    maxPointX = maxPointX / ratio;
+
+    if (ratio < 1) {
+        maxPointY = maxPointY * ratio;
+    }
     return {
-        'x': maxPointX, //+ MAX_RADIUS,
-        'y': maxPointY //+ MAX_RADIUS
+        'x': maxPointX + MAX_RADIUS,
+        'y': maxPointY + MAX_RADIUS
     };
 }
 
 /* Gets the boundary of the tapestry */
-function getTapestryDimensions() {
+function getTapestryDimensions(ratio) {
+    if (typeof ratio === 'undefined') {
+        ratio = 1;
+    }
 
-    // var tapestryBrowserRatio = tapestryWidth / tapestryViewportWidth;
     var tapestryWidth = $('#'+TAPESTRY_CONTAINER_ID).outerWidth();
     var tapestryHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
-
-
-    // ASDFDFAOFSADOFNSOFANGOANGODSNGANGNASDONGAENGAOSDG
-    //A DFAODFNAS OFNSODNF OASDNF AONF ONASD
-    // var nodeDimensions = getNodesDimensions(originalDataset);
-
-    // if (nodeDimensions.x > tapestryWidth || nodeDimensions.y > tapestryHeight) {
-    //     var tapestryWidth = nodeDimensions.x;
-    //     var tapestryHeight = nodeDimensions.y;
-    // }
 
 
     if (NODE_DIMENSIONS.x > tapestryWidth) {
@@ -2236,6 +2236,9 @@ function getTapestryDimensions() {
     if (NODE_DIMENSIONS.y > tapestryHeight) {
         var tapestryHeight = NODE_DIMENSIONS.y;
     }
+
+    tapestryWidth = tapestryWidth / ratio;
+    tapestryHeight = tapestryHeight * ratio;
 
     return {
         'width': tapestryWidth + MAX_RADIUS,
