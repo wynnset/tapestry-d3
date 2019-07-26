@@ -6,11 +6,11 @@
 
 var // declared constants
     TAPESTRY_CONTAINER_ID = "tapestry",
-    PROGRESS_THICKNESS = 20,
+    PROGRESS_THICKNESS = 20/1.5,
     LINK_THICKNESS = 6,
-    NORMAL_RADIUS = 70,
-    ROOT_RADIUS_DIFF = 70,
-    GRANDCHILD_RADIUS_DIFF = -100,
+    NORMAL_RADIUS = 140/1.5,
+    ROOT_RADIUS_DIFF = 70/1.5,
+    GRANDCHILD_RADIUS_DIFF = -100/1.5,
     TRANSITION_DURATION = 800,
     NODE_TEXT_RATIO = 5/6,
     COLOR_ACTIVE = "#11a6d8",
@@ -24,6 +24,8 @@ var // declared constants
     TAPESTRY_PROGRESS_URL = apiUrl + "/users/progress",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings",
     ADD_NODE_MODAL_URL = addNodeModalUrl;
+    NODE_DIMENSIONS = {x : 1000,
+                       y : 500};
 
 var // declared variables
     dataset, root, svg, links, nodes,               // Basics
@@ -35,8 +37,8 @@ var // declared variables
     tapestrySlug, 
     saveProgress = true, progressLastSaved = new Date(), // Saving Progress
     enablePopupNodes = false, inViewMode = false,   // Pop-up nodes
-    nodeImageHeight = 420,
-    nodeImageWidth = 780,
+    nodeImageHeight = 420/1.5,
+    nodeImageWidth = 780/1.5,
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {},
     tapestryDepth = 2;                              // Default depth of Tapestry
@@ -86,6 +88,11 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     }
     originalDataset = result;
     saveCoordinates();
+    console.log(getNodesDimensions(dataset).x);
+    console.log(getNodesDimensions(dataset).y);
+
+    NODE_DIMENSIONS.x = getNodesDimensions(dataset).x;
+    NODE_DIMENSIONS.y = getNodesDimensions(dataset).y;
 
     //---------------------------------------------------
     // 1. GET PROGRESS FROM COOKIE (IF ENABLED)
@@ -992,6 +999,9 @@ function dragstarted(d) {
 }
 
 function dragged(d) {
+    console.log(dataset);
+  //  console.log(dataset.nodes[2].x," AND ",dataset.nodes[2].y);
+    console.log("DIMESON",getTapestryDimensions());
     d.fx = d3.event.x;
     d.fy = d3.event.y;
     // var newx = d3.event.x >= getBrowserWidth() ? getBrowserWidth() : d3.event.x
@@ -2205,49 +2215,31 @@ function getNodesDimensions(dataset) {
 /* Gets the boundary of the tapestry */
 function getTapestryDimensions() {
 
-    // var nodeDimensions = getNodesDimensions(originalDataset);
-    // console.log("DNDNDNDNDNDNND",nodeDimensions);
-    // var tapestryWidth = nodeDimensions.x;
-    // var tapestryHeight = nodeDimensions.y;
-
-    // var tapestryViewportWidth = getBrowserWidth() - $('#'+TAPESTRY_CONTAINER_ID).offset().left;
-    // console.log("all dat shit:  ",$('#'+TAPESTRY_CONTAINER_ID).offset())
-
-    // var tapestryViewportHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
-
     // var tapestryBrowserRatio = tapestryWidth / tapestryViewportWidth;
     var tapestryWidth = $('#'+TAPESTRY_CONTAINER_ID).outerWidth();
     var tapestryHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
 
-    var nodeDimensions = getNodesDimensions(originalDataset);
-    var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
 
-    if (nodeDimensions.x > tapestryWidth || nodeDimensions.y > tapestryHeight) {
-        var tapestryWidth = nodeDimensions.x;
-        var tapestryHeight = nodeDimensions.y;
-    }
-    // if (nodeDimensions.y > tapestryHeight) {
+    // ASDFDFAOFSADOFNSOFANGOANGODSNGANGNASDONGAENGAOSDG
+    //A DFAODFNAS OFNSODNF OASDNF AONF ONASD
+    // var nodeDimensions = getNodesDimensions(originalDataset);
+
+    // if (nodeDimensions.x > tapestryWidth || nodeDimensions.y > tapestryHeight) {
+    //     var tapestryWidth = nodeDimensions.x;
     //     var tapestryHeight = nodeDimensions.y;
     // }
-    console.log("tapwidth: ",tapestryWidth,"taphieght: ",tapestryHeight);
-    console.log("truwidth",getBrowserWidth(),"truheight",getBrowserHeight());
 
-    // if (tapestryWidth > getBrowserWidth()) {
-    //     tapestryWidth = getBrowserWidth();
-    // }
 
-    
-    if (tapestryHeight > getBrowserHeight()) {
-        tapestryHeight = getBrowserHeight();
+    if (NODE_DIMENSIONS.x > tapestryWidth) {
+        var tapestryWidth = NODE_DIMENSIONS.x;
+    }
+    if (NODE_DIMENSIONS.y > tapestryHeight) {
+        var tapestryHeight = NODE_DIMENSIONS.y;
     }
 
-    var tapestryAspectRatio = tapestryHeight / tapestryWidth;
-    console.log("aspectratio",tapestryAspectRatio);
-
-
     return {
-        'width': tapestryWidth,
-        'height': tapestryHeight
+        'width': tapestryWidth + MAX_RADIUS,
+        'height': tapestryHeight + MAX_RADIUS
     };
 }
 
@@ -2296,6 +2288,7 @@ function getNodeById(id) {
 }
 
 function getBoundedCoord(coord, maxCoord) {
+    
     return Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
 }
 
