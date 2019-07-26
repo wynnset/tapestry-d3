@@ -983,9 +983,6 @@ function ticked() {
 
 function dragstarted(d) {
     var tapestryDimensions = getTapestryDimensions();
-    console.log("tapdim",tapestryDimensions);
-    console.log("browser height n width: ",getBrowserHeight(),getBrowserWidth())
-    console.log("dx n dy",d.x," ",d.y);
 
     if (!d3.event.active) force.alphaTarget(0.2).restart();
     d.fx = getBoundedCoord(d.x, tapestryDimensions.width);
@@ -2218,26 +2215,35 @@ function getTapestryDimensions() {
 
     // var tapestryViewportHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
 
-    // var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
     // var tapestryBrowserRatio = tapestryWidth / tapestryViewportWidth;
     var tapestryWidth = $('#'+TAPESTRY_CONTAINER_ID).outerWidth();
     var tapestryHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
 
     var nodeDimensions = getNodesDimensions(originalDataset);
+    var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
 
     if (nodeDimensions.x > tapestryWidth || nodeDimensions.y > tapestryHeight) {
         var tapestryWidth = nodeDimensions.x;
         var tapestryHeight = nodeDimensions.y;
     }
-    console.log("truewidth: ",tapestryWidth,"truehieght: ",tapestryHeight);
-    console.log("width",getBrowserWidth(),"height",getBrowserHeight());
+    // if (nodeDimensions.y > tapestryHeight) {
+    //     var tapestryHeight = nodeDimensions.y;
+    // }
+    console.log("tapwidth: ",tapestryWidth,"taphieght: ",tapestryHeight);
+    console.log("truwidth",getBrowserWidth(),"truheight",getBrowserHeight());
 
-    if (tapestryWidth > getBrowserWidth()) {
-        tapestryWidth = getBrowserWidth();
-    }
+    // if (tapestryWidth > getBrowserWidth()) {
+    //     tapestryWidth = getBrowserWidth();
+    // }
+
+    
     if (tapestryHeight > getBrowserHeight()) {
         tapestryHeight = getBrowserHeight();
     }
+
+    var tapestryAspectRatio = tapestryHeight / tapestryWidth;
+    console.log("aspectratio",tapestryAspectRatio);
+
 
     return {
         'width': tapestryWidth,
