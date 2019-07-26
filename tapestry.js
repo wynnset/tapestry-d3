@@ -149,6 +149,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     $(window).resize(function() {
         var browserRatio = getBrowserWidth()/getBrowserHeight();
         getTapestryDimensions(browserRatio);
+        updateSvgDimensions(TAPESTRY_CONTAINER_ID);
     });
         
         
@@ -2209,10 +2210,8 @@ function getNodesDimensions(dataset,ratio) {
     }
 
     maxPointX = maxPointX / ratio;
-
-    if (ratio < 1) {
-        maxPointY = maxPointY * ratio;
-    }
+    maxPointY = maxPointY * ratio;
+    
     return {
         'x': maxPointX + MAX_RADIUS,
         'y': maxPointY + MAX_RADIUS
