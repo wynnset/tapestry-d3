@@ -152,7 +152,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     $(window).resize(function() {
         var browserRatio = getBrowserWidth()/getBrowserHeight();
         getTapestryDimensions(browserRatio);
-    })
+    });
         
         
     //---------------------------------------------------
@@ -2231,10 +2231,10 @@ function getTapestryDimensions(ratio) {
 
 
     if (NODE_DIMENSIONS.x > tapestryWidth) {
-        var tapestryWidth = NODE_DIMENSIONS.x;
+        tapestryWidth = NODE_DIMENSIONS.x;
     }
     if (NODE_DIMENSIONS.y > tapestryHeight) {
-        var tapestryHeight = NODE_DIMENSIONS.y;
+        tapestryHeight = NODE_DIMENSIONS.y;
     }
 
     tapestryWidth = tapestryWidth / ratio;
