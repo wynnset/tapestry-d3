@@ -2186,10 +2186,8 @@ function getAspectRatio() {
     }
 }
 
-function getNodesDimensions(dataset,ratio) {
-    if (typeof ratio === 'undefined') {
-        ratio = 1;
-    }
+function getNodesDimensions(dataset) {
+
     var maxPointX = 0;
     var maxPointY = 0;
     for (var index in dataset.nodes) {
