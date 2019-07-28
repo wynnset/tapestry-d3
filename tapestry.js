@@ -79,6 +79,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
+        // always unlock root node
         for (var i=0; i<dataset.nodes.length; i++) {
             if (dataset.nodes[i].id == dataset.rootId) {
                 dataset.nodes[i].unlocked = true;
@@ -90,11 +91,11 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
         dataset.nodes[i].fx = dataset.nodes[i].coordinates.x;
         dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
     }
-    originalDataset = result;
+    originalDataset = dataset;
     saveCoordinates();
 
     //---------------------------------------------------
-    // 1. GET PROGRESS FROM COOKIE (IF ENABLED)
+    // 1. GET PROGRESS FROM DATABASE OR COOKIE (IF ENABLED)
     //---------------------------------------------------
 
     tapestrySlug = dataset.settings.tapestrySlug;
@@ -106,7 +107,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
             jQuery.get(USER_NODE_PROGRESS_URL, { "post_id": tapestryWpPostId }, function(result) {
                 if (result && !isEmptyObject(result)) {
                     setDatasetProgress(JSON.parse(result));
-                    updateViewedProgress(); // update viewed progress because async fetch of dataset
+                    init();
                 }
             }).fail(function(e) {
                 console.error("Error with retrieving node progress");
@@ -122,13 +123,15 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
                 console.error(e);
             });
 
-        } else { 
+        }
+        else { 
             // Update dataset with data from cookie (if any)
             var cookieProgress = Cookies.get("progress-data-"+tapestrySlug);
 
             if (cookieProgress) {
                 cookieProgress = JSON.parse( cookieProgress );
                 setDatasetProgress(cookieProgress);	
+                init();
             }
 
             // Update H5P Video Settings from cookie (if any)
@@ -139,7 +142,15 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
             }
         }
     }
+    else {
+        init();
+    }
+}).fail(function(e) {
+    console.error("Error with loading tapestries");
+    console.error(e);
+});
 
+function init() {
     //---------------------------------------------------
     // 2. SIZE AND SCALE THE TAPESTRY AND SVG TO FIT WELL
     //---------------------------------------------------
@@ -157,7 +168,6 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     setLinkTypes(root);
     setUnlocked();
     setAccessibleStatus();
-
 
     if (dataset.settings !== undefined && dataset.settings.thumbDiff !== undefined) {
         nodeImageHeight += dataset.settings.thumbDiff;
@@ -189,10 +199,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
 
     recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
-}).fail(function(e) {
-    console.error("Error with loading tapestries");
-    console.error(e);
-});
+}
 
 /****************************************************
  * ADD TAPESTRY CONTROLS
@@ -2493,6 +2500,16 @@ function setDatasetProgress(progressObj) {
             dataset.nodes[index].unlocked = unlocked ? true : false;
         }
     }
+
+    if (dataset && dataset.nodes && dataset.nodes.length > 0) {
+        for (var i=0; i<dataset.nodes.length; i++) {
+            if (dataset.nodes[i].id == dataset.rootId) {
+                dataset.nodes[i].unlocked = true;
+                break;
+            }
+        }
+    }
+
     return true;
 }
 
@@ -2565,7 +2582,6 @@ function setLinkTypes(rootId) {
 
 /* For setting the "unlocked" field of nodes in dataset if logic shows node to be unlocked */
 function setUnlocked() {
-    console.log('HEREEEEE',dataset);
     var parentIndex;
     for (var i = 0; i < dataset.links.length; i++) {
         
@@ -2594,7 +2610,7 @@ function setAccessibleStatus(node, depth, parentNodeId, parentIsAccessible = tru
         node = dataset.nodes[findNodeIndex(dataset.rootId)];
     }
 
-    // If no node passed in, assume tapestry depth
+    // If no depth passed in, assume tapestry depth
     if (typeof depth == "undefined") {
         depth = tapestryDepth;
     }
@@ -2602,15 +2618,11 @@ function setAccessibleStatus(node, depth, parentNodeId, parentIsAccessible = tru
     getChildren(node.id, 1).forEach (childNodeId => {
         var thisNode = getNodeById(childNodeId);
 
-        console.log("THIS NODE IS: THE BE: ",thisNode);
         // Do not traverse up the parent
         if (parentNodeId != thisNode.id) {
             // If a node is accessible, only if it's unlocked and its parent is accessible
             
-            var isAccessible = ((thisNode.unlocked) && parentIsAccessible);
-            console.log("is it unlocked: ",thisNode.unlocked);
-            console.log("parent is access: ",parentIsAccessible);
-            console.log("is accessible: ",isAccessible);
+            var isAccessible = thisNode.unlocked && parentIsAccessible;
             dataset.nodes[findNodeIndex(thisNode.id)].accessible = isAccessible;
             if (depth > 0) {
                 // Keep going deeper in
@@ -2623,10 +2635,7 @@ function setAccessibleStatus(node, depth, parentNodeId, parentIsAccessible = tru
 // ALL the checks for whether a certain node is viewable
 function getViewable(node) {
 
-  //  if (node.typeData.unlocked === "1") return true;
-
     // TODO: CHECK 1: If user is authorized to view it
-    // if ()
 
     // CHECK 2: Always show root node
     if (node.nodeType === "root" || (node.id == dataset.rootId && node.nodeType !== "")) return true;
