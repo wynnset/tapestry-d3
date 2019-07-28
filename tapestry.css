@@ -144,20 +144,41 @@ div.modal {
     z-index: 100;
     background-position: 0 0;
     background-size: cover;
+    background-color: white;
     opacity: 1;
     transition: all 1s;
     transition-timing-function: ease-in;
-    border: solid 1px #999;
-    border-radius: 40px;
+    box-shadow: 0 0 100px -40px #000;
+    border: solid 1px #ddd;
+    border-radius: 15px;
     overflow: hidden;
 }
+
+#spotlight-content[data-view-mode=true] {
+    box-shadow: none;
+    border-color: #999;
+}
+
+#spotlight-content[data-media-type=text] {
+    outline: none;
+    overflow: scroll;
+    background: #eee;
+    color: #333;
+    padding: 1em;
+}
+
 #spotlight-content > * {
     background: #000;
     outline: none;
 }
+
 #spotlight-content[data-media-format=mp4] > * {
     width: 100%;
     height: auto;
+}
+
+#spotlight-content[data-media-type=text]  > * {
+    background: transparent;
 }
 
 #spotlight-overlay {
@@ -166,6 +187,28 @@ div.modal {
     left: 0;
     width: 100%;
     height: 100%;
+}
+
+/* Text Node Styling */
+#text-light-box-title > h3 {
+    margin: 1em 0 1em 15px;
+}
+
+#text-light-box-title > p {
+    font-size: 42px;
+    margin: 0.4em 0 0;
+    padding-left: 0.4em;
+}
+
+#text-light-box-paragraph {
+    font: 14px/1.7 "Source Sans Pro", sans-serif;
+    font-size: 16px;
+    color: #47425d;
+}
+
+#text-light-box-paragraph-text {
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
 .progress-meter .background {
@@ -195,7 +238,6 @@ div.modal {
 
 .imageOverlay {
     opacity: 0.5;
-    transition: 0.2s all;
 }
 
 .node .expandGrandchildren {
@@ -204,15 +246,10 @@ div.modal {
 
 .node:hover .expandGrandchildren {
     transform: scale(1.2);
-    transition: 0.2s all;
 }
 
 .node:hover .imageOverlay {
     opacity: 0;
-}
-
-text {
-    transition: 0.2s all;
 }
 
 .node:hover text {
@@ -246,6 +283,16 @@ text {
     padding: 2px;
 }
 
+.mediaButton > i[data-media-type="text"]:not(.mediaButtonLoading) {
+    background: #666;
+    color: #fff;
+    font-size: 35px;
+    padding: 12px;
+}
+.mediaButton:hover > i[data-media-type="text"]:not(.mediaButtonLoading) {
+    background: #11a6d8;
+}
+
 .mediaButtonLoading {
     color: transparent;
     background-image: url(https://beta.tapestry-tool.com/wp-content/uploads/2018/11/loading-eclipse.svg);
@@ -258,6 +305,39 @@ text {
     box-shadow: 0 0 0 2px #666 inset;
 }
 
+/* EDIT NODE BUTTON */
+.editNodeButton {
+    transition: all 0.25s ease;
+    cursor: pointer;
+    color: #666666;
+    overflow: hidden;
+    border-radius: 100%;
+    border: solid 4px #fff;
+}
+
+.editNodeButton:hover,
+.editNodeButton:active {
+    transform: scale(1.15) translate(0, -21px);
+    color: #11a6d8;
+}
+
+#cancel-edit-node {
+    color: white;
+    background-color: #dc3545;
+}
+
+#submit-edit-node {
+    color: white;
+}
+
+.editNodeButton > i {
+    font-size: 63px;
+    background: #fff;
+    border: solid 1px #fff;
+    padding: 2px;
+    margin: -8px 0 0 -5px;
+}
+
 /* ADD NODE BUTTON */
 .addNodeButton {
     transition: all 0.25s ease;
@@ -267,12 +347,12 @@ text {
     border-radius: 100%;
 }
 
+
 .addNodeButton:hover,
 .addNodeButton:active {
     transform: scale(1.15) translate(0, -21px);
     color: #11a6d8;
 }
-
 .addNodeButton > i:not(.mediaButtonLoading) {
     font-size: 55px;
     background: #fff;
@@ -387,7 +467,7 @@ body {font-family: Arial, Helvetica, sans-serif;}
 
 /* Add styles to the form container */
 .form-container {
-    padding: 6%;
+    padding: 3%;
     background-color: white;
     margin: 0 auto;
 }
@@ -398,6 +478,14 @@ body {font-family: Arial, Helvetica, sans-serif;}
     padding: 15px;
     margin: 5px 0 22px 0;
     border: none;
+    background: #f1f1f1;
+}
+
+/* Full-width input fields */
+.form-container textarea {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0 22px 0;
     background: #f1f1f1;
 }
 
@@ -475,4 +563,56 @@ body {font-family: Arial, Helvetica, sans-serif;}
 #root-node-btn:active {
     transform: scale(1.1);
     color: #11a6d8;
+}
+
+.lightbox-form-section {
+    border-top: solid 1px #DDD;
+    margin: 20px -32px;
+    padding: 5px 32px;
+}
+
+.lightbox-form-section > h4 {
+    margin: 2rem 0;
+}
+
+#contents-details {
+    margin-top: 1rem;
+}
+
+/* Permissions Labels */
+
+#permissions-details > table td {
+    border-color: #ddd;
+    background: #eee;
+}
+#permissions-details > table th {
+    border-color: #eee;
+    background: #fafafa;
+}
+#permissions-details > table tfoot td {
+    background: #ddd;
+}
+#permissions-details input#user-number-input {
+    width: 70px;
+}
+#user-permissions-btn, 
+#group-permissions-btn {
+    padding: 4px 1rem;
+    color: white;
+}
+
+.permissions-plus {
+    margin-right: 4px;
+}
+
+input[type="checkbox"][disabled] {
+    cursor: not-allowed;
+}
+
+#mediaFormat[disabled], #mediaType[disabled]{
+    cursor: not-allowed;
+}
+
+#locked-container {
+    margin-bottom: 10px;
 }
