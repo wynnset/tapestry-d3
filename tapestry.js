@@ -19,7 +19,7 @@ var // declared constants
     COLOR_SECONDARY_LINK = "transparent",
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
     TIME_BETWEEN_SAVE_PROGRESS = 5, // Means the number of seconds between each save progress call
-    NODE_UNLOCK_TIMEFRAME = 2; // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
+    NODE_UNLOCK_TIMEFRAME = 2, // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
     USER_NODE_PROGRESS_URL = apiUrl + "/users/progress",
     USER_NODE_UNLOCKED_URL = apiUrl + "/users/unlocked",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings",
@@ -66,8 +66,12 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
-        dataset.nodes[0].typeData.unlocked = true;
-        console.log(dataset.nodes[0].typeData.unlocked?'unnn':'locked');
+        for (var i=0; i<dataset.nodes.length; i++) {
+            if (dataset.nodes[i].id == dataset.rootId) {
+                dataset.nodes[i].unlocked = true;
+                break;
+            }
+        }
     }
     originalDataset = dataset;
     saveCoordinates();
@@ -84,9 +88,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
 
             jQuery.get(USER_NODE_PROGRESS_URL, { "post_id": tapestryWpPostId }, function(result) {
                 if (result && !isEmptyObject(result)) {
-                    console.log(result);
                     setDatasetProgress(JSON.parse(result));
-                    console.log('dataset',dataset);
                     updateViewedProgress(); // update viewed progress because async fetch of dataset
                 }
             }).fail(function(e) {
@@ -380,9 +382,9 @@ function tapestryAddNewNode(formData, isRoot) {
             ],
             "mediaURL": "",
             "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
-            "mediaHeight": 600,
-            "unlocked": true
+            "mediaHeight": 600
         },
+        "unlocked": true,
         "fx": getBrowserWidth(),
         "fy": getBrowserHeight()
     };
@@ -433,7 +435,7 @@ function tapestryAddNewNode(formData, isRoot) {
                 break;
             case "appearsAt":
                 appearsAt = parseInt(fieldValue);
-                newNodeEntry.typeData.unlocked = !appearsAt || isRoot;
+                newNodeEntry.unlocked = !appearsAt || isRoot;
                 break;
             default:
                 break;
@@ -1145,13 +1147,13 @@ function buildPathAndButton() {
 function updateViewedProgress() {
     path = nodes
         .filter(function (d) {
-            return d.nodeType !== "" && d.typeData.unlocked;
+            return d.nodeType !== "" && d.unlocked;
         })
         .selectAll("path")
         .data(function (d, i) {
             var data = d.typeData.progress;
             data.forEach(function (e) {
-                e.extra = {'nodeType': d.nodeType, 'unlocked': d.typeData.unlocked };
+                e.extra = {'nodeType': d.nodeType, 'unlocked': d.unlocked };
             })
             return pieGenerator(data, i);
         });
@@ -1355,8 +1357,8 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
             video.addEventListener('timeupdate', function () {
                 if (video.played.length > 0 && viewedAmount < video.currentTime) {
                     for (var i = 0; i < childrenData.length; i++) {
-                        if (Math.abs(childrenData[i].appearsAt - video.currentTime) <= NODE_UNLOCK_TIMEFRAME && video.paused === false && !dataset.nodes[childrenData[i].nodeIndex].typeData.unlocked) {
-                            setUnlocked(childrenData[i].nodeIndex);
+                        if (Math.abs(childrenData[i].appearsAt - video.currentTime) <= NODE_UNLOCK_TIMEFRAME && video.paused === false && !dataset.nodes[childrenData[i].nodeIndex].unlocked) {
+                            saveNodeAsUnlocked(childrenData[i]);
                             setAccessibleStatus();
                             filterLinks();
                             filterNodes();
@@ -2021,20 +2023,15 @@ function getDatasetProgress() {
 }
 
 function setDatasetProgress(progressObj) {
-    console.log("init");
     
     if (progressObj.length < 1) {
         return false;
     }
     
     for (var id in progressObj) {
-
-        console.log("progress object: ", progressObj[id]);
-        
         var amountViewed = progressObj[id].progress;
         var amountUnviewed = 1.00 - amountViewed;
         var unlocked = progressObj[id].unlocked;
-        console.log(progressObj[id].unlocked);
     
         var index = findNodeIndex(id);
         
@@ -2042,10 +2039,24 @@ function setDatasetProgress(progressObj) {
             //Update the dataset with new values
             dataset.nodes[index].typeData.progress[0].value = amountViewed;
             dataset.nodes[index].typeData.progress[1].value = amountUnviewed;
-              dataset.nodes[index].typeData.unlocked = unlocked ? true : false;
+            dataset.nodes[index].unlocked = unlocked ? true : false;
         }
     }
     return true;
+}
+
+/* For saving the "unlocked" status of the given node as true for the current user */
+function saveNodeAsUnlocked(node) {
+    dataset.nodes[node.nodeIndex].unlocked = true;
+    jQuery.post(USER_NODE_UNLOCKED_URL, {
+        "post_id": tapestryWpPostId,
+        "node_id": node.id,
+        "unlocked": true
+    })
+    .fail(function(e) {
+        console.error("Error with update user's node unlock property for node index", node.nodeIndex);
+        console.error(e);
+    });
 }
 
 /* For setting the "type" field of nodes in dataset */
@@ -2101,73 +2112,18 @@ function setLinkTypes(rootId) {
     }
 }
 
-/* For setting the "unlocked" field of nodes.typeData in dataset or a specific node (if a parameter is passed in) */
-function setUnlocked(childIndex) {
+/* For setting the "unlocked" field of nodes in dataset if logic shows node to be unlocked */
+function setUnlocked() {
+    console.log('HEREEEEE',dataset);
+    var parentIndex;
+    for (var i = 0; i < dataset.links.length; i++) {
+        
+        childIndex = findNodeIndex(dataset.links[i].target.id);
+        parentIndex = findNodeIndex(dataset.links[i].source.id);
 
-    if (typeof childIndex === 'undefined') {
-        console.log("yo");
-        console.log(dataset);
-        var parentIndex;
-        for (var i = 0; i < dataset.links.length; i++) {
-            
-            childIndex = findNodeIndex(dataset.links[i].target.id);
-            parentIndex = findNodeIndex(dataset.links[i].source.id);
-            // TODO move unlocked out of typeData
-
-            if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
-                dataset.nodes[childIndex].typeData.unlocked = null;
-
-                dataset.nodes[childIndex].typeData.unlocked = true;
-                console.log("typea",typeof dataset.nodes[childIndex].typeData.unlocked);
-
-//                 jQuery.post(USER_NODE_UNLOCKED_URL, {
-//                         "post_id": tapestryWpPostId,
-//                         "node_id": dataset.nodes[childIndex].id
-// //                        "unlocked": true
-//                     }).fail(function(e) {
-//                         console.error("Error with update node's unlock property");
-//                         console.error(e);
-//                     });
-            }
+        if (dataset.links[i].appearsAt <= (dataset.nodes[parentIndex].typeData.progress[0].value * dataset.nodes[parentIndex].mediaDuration)) {
+            dataset.nodes[childIndex].unlocked = true;
         }
-    }
-    else {
-        if (dataset.rootId === dataset.nodes[findNodeIndex(root)].id) {
-            console.log("made true");
-            dataset.nodes[childIndex].typeData.unlocked = true;
-        }
-    //     console.log(dataset);
-    //     dataset.nodes[0].typeData.unlocked = true;
-    //     jQuery.post(USER_NODE_UNLOCKED_URL, {
-    //         "post_id": tapestryWpPostId,
-    //         "node_id": dataset.nodes[0].id
-    // //            "unlocked": true
-    //     })
-    //     .fail(function(e) {
-    //         console.error("Error with update node's unlock property at parent node");
-    //         console.error(e);
-    //     });    
-
-        // TODO move unlocked out of typeData
-        console.log("yoyo");
-        console.log(dataset);
-        dataset.nodes[childIndex].typeData.unlocked = null;
-
-        dataset.nodes[childIndex].typeData.unlocked = true;
-        // jQuery.get(USER_NODE_UNLOCKED_URL, function (result){
-        //     console.log("URL " + result);
-        // });
-        jQuery.post(USER_NODE_UNLOCKED_URL, {
-            "post_id": tapestryWpPostId,
-            "node_id": dataset.nodes[childIndex].id
-//            "unlocked": true
-        }).fail(function(jqXHR, textStatus, errorThrown) {
-            console.error("Error with update node's unlock property");
-            console.error(jqXHR);
-            console.error(textStatus);
-            console.error(errorThrown);
-
-        });
     }
 }
 
@@ -2196,8 +2152,8 @@ function setAccessibleStatus(node, depth, parentNodeId, parentIsAccessible = tru
         if (parentNodeId != thisNode.id) {
             // If a node is accessible, only if it's unlocked and its parent is accessible
             
-            var isAccessible = ((thisNode.typeData.unlocked) && parentIsAccessible);
-            console.log("is it unlocked: ",thisNode.typeData.unlocked);
+            var isAccessible = ((thisNode.unlocked) && parentIsAccessible);
+            console.log("is it unlocked: ",thisNode.unlocked);
             console.log("parent is access: ",parentIsAccessible);
             console.log("is accessible: ",isAccessible);
             dataset.nodes[findNodeIndex(thisNode.id)].accessible = isAccessible;
