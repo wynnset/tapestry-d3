@@ -148,17 +148,37 @@ div.modal {
     opacity: 1;
     transition: all 1s;
     transition-timing-function: ease-in;
-    border: solid 1px #999;
-    border-radius: 40px;
+    box-shadow: 0 0 100px -40px #000;
+    border: solid 1px #ddd;
+    border-radius: 15px;
     overflow: hidden;
 }
+
+#spotlight-content[data-view-mode=true] {
+    box-shadow: none;
+    border-color: #999;
+}
+
+#spotlight-content[data-media-type=text] {
+    outline: none;
+    overflow: scroll;
+    background: #eee;
+    color: #333;
+    padding: 1em;
+}
+
 #spotlight-content > * {
     background: #000;
     outline: none;
 }
+
 #spotlight-content[data-media-format=mp4] > * {
     width: 100%;
     height: auto;
+}
+
+#spotlight-content[data-media-type=text]  > * {
+    background: transparent;
 }
 
 #spotlight-overlay {
@@ -171,6 +191,28 @@ div.modal {
 
 #tapestry-node-description-text {
     color: white;
+}
+
+/* Text Node Styling */
+#text-light-box-title > h3 {
+    margin: 1em 0 1em 15px;
+}
+
+#text-light-box-title > p {
+    font-size: 42px;
+    margin: 0.4em 0 0;
+    padding-left: 0.4em;
+}
+
+#text-light-box-paragraph {
+    font: 14px/1.7 "Source Sans Pro", sans-serif;
+    font-size: 16px;
+    color: #47425d;
+}
+
+#text-light-box-paragraph-text {
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
 .progress-meter .background {
@@ -245,6 +287,16 @@ div.modal {
     padding: 2px;
 }
 
+.mediaButton > i[data-media-type="text"]:not(.mediaButtonLoading) {
+    background: #666;
+    color: #fff;
+    font-size: 35px;
+    padding: 12px;
+}
+.mediaButton:hover > i[data-media-type="text"]:not(.mediaButtonLoading) {
+    background: #11a6d8;
+}
+
 .mediaButtonLoading {
     color: transparent;
     background-image: url(https://beta.tapestry-tool.com/wp-content/uploads/2018/11/loading-eclipse.svg);
@@ -256,7 +308,6 @@ div.modal {
     background-size: 98%;
     box-shadow: 0 0 0 2px #666 inset;
 }
-
 
 /* EDIT NODE BUTTON */
 .editNodeButton {
@@ -434,6 +485,14 @@ body {font-family: Arial, Helvetica, sans-serif;}
     background: #f1f1f1;
 }
 
+/* Full-width input fields */
+.form-container textarea {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0 22px 0;
+    background: #f1f1f1;
+}
+
 /* When the inputs get focus, do something */
 .form-container input[type=text]:focus, .form-container input[type=password]:focus {
     background-color: #ddd;
@@ -510,6 +569,7 @@ body {font-family: Arial, Helvetica, sans-serif;}
     color: #11a6d8;
 }
 
+<<<<<<< HEAD
 .form-container textarea {
     width: 100%;
     padding: 15px;
@@ -520,27 +580,56 @@ body {font-family: Arial, Helvetica, sans-serif;}
 /* Permissions Labels */
 #permissions-details {
     margin-top: 10%;
+=======
+.lightbox-form-section {
+    border-top: solid 1px #DDD;
+    margin: 20px -32px;
+    padding: 5px 32px;
+>>>>>>> master
 }
 
-#user-permissions-btn, #group-permissions-btn {
-    border-radius: 100px 100px 100px 100px;
+.lightbox-form-section > h4 {
+    margin: 2rem 0;
+}
+
+#contents-details {
+    margin-top: 1rem;
+}
+
+/* Permissions Labels */
+
+#permissions-details > table td {
+    border-color: #ddd;
+    background: #eee;
+}
+#permissions-details > table th {
+    border-color: #eee;
+    background: #fafafa;
+}
+#permissions-details > table tfoot td {
+    background: #ddd;
+}
+#permissions-details input#user-number-input {
+    width: 70px;
+}
+#user-permissions-btn, 
+#group-permissions-btn {
+    padding: 4px 1rem;
     color: white;
-}
-
-.permissions-btn-panel {
-    margin-top: 5%;
 }
 
 .permissions-plus {
     margin-right: 4px;
 }
 
-#permissions-details {
-    font-size: 15px;
-    font-weight: 500;
-    font-family: Arial, Helvetica, sans-serif;
-}
-
 input[type="checkbox"][disabled] {
     cursor: not-allowed;
+}
+
+#mediaFormat[disabled], #mediaType[disabled]{
+    cursor: not-allowed;
+}
+
+#locked-container {
+    margin-bottom: 10px;
 }
