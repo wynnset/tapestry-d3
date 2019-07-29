@@ -970,7 +970,7 @@ function addLink(source, target, value, appearsAt) {
 
 
 /* Delete or add fx and fy parameters depending on whether or not autoLayout is turned on */
-function coordAdjust() {
+function adjustCoordinates() {
     if (autoLayout) {
         d3.selectAll('g.node').each(function(d){
             delete d.fx;
@@ -990,7 +990,7 @@ function coordAdjust() {
 function startForce() {
 
     if (!inViewMode) {
-        coordAdjust();
+        adjustCoordinates();
     }
 
     var tapestryDimensions = getTapestryDimensions();
