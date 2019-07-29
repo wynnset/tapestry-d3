@@ -659,8 +659,8 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
             newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x; // x 
             newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50; // y
         } else if (!isRoot && !autoLayout) {
-            newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].x; // x 
-            newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].y + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50; // y
+            newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx; // x 
+            newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50; // y
         }
     }
 
@@ -972,15 +972,15 @@ function addLink(source, target, value, appearsAt) {
 /* Define forces that will determine the layout of the graph */
 function startForce() {
 
+    var nodes = dataset.nodes;
+    var tapestryDimensions = getTapestryDimensions();
+
     if (autoLayout) {
 
         d3.selectAll('g.node').each(function(d){
             delete d.fx;
             delete d.fy;
         });
-
-        var nodes = dataset.nodes;
-        var tapestryDimensions = getTapestryDimensions();
 
         simulation = d3.forceSimulation(nodes)
 
@@ -1014,56 +1014,118 @@ function startForce() {
             .nodes(dataset.nodes)
             .on("tick", ticked);
     } 
-    else {
-        startForce2();
+    else if (!autoLayout) {
+        for (var i=0; i < dataset.nodes.length; i++) {
+            if (dataset.nodes[i].coordinates) {
+                dataset.nodes[i].fx = dataset.nodes[i].coordinates.x;
+                dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
+            }
+        }
+        linkForce = d3.forceLink()
+            .id(function (d) {
+                return d.id;
+            });
+
+        collideForce = d3.forceCollide(
+            function (d) {
+                return getRadius(d) * 1.2;
+            });
+
+        simulation = d3.forceSimulation()
+            .force("link", linkForce)
+            .force("collide", collideForce)
+            .force("charge", d3.forceManyBody().strength(-5000))
+            .force("center", d3.forceCenter(tapestryDimensions.width/ 2, tapestryDimensions.height / 2));
+
+        simulation
+            .nodes(dataset.nodes)
+            .on("tick", ticked);
+
+        simulation
+            .force("link")
+            .links(dataset.links);
+        
+        simulation
+            .nodes(dataset.nodes)
+            .on("tick", ticked);
+    
+        simulation
+            .force("link")
+            .links(dataset.links);
+    
+    //    d3.select({}).transition().duration(TRANSITION_DURATION);
+
     }
     
 }
 
 /* Define forces that will determine the layout of the graph */
-function startForce2() {
+// function startForce2() {
 
-    for (var i=0; i < dataset.nodes.length; i++) {
-        if (dataset.nodes[i].coordinates) {
-            dataset.nodes[i].fx = dataset.nodes[i].coordinates.x;
-            dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
-        }
-    }
+//     for (var i=0; i < dataset.nodes.length; i++) {
+//         if (dataset.nodes[i].coordinates) {
+//             dataset.nodes[i].fx = dataset.nodes[i].coordinates.x;
+//             dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
+//         }
+//     }
+//         linkForce = d3.forceLink()
+//         .id(function (d) {
+//             return d.id;
+//         });
 
-    // d3.selectAll('g.node').each(function(d){
-    //     d.fx = d.x;
-    //     d.fy = d.y;
-    // });
+//     collideForce = d3.forceCollide(
+//         function (d) {
+//             return getRadius(d) * 1.2;
+//         });
 
-    var tapestryDimensions = getTapestryDimensions();
+//     simulation = d3.forceSimulation()
+//         .force("link", linkForce)
+//         .force("collide", collideForce)
+//         .force("charge", d3.forceManyBody().strength(-5000))
+//         .force("center", d3.forceCenter(tapestryDimensions.width/ 2, tapestryDimensions.height / 2));
 
-    linkForce = d3.forceLink()
-        .id(function (d) {
-            return d.id;
-        });
+//     simulation
+//         .nodes(dataset.nodes)
+//         .on("tick", ticked);
 
-    collideForce = d3.forceCollide(
-        function (d) {
-            return getRadius(d) * 1.2;
-        });
+//     simulation
+//         .force("link")
+//         .links(dataset.links);
 
-    simulation = d3.forceSimulation()
-        .force("link", linkForce)
-        .force("collide", collideForce)
-        .force("charge", d3.forceManyBody().strength(-5000))
-        .force("center", d3.forceCenter(tapestryDimensions.width/ 2, tapestryDimensions.height / 2));
+//     // d3.selectAll('g.node').each(function(d){
+//     //     d.fx = d.x;
+//     //     d.fy = d.y;
+//     // });
 
-    simulation
-        .nodes(dataset.nodes)
-        .on("tick", ticked);
+//     var tapestryDimensions = getTapestryDimensions();
 
-    simulation
-        .force("link")
-        .links(dataset.links);
+//     linkForce = d3.forceLink()
+//         .id(function (d) {
+//             return d.id;
+//         });
 
-    d3.select({}).transition().duration(TRANSITION_DURATION);
+//     collideForce = d3.forceCollide(
+//         function (d) {
+//             return getRadius(d) * 1.2;
+//         });
 
-}
+//     simulation = d3.forceSimulation()
+//         .force("link", linkForce)
+//         .force("collide", collideForce)
+//         .force("charge", d3.forceManyBody().strength(-5000))
+//         .force("center", d3.forceCenter(tapestryDimensions.width/ 2, tapestryDimensions.height / 2));
+
+//     simulation
+//         .nodes(dataset.nodes)
+//         .on("tick", ticked);
+
+//     simulation
+//         .force("link")
+//         .links(dataset.links);
+
+//     d3.select({}).transition().duration(TRANSITION_DURATION);
+
+// }
 
 //Resize all nodes, where id is now the root
 function resizeNodes(id) {
