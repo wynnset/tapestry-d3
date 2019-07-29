@@ -6,12 +6,12 @@
 
 var // declared constants
     TAPESTRY_CONTAINER_ID = "tapestry",
-    BIGCON = 2,
-    PROGRESS_THICKNESS = 20/BIGCON,
+    SIZING_CONSTANT = 2,
+    PROGRESS_THICKNESS = 20/SIZING_CONSTANT,
     LINK_THICKNESS = 6,
-    NORMAL_RADIUS = 140/BIGCON,
-    ROOT_RADIUS_DIFF = 70/BIGCON,
-    GRANDCHILD_RADIUS_DIFF = -100/BIGCON,
+    NORMAL_RADIUS = 140/SIZING_CONSTANT,
+    ROOT_RADIUS_DIFF = 70/SIZING_CONSTANT,
+    GRANDCHILD_RADIUS_DIFF = -100/SIZING_CONSTANT,
     TRANSITION_DURATION = 800,
     NODE_TEXT_RATIO = 5/6,
     COLOR_ACTIVE = "#11a6d8",
@@ -37,15 +37,13 @@ var // declared variables
     adjustedRadiusRatio = 1,                        // Radius adjusted for view mode
     tapestrySlug, 
     saveProgress = true, progressLastSaved = new Date(), // Saving Progress
-    enablePopupNodes = true, inViewMode = false,   // Pop-up nodes  // - ford
-    nodeImageHeight = 420/BIGCON,
-    nodeImageWidth = 780/BIGCON,
+    enablePopupNodes = true, inViewMode = false,   // Pop-up nodes
+    nodeImageHeight = 420/SIZING_CONSTANT,
+    nodeImageWidth = 780/SIZING_CONSTANT,
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {},
     tapestryDepth = 2,                              // Default depth of Tapestry
-    autoLayout = true,
-    linkForce,
-    collideForce;
+    autoLayout = true;
 
 var // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
@@ -80,7 +78,6 @@ jQuery.ajaxSetup({
     }
 });
 
-//$.getJSON( jsonUrl, function(result){
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;
@@ -88,17 +85,8 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
         dataset.nodes[0].typeData.unlocked = true;
     }
- //   if (!autoLayout) {
-
- //   }
-    // else if (autoLayout) {
-    //     for (var i=0; i < dataset.nodes.length; i++) {
-    //         console.log(dataset.nodes[i]);
-    //     }
-    // }
     originalDataset = result;
     saveCoordinates();
-
     NODE_DIMENSIONS = getNodesDimensions(dataset);
 
     //---------------------------------------------------
@@ -395,7 +383,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         $("#cancel-add-new-node").on("click", function() {
             tapestryHideAddNodeModal();
         });
-        hideShowDepthSlider(); // this was just added - ford
+        hideShowDepthSlider();
         
         $("#submit-edit-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
@@ -658,21 +646,20 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
 
     // Node ID exists, so edit case
     if (isEdit && autoLayout) {
-        newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x; // x
-        newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y; // y - ford
+        newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x;
+        newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y; 
     } else if (isEdit && !autoLayout) {
-        console.log("entered isEdit loop");
-        newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].x; // x
-        newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].y; // y - ford
+        newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].x; 
+        newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].y; 
     }
     else {
         if (!isRoot && autoLayout) {
             // Just put the node right under the current node
-            newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x; // x 
-            newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50; // y
+            newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x; 
+            newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
         } else if (!isRoot && !autoLayout) {
-            newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx; // x 
-            newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50; // y
+            newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx; 
+            newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
         }
     }
 
@@ -981,9 +968,10 @@ function addLink(source, target, value, appearsAt) {
  * D3 RELATED FUNCTIONS
  ****************************************************/
 
+
+/* Delete or add fx and fy parameters depending on whether or not autoLayout is turned on */
 function coordAdjust() {
     if (autoLayout) {
-
         d3.selectAll('g.node').each(function(d){
             delete d.fx;
             delete d.fy;
@@ -1006,18 +994,8 @@ function startForce() {
     }
 
     var tapestryDimensions = getTapestryDimensions();
-
     var nodes = dataset.nodes;
 
-
-    if (autoLayout) {
-
-        // d3.selectAll('g.node').each(function(d){
-        //     delete d.fx;
-        //     delete d.fy;
-        // });
-
-    
         simulation = d3.forceSimulation(nodes)
 
             // "charge" and forceManyBody determine the the repulsion/attraction strength
@@ -1049,116 +1027,7 @@ function startForce() {
         simulation
             .nodes(dataset.nodes)
             .on("tick", ticked);
-    } 
-    else if (!autoLayout) {
-        // if (!inViewMode) {
-
-        // }
-        linkForce = d3.forceLink()
-            .id(function (d) {
-                return d.id;
-            });
-
-        collideForce = d3.forceCollide(
-            function (d) {
-                return getRadius(d) * 1.2;
-            });
-
-        simulation = d3.forceSimulation()
-            .force("link", linkForce)
-            .force("collide", collideForce)
-            .force("charge", d3.forceManyBody().strength(-5000))
-            .force("center", d3.forceCenter(tapestryDimensions.width/ 2, tapestryDimensions.height / 2));
-
-        simulation
-            .nodes(dataset.nodes)
-            .on("tick", ticked);
-
-        simulation
-            .force("link")
-            .links(dataset.links);
-        
-        simulation
-            .nodes(dataset.nodes)
-            .on("tick", ticked);
-    
-        simulation
-            .force("link")
-            .links(dataset.links);
-    
-    //    d3.select({}).transition().duration(TRANSITION_DURATION);
-
-    }
-    
 }
-
-/* Define forces that will determine the layout of the graph */
-// function startForce2() {
-
-//     for (var i=0; i < dataset.nodes.length; i++) {
-//         if (dataset.nodes[i].coordinates) {
-//             dataset.nodes[i].fx = dataset.nodes[i].coordinates.x;
-//             dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
-//         }
-//     }
-//         linkForce = d3.forceLink()
-//         .id(function (d) {
-//             return d.id;
-//         });
-
-//     collideForce = d3.forceCollide(
-//         function (d) {
-//             return getRadius(d) * 1.2;
-//         });
-
-//     simulation = d3.forceSimulation()
-//         .force("link", linkForce)
-//         .force("collide", collideForce)
-//         .force("charge", d3.forceManyBody().strength(-5000))
-//         .force("center", d3.forceCenter(tapestryDimensions.width/ 2, tapestryDimensions.height / 2));
-
-//     simulation
-//         .nodes(dataset.nodes)
-//         .on("tick", ticked);
-
-//     simulation
-//         .force("link")
-//         .links(dataset.links);
-
-//     // d3.selectAll('g.node').each(function(d){
-//     //     d.fx = d.x;
-//     //     d.fy = d.y;
-//     // });
-
-//     var tapestryDimensions = getTapestryDimensions();
-
-//     linkForce = d3.forceLink()
-//         .id(function (d) {
-//             return d.id;
-//         });
-
-//     collideForce = d3.forceCollide(
-//         function (d) {
-//             return getRadius(d) * 1.2;
-//         });
-
-//     simulation = d3.forceSimulation()
-//         .force("link", linkForce)
-//         .force("collide", collideForce)
-//         .force("charge", d3.forceManyBody().strength(-5000))
-//         .force("center", d3.forceCenter(tapestryDimensions.width/ 2, tapestryDimensions.height / 2));
-
-//     simulation
-//         .nodes(dataset.nodes)
-//         .on("tick", ticked);
-
-//     simulation
-//         .force("link")
-//         .links(dataset.links);
-
-//     d3.select({}).transition().duration(TRANSITION_DURATION);
-
-// }
 
 //Resize all nodes, where id is now the root
 function resizeNodes(id) {
@@ -1207,7 +1076,6 @@ function dragstarted(d) {
     if (!d3.event.active) simulation.alphaTarget(0.2).restart();
 
     if (autoLayout) {
-        console.log("tapdim", tapestryDimensions);
         d.x = getBoundedCoord(d.x, tapestryDimensions.width);
         d.y = getBoundedCoord(d.y, tapestryDimensions.height);
     } else {
@@ -2243,7 +2111,6 @@ function createTextNodeElement(title, str) {
 
 // Builds the view mode, including functionality to
 function changeToViewMode(lightboxDimensions) {
-    console.log("entered changeToViewMode");
 
     if (!enablePopupNodes) {
         return;
@@ -2266,15 +2133,14 @@ function changeToViewMode(lightboxDimensions) {
                 d.fy = screenToSVG(0, $("#header").height() + NORMAL_RADIUS + ($("#spotlight-content").height() / 2)).y;
             }
         } else if (d.nodeType === "child") {
-            console.log("coco: ",coordinates[d.id])
-            d.fx = coordinates[d.id].x;
-            d.fy = coordinates[d.id].y;
+            d.fx = coordinates[d.id].fx;
+            d.fy = coordinates[d.id].fy;
         }
     });
 
     filterTapestry();
 
-  //  startForce();
+    startForce();
 }
 
 function getViewModeCoordinates(lightboxDimensions, children) {
@@ -2283,63 +2149,6 @@ function getViewModeCoordinates(lightboxDimensions, children) {
     var nodeSpace = (nodeRadius * 2);
 
     var coordinates = [];
-  //  if (autoLayout) {
-        // for (var i = 0; i < children.length; i++) {
-        //     if (children.length <= 2) {
-        //         if (lightboxDimensions.adjustedOn === "width") {
-        //             if (i % 2 === 0) {
-        //                 coordinates[children[i]] = {
-        //                     "x": 0,
-        //                     "y": getTapestryDimensions().height / 2
-        //                 };
-        //             } else {
-        //                 coordinates[children[i]] = {
-        //                     "x": screenToSVG(getBrowserWidth(), 0).x - nodeSpace,
-        //                     "y": getTapestryDimensions().height / 2
-        //                 };
-        //             }
-        //         } else {
-        //             if (i % 2 === 0) {
-        //                 coordinates[children[i]] = {
-        //                     "x": getTapestryDimensions().width / 2,
-        //                     "y": 0
-        //                 };
-        //             } else {
-        //                 coordinates[children[i]] = {
-        //                     "x": getTapestryDimensions().width / 2,
-        //                     "y": getTapestryDimensions().height - nodeSpace
-        //                 };
-        //             }
-        //         }
-        //     } else {
-        //         if (lightboxDimensions.adjustedOn === "width") {
-        //             if (i % 2 === 0) {
-        //                 coordinates[children[i]] = {
-        //                     "x": 0,
-        //                     "y": Math.min(screenToSVG(0, getBrowserHeight() * (i / (children.length - 1))).y + nodeRadius, getTapestryDimensions().height - nodeSpace)
-        //                 };
-        //             } else {
-        //                 coordinates[children[i]] = {
-        //                     "x": screenToSVG(getBrowserWidth(), 0).x - nodeSpace,
-        //                     "y": Math.min(screenToSVG(0, getBrowserHeight() * ((i-1) / (children.length - 1))).y + nodeRadius, getTapestryDimensions().height - nodeSpace)
-        //                 };
-        //             }
-        //         } else {
-        //             if (i % 2 === 0) {
-        //                 coordinates[children[i]] = {
-        //                     "x": Math.min(getTapestryDimensions().width * (i / (children.length - 1)) + nodeRadius, getTapestryDimensions().width - (nodeSpace * 2)),
-        //                     "y": 0
-        //                 };
-        //             } else {
-        //                 coordinates[children[i]] = {
-        //                     "x": Math.min(getTapestryDimensions().width * ((i - 1) / (children.length - 1)) + nodeRadius, getTapestryDimensions().width - (nodeSpace * 2)),
-        //                     "y": screenToSVG(0, (NORMAL_RADIUS * 1.5) + (NORMAL_RADIUS * 0.1) + $("#spotlight-content").height() + $(".mediaButtonIcon").height()).y
-        //                 };
-        //             }
-        //         }
-        //     }
-        // }
- //   } else {
         for (var i = 0; i < children.length; i++) {
             if (children.length <= 2) {
                 if (lightboxDimensions.adjustedOn === "width") {
@@ -2424,27 +2233,12 @@ function exitViewMode() {
 
     // For reapplying the coordinates of all the nodes prior to transitioning to play-mode
 
-    if (!autoLayout) {
-        for (var i in dataset.nodes) {
-            var id = dataset.nodes[i].id;
-            dataset.nodes[i].fx = nodeCoordinates[id].fx;
-            dataset.nodes[i].fy = nodeCoordinates[id].fy;
-        }
-    
+    if (!autoLayout) {    
         d3.selectAll('g.node')
             .transition()
             .duration(TRANSITION_DURATION)
             .attr("cx", function(d) { return d.fx; })
             .attr("cy", function(d) { return d.fy; });
-    }
-
-    if (autoLayout) {
-        d3.selectAll('g.node')
-            .each(function(d) {
-                d.fixed = false;
-                delete d.fx;
-                delete d.fy;
-            });
     }
 
     d3.selectAll('g.node')
@@ -2512,9 +2306,6 @@ function getNodesDimensions(dataset) {
             }
         }
     }
-
-  //  maxPointX = maxPointX / ratio;
-  //  maxPointY = maxPointY * ratio;
     
     return {
         'x': maxPointX + MAX_RADIUS,
@@ -3009,12 +2800,12 @@ function saveCoordinates() {
         var id = node.id;
         if (autoLayout) {
             nodeCoordinates[id] = {
-                "x": node.x, // fx & fy - ford
+                "x": node.x,
                 "y": node.y
             };
         } else {
             nodeCoordinates[id] = {
-                "fx": node.fx, // fx & fy - ford
+                "fx": node.fx,
                 "fy": node.fy
             };
         }
