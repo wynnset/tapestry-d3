@@ -260,8 +260,8 @@ div.modal {
     stroke-opacity: 5;
 }
 
-.link-lines:hover {
-    color: red;
+.link-lines{
+    cursor: pointer;
 }
 
 /* MEDIA BUTTON */

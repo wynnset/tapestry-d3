@@ -905,9 +905,63 @@ function addLink(source, target, value, appearsAt) {
     });
 }
 
-$(".link-lines").click(function(e) {
-    console.log("click event");
-});
+function deleteLink(source, target) {
+    var links = JSON.parse(JSON.stringify(dataset.links));
+    for (var i = 0; i < links.length; i++) {
+        if (links[i].source.id === source && links[i].target.id === target) {
+            links.splice(i, 1);
+
+            var graph = buildGraph(links);
+
+            // Check if there is a path from root to source and root to target, if true then we can delete the link
+            if (hasPathBetweenNodes(dataset.rootId, source, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours) &&
+                hasPathBetweenNodes(dataset.rootId, target, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours)) {
+                // TODO: call endpoint
+                dataset.links = links;
+                redrawTapestryWithNewNode();
+            } else {
+                alert("Link cannot be removed.");
+            }
+        }
+    }
+}
+
+// Set up neighbors and visited for BFS traversal
+function buildGraph(links) {
+    var graph = {};
+    graph.visited = {};
+    graph.neighbours = {};
+
+    for (var j = 0; j < dataset.nodes.length; j++) {
+        graph.visited[dataset.nodes[j].id] = false;
+        graph.neighbours[dataset.nodes[j].id] = [];
+    }
+
+    for (var k = 0; k < links.length; k++) {
+        graph.neighbours[links[k].source.id].push(links[k].target.id);
+        graph.neighbours[links[k].target.id].push(links[k].source.id);
+    }
+    return graph;
+}
+
+// Checks if there is a path between the source and target nodes
+function hasPathBetweenNodes(startNode, targetNode, visited, graph) {
+    if (startNode === targetNode) {
+        return true;
+    }
+    var foundNode = false;
+    if (!visited[startNode]) {
+        visited[startNode] = true;
+        for (var i = 0; i < graph[startNode].length; i++) {
+            if (!visited[graph[startNode][i]]) {
+                currentChild = hasPathBetweenNodes(graph[startNode][i], targetNode, visited, graph);
+                foundNode = currentChild || foundNode;
+            }
+        }
+    }
+
+    return foundNode;
+}
 
 /****************************************************
  * D3 RELATED FUNCTIONS
@@ -1068,10 +1122,30 @@ function createLinks() {
                         else return "";
                     })
                     .attr("class", function(d) {
-                        return "link-lines"
+                        return "link-lines";
+                    })
+                    .attr("id", function(d) {
+                        return "link-lines-" + d.source.id + "-" + d.target.id;
                     })
                     .on("click", function(d) {
-                        console.log("hello");
+                        var result = confirm("Are you sure you want to delete this link? (" + dataset.nodes[findNodeIndex(d.source.id)].title + "-" + dataset.nodes[findNodeIndex(d.target.id)].title + ")");
+                        if (result) {
+                            deleteLink(d.source.id, d.target.id);
+                        }
+                    })
+                    .on("mouseover", function(d) {
+                        $("#link-lines-" + d.source.id + "-" + d.target.id).attr("stroke", "red");
+                        $("#link-lines-" + d.source.id + "-" + d.target.id).attr("stroke-width", LINK_THICKNESS + 5);
+                    })
+                    .on("mouseout", function(d) {
+                        $("#link-lines-" + d.source.id + "-" + d.target.id).attr("stroke", function (d) {
+                            if (d.type === "grandchild")
+                                return COLOR_GRANDCHILD;
+                            else if (d.secondary)
+                                return COLOR_SECONDARY_LINK;
+                            else return COLOR_LINK;
+                        });
+                        $("#link-lines-" + d.source.id + "-" + d.target.id).attr("stroke-width", LINK_THICKNESS);
                     })
                     .attr("stroke-width", LINK_THICKNESS);
 }
