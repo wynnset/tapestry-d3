@@ -37,13 +37,13 @@ var // declared variables
     adjustedRadiusRatio = 1,                        // Radius adjusted for view mode
     tapestrySlug, 
     saveProgress = true, progressLastSaved = new Date(), // Saving Progress
-    enablePopupNodes = false, inViewMode = false,   // Pop-up nodes
+    enablePopupNodes = true, inViewMode = false,   // Pop-up nodes  // - ford
     nodeImageHeight = 420/BIGCON,
     nodeImageWidth = 780/BIGCON,
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {},
     tapestryDepth = 2,                              // Default depth of Tapestry
-    autoLayout = false,
+    autoLayout = true,
     linkForce,
     collideForce;
 
@@ -981,19 +981,43 @@ function addLink(source, target, value, appearsAt) {
  * D3 RELATED FUNCTIONS
  ****************************************************/
 
-/* Define forces that will determine the layout of the graph */
-function startForce() {
-
-    var nodes = dataset.nodes;
-    var tapestryDimensions = getTapestryDimensions();
-
+function coordAdjust() {
     if (autoLayout) {
 
         d3.selectAll('g.node').each(function(d){
             delete d.fx;
             delete d.fy;
         });
+    } else if (!autoLayout) {
+        for (var i=0; i < dataset.nodes.length; i++) {
+            if (dataset.nodes[i].coordinates) {
+                dataset.nodes[i].fx = dataset.nodes[i].coordinates.x;
+                dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
+            }
+        }
+    }
+}
 
+/* Define forces that will determine the layout of the graph */
+function startForce() {
+
+    if (!inViewMode) {
+        coordAdjust();
+    }
+
+    var tapestryDimensions = getTapestryDimensions();
+
+    var nodes = dataset.nodes;
+
+
+    if (autoLayout) {
+
+        // d3.selectAll('g.node').each(function(d){
+        //     delete d.fx;
+        //     delete d.fy;
+        // });
+
+    
         simulation = d3.forceSimulation(nodes)
 
             // "charge" and forceManyBody determine the the repulsion/attraction strength
@@ -1027,12 +1051,9 @@ function startForce() {
             .on("tick", ticked);
     } 
     else if (!autoLayout) {
-        for (var i=0; i < dataset.nodes.length; i++) {
-            if (dataset.nodes[i].coordinates) {
-                dataset.nodes[i].fx = dataset.nodes[i].coordinates.x;
-                dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
-            }
-        }
+        // if (!inViewMode) {
+
+        // }
         linkForce = d3.forceLink()
             .id(function (d) {
                 return d.id;
@@ -2222,6 +2243,7 @@ function createTextNodeElement(title, str) {
 
 // Builds the view mode, including functionality to
 function changeToViewMode(lightboxDimensions) {
+    console.log("entered changeToViewMode");
 
     if (!enablePopupNodes) {
         return;
@@ -2244,6 +2266,7 @@ function changeToViewMode(lightboxDimensions) {
                 d.fy = screenToSVG(0, $("#header").height() + NORMAL_RADIUS + ($("#spotlight-content").height() / 2)).y;
             }
         } else if (d.nodeType === "child") {
+            console.log("coco: ",coordinates[d.id])
             d.fx = coordinates[d.id].x;
             d.fy = coordinates[d.id].y;
         }
@@ -2490,8 +2513,8 @@ function getNodesDimensions(dataset) {
         }
     }
 
-    maxPointX = maxPointX / ratio;
-    maxPointY = maxPointY * ratio;
+  //  maxPointX = maxPointX / ratio;
+  //  maxPointY = maxPointY * ratio;
     
     return {
         'x': maxPointX + MAX_RADIUS,
