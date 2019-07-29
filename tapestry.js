@@ -2168,7 +2168,7 @@ function createLightBoxFooter(description, mediaType) {
         var descriptionContent = document.createElement("div");
         if (mediaType === "text") {
             var hr = document.createElement("hr");
-            hr.setAttribute("id", "tapestry-text-node-hr")
+            hr.setAttribute("id", "tapestry-text-node-hr");
             descriptionContent.append(hr);
         }
         var descriptionText = document.createElement("p");
