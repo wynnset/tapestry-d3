@@ -6,11 +6,12 @@
 
 var // declared constants
     TAPESTRY_CONTAINER_ID = "tapestry",
-    PROGRESS_THICKNESS = 20,
-    LINK_THICKNESS = 6,
-    NORMAL_RADIUS = 140,
-    ROOT_RADIUS_DIFF = 70,
-    GRANDCHILD_RADIUS_DIFF = -100,
+    SIZING_CONSTANT = 2,
+    PROGRESS_THICKNESS = 20/SIZING_CONSTANT,
+    LINK_THICKNESS = 6/SIZING_CONSTANT,
+    NORMAL_RADIUS = 140/SIZING_CONSTANT,
+    ROOT_RADIUS_DIFF = 70/SIZING_CONSTANT,
+    GRANDCHILD_RADIUS_DIFF = -100/SIZING_CONSTANT,
     TRANSITION_DURATION = 800,
     NODE_TEXT_RATIO = 5/6,
     COLOR_ACTIVE = "#11a6d8",
@@ -36,8 +37,8 @@ var // declared variables
     tapestrySlug, 
     saveProgress = true, progressLastSaved = new Date(), // Saving Progress
     enablePopupNodes = false, inViewMode = false,   // Pop-up nodes
-    nodeImageHeight = 420,
-    nodeImageWidth = 780,
+    nodeImageHeight = 420/SIZING_CONSTANT,
+    nodeImageWidth = 780/SIZING_CONSTANT,
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {},
     tapestryDepth = 2;                              // Default depth of Tapestry
