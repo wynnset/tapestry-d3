@@ -249,6 +249,17 @@ hideShowDepthSlider(); // run it now (we will also run it later when tapestry is
 tapestryDepthSlider.onchange = function() {
     tapestryDepth = this.value;
 
+    var nodes = dataset.nodes
+
+    var nodesToShow = nodes.filter(function (d) {
+        return getViewable(d);
+    });
+
+    SIZING_CONSTANT = nodesToShow.length;
+
+    console.log(SIZING_CONSTANT);
+
+
     setNodeTypes(root);
     setLinkTypes(root);
 
