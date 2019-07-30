@@ -737,7 +737,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
                     url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + newId + "/permissions",
                     method: 'PUT',
                     data: JSON.stringify(permissionData),
-                    success: function(result) {
+                    complete: function(result) {
                         // Redraw root node
                         dataset.rootId = newId;
                         tapestryHideAddNodeModal();
@@ -818,7 +818,6 @@ function redrawTapestryWithNewNode(isRoot) {
     setLinkTypes(root);
     setUnlocked();
     setAccessibleStatus();
-
 
     // Rebuild the nodes and links
     links = createLinks();
@@ -1220,7 +1219,11 @@ function buildNodeContents() {
         });
 
     nodes.append("circle")
-        .attr("class", "imageOverlay")
+        .attr("class", function (d) {
+            if (d.nodeType === "grandchild")
+                return "imageOverlay expandGrandchildren";
+            return "imageOverlay";
+        })
         .attr("data-id", function (d) {
             return d.id;
         })
@@ -1311,6 +1314,11 @@ function rebuildNodeContents() {
                     return rad - (PROGRESS_THICKNESS * adjustedRadiusRatio)/2;
                 else
                     return 0;
+            })
+            .attr("class", function (d) {
+                if (d.nodeType === "grandchild")
+                    return "imageOverlay expandGrandchildren";
+                return "imageOverlay";
             })
             .attr("fill", function (d) {
                 if (!getViewable(d)) {
@@ -1424,6 +1432,8 @@ function buildPathAndButton() {
             .html(function(d){
                 return "<p>" + d.title + "</p>";
             });
+        
+    updateViewedProgress();
 
     // Append mediaButton
     nodes
@@ -1432,8 +1442,7 @@ function buildPathAndButton() {
         })
         .append("svg:foreignObject")
         .html(function (d) {
-            var mediaHTML = "";
-            mediaHTML += '<i id="mediaButtonIcon' + d.id + '"' +
+            return '<i id="mediaButtonIcon' + d.id + '"' + 
                 ' class="' + getIconClass(d.mediaType, 'play') + ' mediaButtonIcon"' +
                 ' data-id="' + d.id + '"' + 
                 ' data-format="' + d.mediaFormat + '"' + 
@@ -1442,7 +1451,6 @@ function buildPathAndButton() {
                 ' data-url="' + (d.typeData.mediaURL ? d.typeData.mediaURL : '') + '"' +
                 ' data-media-width="' + d.typeData.mediaWidth + '"' + 
                 ' data-media-height="' + d.typeData.mediaHeight + '"><\/i>';
-            return mediaHTML;
         })
         .attr("id", function (d) {
             return "mediaButton" + d.id;
@@ -1629,9 +1637,6 @@ function buildPathAndButton() {
 
 function updateViewedProgress() {
     path = nodes
-        .filter(function (d) {
-            return d.nodeType !== "" && d.unlocked;
-        })
         .selectAll("path")
         .data(function (d, i) {
             var data = d.typeData.progress;
@@ -1646,16 +1651,14 @@ function updateViewedProgress() {
     path.enter()
         .append("path")
         .attr("fill", function (d, i) {
-            if (d.data.group !== "viewed") return "transparent";
-
-            var viewableByUser = true;
-            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "" || !d.data.extra.unlocked || !viewableByUser)
+            if (d.data.group !== "viewed" || !getViewable(d)) 
+                return "transparent";
+            else if (d.data.extra.nodeType === "grandchild")
                 return "#cad7dc";
             else return "#11a6d8";
         })
         .attr("class", function (d) {
-            var viewableByUser = true;
-            if (d.data.extra.nodeType === "grandchild" || d.data.extra.nodeType === "" || !d.data.extra.unlocked || !viewableByUser)
+            if (d.data.extra.nodeType === "grandchild")
                 return "expandGrandchildren";
         })
         .attr("d", function (d) {
@@ -1850,17 +1853,15 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
             
             // Update the progress circle for this video
             video.addEventListener('timeupdate', function () {
-                if (video.played.length > 0 && viewedAmount < video.currentTime) {
-                    for (var i = 0; i < childrenData.length; i++) {
-                        if (Math.abs(childrenData[i].appearsAt - video.currentTime) <= NODE_UNLOCK_TIMEFRAME && video.paused === false && !dataset.nodes[childrenData[i].nodeIndex].unlocked) {
-                            saveNodeAsUnlocked(childrenData[i]);
-                            setAccessibleStatus();
-                            filterTapestry();
-                        }
+                for (var i = 0; i < childrenData.length; i++) {
+                    if (Math.abs(childrenData[i].appearsAt - video.currentTime) <= NODE_UNLOCK_TIMEFRAME && video.paused === false && !dataset.nodes[childrenData[i].nodeIndex].unlocked) {
+                        saveNodeAsUnlocked(childrenData[i]);
+                        setAccessibleStatus();
+                        filterTapestry();
                     }
-                    updateViewedValue(id, video.currentTime, video.duration);
-                    updateViewedProgress();
                 }
+                updateViewedValue(id, video.currentTime, video.duration);
+                updateViewedProgress();
             });
 
             // Play the video at the last watched time (or at the beginning if not watched yet)
@@ -2279,7 +2280,6 @@ function getBoundedCoord(coord, maxCoord) {
 
 /* Add 'depth' parameter to each node recursively. 
     The depth is determined by the number of levels from the root each node is. */
-
 function addDepthToNodes(id, depth, visited) {
     visited.push(id);
 
@@ -2324,7 +2324,6 @@ function addDepthToNodes(id, depth, visited) {
 }
 
 /* Return the distance between a node and its farthest descendant node */
-
 function findMaxDepth(id) {
 
     if ((dataset && dataset.nodes.length === 0) || !id)  {
@@ -2355,7 +2354,6 @@ function findMaxDepth(id) {
 
 /* Find children based on depth. 
     depth = 0 returns node + children, depth = 1 returns node + children + children's children, etc. */
-
 function getChildren(id, depth) {
     if (typeof depth === 'undefined') {
         depth = tapestryDepth;
@@ -2611,9 +2609,9 @@ function setAccessibleStatus(node, depth, parentNodeId, parentIsAccessible = tru
         node = dataset.nodes[findNodeIndex(dataset.rootId)];
     }
 
-    // If no depth passed in, assume tapestry depth
+    // If no node passed in, use max depth
     if (typeof depth == "undefined") {
-        depth = tapestryDepth;
+        depth = findMaxDepth(root);
     }
 
     getChildren(node.id, 1).forEach (childNodeId => {
@@ -2621,8 +2619,7 @@ function setAccessibleStatus(node, depth, parentNodeId, parentIsAccessible = tru
 
         // Do not traverse up the parent
         if (parentNodeId != thisNode.id) {
-            // If a node is accessible, only if it's unlocked and its parent is accessible
-            
+            // A node is accessible only if it's unlocked and its parent is accessible
             var isAccessible = thisNode.unlocked && parentIsAccessible;
             dataset.nodes[findNodeIndex(thisNode.id)].accessible = isAccessible;
             if (depth > 0) {
