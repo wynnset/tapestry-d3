@@ -359,6 +359,13 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         $("#cancel-add-new-node").on("click", function() {
             tapestryHideAddNodeModal();
         });
+
+        $("#tapestry-delete-node").on("click", function() {
+            var result = confirm("Are you sure you want to delete this node?");
+            if (result) {
+                console.log("delete");
+            }
+        });
         
         $("#submit-edit-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
@@ -1114,6 +1121,7 @@ function createLinks() {
                             return COLOR_SECONDARY_LINK;
                         else return COLOR_LINK;
                     })
+                    .attr("stroke-width", LINK_THICKNESS)
                     .attr("style", function(d){
                         if (d.type === "")
                             return "display: none"
@@ -1146,8 +1154,7 @@ function createLinks() {
                             else return COLOR_LINK;
                         });
                         $("#link-lines-" + d.source.id + "-" + d.target.id).attr("stroke-width", LINK_THICKNESS);
-                    })
-                    .attr("stroke-width", LINK_THICKNESS);
+                    });
 }
 
 function createNodes() {
