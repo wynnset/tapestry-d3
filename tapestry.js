@@ -6,12 +6,11 @@
 
 var // declared constants
     TAPESTRY_CONTAINER_ID = "tapestry",
-    SIZING_CONSTANT = 2,
-    PROGRESS_THICKNESS = 20/SIZING_CONSTANT,
-    LINK_THICKNESS = 6/SIZING_CONSTANT,
-    NORMAL_RADIUS = 140/SIZING_CONSTANT,
-    ROOT_RADIUS_DIFF = 70/SIZING_CONSTANT,
-    GRANDCHILD_RADIUS_DIFF = -100/SIZING_CONSTANT,
+    PROGRESS_THICKNESS = 20,
+    LINK_THICKNESS = 6,
+    NORMAL_RADIUS = 140,
+    ROOT_RADIUS_DIFF = 70,
+    GRANDCHILD_RADIUS_DIFF = -100,
     TRANSITION_DURATION = 800,
     NODE_TEXT_RATIO = 5/6,
     COLOR_ACTIVE = "#11a6d8",
@@ -37,8 +36,8 @@ var // declared variables
     tapestrySlug, 
     saveProgress = true, progressLastSaved = new Date(), // Saving Progress
     enablePopupNodes = false, inViewMode = false,   // Pop-up nodes
-    nodeImageHeight = 420/SIZING_CONSTANT,
-    nodeImageWidth = 780/SIZING_CONSTANT,
+    nodeImageHeight = 420,
+    nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {},
     tapestryDepth = 2;                              // Default depth of Tapestry
@@ -94,6 +93,7 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     }
     originalDataset = dataset;
     saveCoordinates();
+
 
     //---------------------------------------------------
     // 1. GET PROGRESS FROM DATABASE OR COOKIE (IF ENABLED)
@@ -1119,6 +1119,7 @@ function createNodes() {
  * @param {boolean} freshBuild If true, calls buildNodeContents() after done; otherwise calls rebuildNodeContents()
  */
 function filterTapestry(freshBuild=false) {
+    cruncher(2);
 
     // Show Links
 
@@ -2175,6 +2176,23 @@ function exitViewMode() {
 /****************************************************
  * HELPER FUNCTIONS
  ****************************************************/
+
+// set multiple things
+function cruncher(sizeCon) {
+
+    PROGRESS_THICKNESS = 20/sizeCon,
+    LINK_THICKNESS = 6/sizeCon,
+    NORMAL_RADIUS = 140/sizeCon,
+    ROOT_RADIUS_DIFF = 70/sizeCon,
+    GRANDCHILD_RADIUS_DIFF = -100/sizeCon,
+
+    nodeImageHeight = 420/sizeCon;
+    nodeImageWidth = 780/sizeCon;
+
+    MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
+    innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
+    outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2);
+}
 
 // Set multiple attributes for an HTML element at once
 function setAttributes(elem, obj) {
