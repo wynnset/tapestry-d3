@@ -21,6 +21,7 @@ var // declared constants
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
     TIME_BETWEEN_SAVE_PROGRESS = 5, // Means the number of seconds between each save progress call
     NODE_UNLOCK_TIMEFRAME = 2, // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
+    API_PUT_METHOD = 'PUT',
     USER_NODE_PROGRESS_URL = apiUrl + "/users/progress",
     USER_NODE_UNLOCKED_URL = apiUrl + "/users/unlocked",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings",
@@ -76,11 +77,15 @@ jQuery.ajaxSetup({
 });
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
-    dataset = result;
+    dataset = result;	
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
-        // always unlock root node
         for (var i=0; i<dataset.nodes.length; i++) {
+        	// change http:// to https:// in media URLs with // so it can work on both protocols without giving insecure content warnings
+			if (typeof dataset.nodes[i].typeData != "undefined" && typeof dataset.nodes[i].typeData.mediaURL != "undefined" && dataset.nodes[i].typeData.mediaURL.length > 0) {
+				dataset.nodes[i].typeData.mediaURL = dataset.nodes[i].typeData.mediaURL.replace(/(http(s?)):\/\//gi, '//');
+			}
+            // always unlock root node
             if (dataset.nodes[i].id == dataset.rootId) {
                 dataset.nodes[i].unlocked = true;
                 break;
@@ -131,7 +136,6 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
             if (cookieProgress) {
                 cookieProgress = JSON.parse( cookieProgress );
                 setDatasetProgress(cookieProgress);	
-                init();
             }
 
             // Update H5P Video Settings from cookie (if any)
@@ -140,6 +144,8 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
                 cookieH5PVideoSettings = JSON.parse( cookieH5PVideoSettings );
                 h5pVideoSettings = cookieH5PVideoSettings;
             }
+
+            init();
         }
     }
     else {
@@ -735,7 +741,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
                 var newId = result.id;
                 $.ajax({
                     url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + newId + "/permissions",
-                    method: 'PUT',
+                    method: API_PUT_METHOD,
                     data: JSON.stringify(permissionData),
                     complete: function(result) {
                         // Redraw root node
@@ -759,7 +765,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
         // Call endpoint for editing node
         $.ajax({
             url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + root,
-            method: 'PUT',
+            method: API_PUT_METHOD,
             data: JSON.stringify(newNodeEntry),
             success: function(result) {
                 newNodeEntry.id = result.id;
@@ -1018,7 +1024,7 @@ function dragended(d) {
     if (tapestryWpIsAdmin) {
         $.ajax({
             url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + d.id + "/coordinates",
-            method: 'PUT',
+            method: API_PUT_METHOD,
             data: JSON.stringify({x: d.x, y: d.y}),
             success: function(result) {
                 d.fx = d.x;
@@ -2719,7 +2725,9 @@ function closeLightbox(id, mediaType) {
         var h5pObj = document.getElementById('h5p').contentWindow.H5P;
         if (h5pObj !== undefined && mediaType == "video") {
             var h5pVideo = h5pObj.instances[0].video;
-            h5pVideo.pause();
+            if (typeof h5pVideo != "undefined" && typeof h5pVideo.pause !== "undefined") {
+            	h5pVideo.pause();
+			}
         }
     }
     
