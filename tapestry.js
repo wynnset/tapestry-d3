@@ -923,9 +923,18 @@ function deleteLink(source, target) {
             // Check if there is a path from root to source and root to target, if true then we can delete the link
             if (hasPathBetweenNodes(dataset.rootId, source, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours) &&
                 hasPathBetweenNodes(dataset.rootId, target, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours)) {
-                // TODO: call endpoint
-                dataset.links = links;
-                redrawTapestryWithNewNode();
+                $.ajax({
+                    url: apiUrl + "/tapestries/" + tapestryWpPostId + "/links/",
+                    method: 'PUT',
+                    data: JSON.stringify(links),
+                    success: function(result) {
+                        dataset.links = links;
+                        redrawTapestryWithNewNode();
+                    },
+                    error: function(e) {
+                        console.error("Error removing link", e);
+                    }
+                });
             } else {
                 alert("Link cannot be removed.");
             }
