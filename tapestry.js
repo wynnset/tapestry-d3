@@ -1740,12 +1740,6 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     }
 
     media.appendTo('#spotlight-content');
-    // Append the footer to lightbox
-    if (mediaType === "text") {
-        $("#text-light-box-content").append(createLightBoxFooter(dataset.nodes[findNodeIndex(id)].description, mediaType));
-    } else {
-        $('#spotlight-content').append(createLightBoxFooter(dataset.nodes[findNodeIndex(id)].description, mediaType));
-    }
 
     $('<a class="lightbox-close">X</a>')
         .css({
@@ -1778,9 +1772,9 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
             changeToViewMode(lightboxDimensions);
             window.setTimeout(function(){
                 height = $('#spotlight-content > *').outerHeight();
-                width = $('#spotlight-content').outerWidth();
+                width = $('#spotlight-content > *').outerWidth();
 
-                $('#spotlight-content > *').css({
+                $('#spotlight-content').css({
                     width: width,
                     height: height,
                     transitionDuration: "0.2s"
@@ -2013,7 +2007,6 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
 
 function createTextNodeElement(title, str) {
     var lightboxContent = document.createElement("div");
-    lightboxContent.setAttribute("id", "text-light-box-content");
     var titleSection = document.createElement("div");
     titleSection.setAttribute("id", "text-light-box-title");
 
@@ -2183,22 +2176,23 @@ function exitViewMode() {
     startForce();
 }
 
-function createLightBoxFooter(description, mediaType) {
-    if (description) {
-        var descriptionContent = document.createElement("div");
-        if (mediaType === "text") {
-            var hr = document.createElement("hr");
-            hr.setAttribute("id", "tapestry-text-node-hr");
-            descriptionContent.append(hr);
-        }
-        var descriptionText = document.createElement("p");
-        descriptionText.setAttribute("id", "tapestry-node-description-text");
-        descriptionText.setAttribute("data-media-type", mediaType);
-        descriptionText.appendChild(document.createTextNode(description));
-        descriptionContent.append(descriptionText);
-        return descriptionContent;
-    }
-}
+// Comment out because we want to add description to sidebar now
+// function createLightBoxFooter(description, mediaType) {
+//     if (description) {
+//         var descriptionContent = document.createElement("div");
+//         if (mediaType === "text") {
+//             var hr = document.createElement("hr");
+//             hr.setAttribute("id", "tapestry-text-node-hr");
+//             descriptionContent.append(hr);
+//         }
+//         var descriptionText = document.createElement("p");
+//         descriptionText.setAttribute("id", "tapestry-node-description-text");
+//         descriptionText.setAttribute("data-media-type", mediaType);
+//         descriptionText.appendChild(document.createTextNode(description));
+//         descriptionContent.append(descriptionText);
+//         return descriptionContent;
+//     }
+// }
 
 /****************************************************
  * HELPER FUNCTIONS
