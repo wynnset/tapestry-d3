@@ -1119,7 +1119,8 @@ function createNodes() {
  * @param {boolean} freshBuild If true, calls buildNodeContents() after done; otherwise calls rebuildNodeContents()
  */
 function filterTapestry(freshBuild=false) {
-    cruncher(2);
+
+    changeConstants();
 
     // Show Links
 
@@ -2178,16 +2179,30 @@ function exitViewMode() {
  ****************************************************/
 
 // set multiple things
-function cruncher(sizeCon) {
+function changeConstants() {
 
-    PROGRESS_THICKNESS = 20/sizeCon,
-    LINK_THICKNESS = 6/sizeCon,
-    NORMAL_RADIUS = 140/sizeCon,
-    ROOT_RADIUS_DIFF = 70/sizeCon,
-    GRANDCHILD_RADIUS_DIFF = -100/sizeCon,
+    var nodesToShow = nodes.filter(function (d) {
+        return getViewable(d);
+    });
+    
+    var viewable = 0;
 
-    nodeImageHeight = 420/sizeCon;
-    nodeImageWidth = 780/sizeCon;
+    for (i = 0; i < nodesToShow._groups[0].length; i++) {
+        viewable = viewable + 1;
+    }
+
+    viewable *= 0.6
+
+    console.log(viewable);
+
+    PROGRESS_THICKNESS = 20/viewable,
+    LINK_THICKNESS = 6/viewable,
+    NORMAL_RADIUS = 140/viewable,
+    ROOT_RADIUS_DIFF = 70/viewable,
+    GRANDCHILD_RADIUS_DIFF = -100/viewable,
+
+    nodeImageHeight = 420/viewable;
+    nodeImageWidth = 780/viewable;
 
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
     innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
