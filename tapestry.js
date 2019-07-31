@@ -1393,20 +1393,6 @@ function rebuildNodeContents() {
         buildPathAndButton();
     }, TRANSITION_DURATION);
 
-    $(document).ready(function() {
-        titles = document.getElementsByClassName("title");
-
-        console.log(titles);
-
-        for (i = 0; i < titles.length; i++) {
-            titles[i].style.fontSize = "10px"
-        }
-    
-        var buttons = document.querySelectorAll('.fas fa-bars mediaButtonIcon,.fas fa-pen-square editNodeIcon,.fas fa-plus-circle addNodeIcon');
-    
-        console.log(buttons);
-    });
-
 }
 
 function buildPathAndButton() {
@@ -2230,15 +2216,10 @@ function changeConstants() {
 
 function alterText() {
 
-    var defaultFont = 30;
-
     var nodeNumber = getNodeNumber();
-
-    var newFont = defaultFont/nodeNumber;
-
+    var newFont = 40/nodeNumber;
     var titles;
-
-    var dongle = newFont.toString + "px"
+    var dongle = newFont.toString() + "px"
 
 
     $(document).ready(function() {
@@ -2250,9 +2231,16 @@ function alterText() {
             titles[i].style.fontSize = dongle;
         }
     
-        var buttons = document.querySelectorAll('.fas fa-bars mediaButtonIcon,.fas fa-pen-square editNodeIcon,.fas fa-plus-circle addNodeIcon');
-    
-        console.log(buttons);
+      //  var buttons = document.querySelectorAll(,,');
+        
+        var doob = document.getElementsByClassName('mediaButtonIcon');
+        var toob = document.getElementsByClassName('editNodeIcon');
+        var noob = document.getElementsByClassName('addNodeIcon');
+
+        toob[0].style.fontSize = dongle;
+        noob[0].style.fontSize = dongle;
+
+        console.log(doob,toob,noob);
     });
 
 }
