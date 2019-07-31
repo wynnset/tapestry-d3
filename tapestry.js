@@ -2215,6 +2215,10 @@ function alterText() {
 
     console.log(titles);
 
+    var buttons = document.querySelectorAll('.fas fa-bars mediaButtonIcon,.fas fa-pen-square editNodeIcon,.fas fa-plus-circle addNodeIcon');
+
+    console.log(buttons);
+
     for (i = 0; i < titles.length; i++) {
         console.log(titles[i].innerHTML);
         titles[i].style.fontSize = "10px"
