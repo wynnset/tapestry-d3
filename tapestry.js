@@ -2182,19 +2182,21 @@ function exitViewMode() {
 function changeConstants() {
 
     var nodesToShow = nodes.filter(function (d) {
-        return getViewable(d);
+        return getViewable(d) && d.nodeType != "grandchild";
     });
-    
+
     var viewable = 0;
 
     for (i = 0; i < nodesToShow._groups[0].length; i++) {
         viewable = viewable + 1;
     }
 
+    console.log(viewable);
+
     viewable *= 0.6
 
-    if (viewable == 0) {
-        viewable = 2;
+    if (viewable < 1.8) {
+        viewable = 1.8;
     }
 
     PROGRESS_THICKNESS = 20/viewable,
