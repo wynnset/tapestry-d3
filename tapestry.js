@@ -1172,6 +1172,8 @@ function filterTapestry(freshBuild=false) {
     else {
         rebuildNodeContents();
     }
+
+    alterText();
 }
 
 /* Draws the components that make up node */
@@ -1301,6 +1303,9 @@ function buildNodeContents() {
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
         });
+
+    alterText();
+
 }
 
 function rebuildNodeContents() {
@@ -1392,6 +1397,8 @@ function rebuildNodeContents() {
     setTimeout(function(){
         buildPathAndButton();
     }, TRANSITION_DURATION);
+
+    alterText();
 }
 
 function buildPathAndButton() {
@@ -2200,6 +2207,18 @@ function changeConstants() {
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
     innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
     outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2);
+
+}
+
+function alterText() {
+    var titles = document.getElementsByClassName("title");
+
+    console.log(titles);
+
+    for (i = 0; i < titles.length; i++) {
+        console.log(titles[i].innerHTML);
+        titles[i].style.fontSize = "10px"
+    }
 }
 
 // Set multiple attributes for an HTML element at once
