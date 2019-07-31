@@ -1456,7 +1456,6 @@ function buildPathAndButton() {
 
     $('.mediaButton > i').click(function(){
         var thisBtn = $(this)[0];
-        root = thisBtn.dataset.id;
         setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
         recordAnalyticsEvent('user', 'open', 'lightbox', thisBtn.dataset.id);
     });
@@ -1691,7 +1690,6 @@ function adjustProgressBarRadii(d) {
 function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     // Adjust the width and height here before passing it into setup media
     var lightboxDimensions = getLightboxDimensions(height, width);
-
     width = lightboxDimensions.width;
     height = lightboxDimensions.height;
     var media = setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height);
@@ -1721,9 +1719,9 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     media.appendTo('#spotlight-content');
     // Append the footer to lightbox
     if (mediaType === "text") {
-        $("#text-light-box-content").append(createLightBoxFooter(dataset.nodes[findNodeIndex(root)].description, mediaType));
+        $("#text-light-box-content").append(createLightBoxFooter(dataset.nodes[findNodeIndex(id)].description, mediaType));
     } else {
-        $('#spotlight-content').append(createLightBoxFooter(dataset.nodes[findNodeIndex(root)].description, mediaType));
+        $('#spotlight-content').append(createLightBoxFooter(dataset.nodes[findNodeIndex(id)].description, mediaType));
     }
 
     $('<a class="lightbox-close">X</a>')
@@ -1756,10 +1754,10 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
         media.on(loadEvent, function() {
             changeToViewMode(lightboxDimensions);
             window.setTimeout(function(){
-                height = $('#spotlight-content').outerHeight();
+                height = $('#spotlight-content > *').outerHeight();
                 width = $('#spotlight-content').outerWidth();
 
-                $('#spotlight-content').css({
+                $('#spotlight-content > *').css({
                     width: width,
                     height: height,
                     transitionDuration: "0.2s"
