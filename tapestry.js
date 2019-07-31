@@ -522,6 +522,12 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
     }
 });
 
+function addNodeChoicesToDeletion() {
+    var dropdownData = {};
+    var children = getChildren(root);
+    console.log(children);
+}
+
 // Type is either "user" or "group"  
 function appendPermissionsRow(id, type) {
     $('#permissions-table tbody').append(
@@ -1613,6 +1619,7 @@ function buildPathAndButton() {
         if (dataset.nodes[findNodeIndex(root)].mediaType !== "video") {
             $("#appearsat-section").hide();
         }
+        addNodeChoicesToDeletion();
         // Show the modal
         $("#createNewNodeModal").modal();
     });
