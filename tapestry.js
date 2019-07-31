@@ -1172,8 +1172,6 @@ function filterTapestry(freshBuild=false) {
     else {
         rebuildNodeContents();
     }
-
-    alterText();
 }
 
 /* Draws the components that make up node */
@@ -1303,9 +1301,6 @@ function buildNodeContents() {
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
         });
-
-    alterText();
-
 }
 
 function rebuildNodeContents() {
@@ -1398,7 +1393,20 @@ function rebuildNodeContents() {
         buildPathAndButton();
     }, TRANSITION_DURATION);
 
-    alterText();
+    $(document).ready(function() {
+        titles = document.getElementsByClassName("title");
+
+        console.log(titles);
+
+        for (i = 0; i < titles.length; i++) {
+            titles[i].style.fontSize = "10px"
+        }
+    
+        var buttons = document.querySelectorAll('.fas fa-bars mediaButtonIcon,.fas fa-pen-square editNodeIcon,.fas fa-plus-circle addNodeIcon');
+    
+        console.log(buttons);
+    });
+
 }
 
 function buildPathAndButton() {
@@ -1643,6 +1651,9 @@ function buildPathAndButton() {
         // Show the modal
         $("#createNewNodeModal").modal();
     });
+
+    // Resize text & buttons based on size
+    alterText();
 }
 
 function updateViewedProgress() {
@@ -2174,9 +2185,8 @@ function exitViewMode() {
  * HELPER FUNCTIONS
  ****************************************************/
 
-// set multiple things
-function changeConstants() {
-
+ // Returns number of viewable nodes that aren't grandchildren
+function getNodeNumber() {
     var nodesToShow = nodes.filter(function (d) {
         return getViewable(d) && d.nodeType != "grandchild";
     });
@@ -2195,14 +2205,22 @@ function changeConstants() {
         viewable = 1.8;
     }
 
-    PROGRESS_THICKNESS = 20/viewable,
-    LINK_THICKNESS = 6/viewable,
-    NORMAL_RADIUS = 140/viewable,
-    ROOT_RADIUS_DIFF = 70/viewable,
-    GRANDCHILD_RADIUS_DIFF = -100/viewable,
+    return viewable;
+}
 
-    nodeImageHeight = 420/viewable;
-    nodeImageWidth = 780/viewable;
+// set multiple things
+function changeConstants() {
+
+    nodeNumber = getNodeNumber();
+
+    PROGRESS_THICKNESS = 20/nodeNumber,
+    LINK_THICKNESS = 6/nodeNumber,
+    NORMAL_RADIUS = 140/nodeNumber,
+    ROOT_RADIUS_DIFF = 70/nodeNumber,
+    GRANDCHILD_RADIUS_DIFF = -100/nodeNumber,
+
+    nodeImageHeight = 420/nodeNumber;
+    nodeImageWidth = 780/nodeNumber;
 
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
     innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
@@ -2211,18 +2229,32 @@ function changeConstants() {
 }
 
 function alterText() {
-    var titles = document.getElementsByClassName("title");
 
-    console.log(titles);
+    var defaultFont = 30;
 
-    var buttons = document.querySelectorAll('.fas fa-bars mediaButtonIcon,.fas fa-pen-square editNodeIcon,.fas fa-plus-circle addNodeIcon');
+    var nodeNumber = getNodeNumber();
 
-    console.log(buttons);
+    var newFont = defaultFont/nodeNumber;
 
-    for (i = 0; i < titles.length; i++) {
-        console.log(titles[i].innerHTML);
-        titles[i].style.fontSize = "10px"
-    }
+    var titles;
+
+    var dongle = newFont.toString + "px"
+
+
+    $(document).ready(function() {
+        titles = document.getElementsByClassName("title");
+
+        console.log(titles);
+
+        for (i = 0; i < titles.length; i++) {
+            titles[i].style.fontSize = dongle;
+        }
+    
+        var buttons = document.querySelectorAll('.fas fa-bars mediaButtonIcon,.fas fa-pen-square editNodeIcon,.fas fa-plus-circle addNodeIcon');
+    
+        console.log(buttons);
+    });
+
 }
 
 // Set multiple attributes for an HTML element at once
