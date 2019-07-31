@@ -53,7 +53,7 @@ body {
 }
 
 #tapestry {
-    margin-top: 100px;
+    margin-top: 20px;
 }
 
 #tapestry-svg > g {
@@ -63,12 +63,19 @@ body {
 /* Tapestry Controls */
 
 #tapestry-controls-wrapper {
-    margin: -30px 10% 20px;
+    margin: 40px 10% 20px;
     padding: 10px 20px;
     float: right;
     width: auto;
-    background: #EEE;
-    box-shadow: 0 0 7px 0 #BBB;
+	background: #fbfbfb;
+	box-shadow: 0 0 7px 0 #DDD;
+}
+@media (min-width:1000px) {
+	#tapestry-controls-wrapper {
+		position: absolute;
+		margin-top: -30px;
+		right: 0;
+	}
 }
 #tapestry-controls-wrapper > * {
     float: left;
@@ -482,7 +489,9 @@ body {font-family: Arial, Helvetica, sans-serif;}
 }
 
 /* Full-width input fields */
-.form-container input[type=text], .form-container input[type=url] {
+.form-container input[type=text],
+.form-container input[type=url], 
+.form-container input[type=file] {
     width: 100%;
     padding: 15px;
     margin: 5px 0 22px 0;
