@@ -2193,7 +2193,9 @@ function changeConstants() {
 
     viewable *= 0.6
 
-    console.log(viewable);
+    if (viewable == 0) {
+        viewable = 2;
+    }
 
     PROGRESS_THICKNESS = 20/viewable,
     LINK_THICKNESS = 6/viewable,
