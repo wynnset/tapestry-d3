@@ -21,7 +21,7 @@ var // declared constants
     CSS_OPTIONAL_LINK = "stroke-dasharray: 30, 15;",
     TIME_BETWEEN_SAVE_PROGRESS = 5, // Means the number of seconds between each save progress call
     NODE_UNLOCK_TIMEFRAME = 2, // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
-    API_PUT_METHOD = 'POST',
+    API_PUT_METHOD = 'PUT',
     USER_NODE_PROGRESS_URL = apiUrl + "/users/progress",
     USER_NODE_UNLOCKED_URL = apiUrl + "/users/unlocked",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings",
