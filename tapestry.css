@@ -562,6 +562,7 @@ body {font-family: Arial, Helvetica, sans-serif;}
 
 .tapestry-delete-node-section {
     float:left;
+    display: none;
 }
 
 #root-node-container {

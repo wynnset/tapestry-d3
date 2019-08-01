@@ -543,13 +543,18 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
 
 function deleteNode() {
     var nodeId = root;
-    console.log(nodeId);
     if (nodeId === dataset.rootId) {
-        console.log("handle root node case");
+        if (dataset.nodes && dataset.nodes.length > 1) {
+            alert("Root node can only be deleted if there are no other nodes in the tapestry");
+            return;
+        }
         $.ajax({
             url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
             method: 'DELETE',
             success: function(e) {
+                svg.selectAll("g.node")
+                .data(dataset.nodes)
+                .remove();
                 dataset.nodes.splice(0, 1);
                 tapestryHideAddNodeModal();
                 redrawTapestryWithNewNode();
@@ -591,24 +596,23 @@ function deleteNode() {
                 method: 'PUT',
                 data: JSON.stringify(links),
                 success: function(result) {
-                    console.log("success");
                     for (var j = 0; j < dataset.nodes.length; j++) {
                         if (dataset.nodes[j].id === nodeId) {
-                            // call delete node endpoint
                             $.ajax({
                                 url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
                                 method: 'DELETE',
                                 success: function(e) {
+                                    svg.selectAll("g.node")
+                                    .data(dataset.nodes)
+                                    .remove();
                                     dataset.nodes.splice(j, 1);
                                     tapestryHideAddNodeModal();
                                     redrawTapestryWithNewNode();
-                                    console.log("redrew");
                                 },
                                 error: function(e) {
                                     console.error("Error deleting node " + nodeId, e);
                                 }
                             });
-
                         }
                     }
                 },
@@ -893,6 +897,9 @@ function tapestryHideAddNodeModal() {
     $("#mp4-content").hide();
     $("#h5p-content").hide();
     $("#appearsat-section").show();
+
+    // Hide delete button
+    $(".tapestry-delete-node-section").hide();
 }
 
 function redrawTapestryWithNewNode(isRoot) {
@@ -900,6 +907,7 @@ function redrawTapestryWithNewNode(isRoot) {
     if (typeof isRoot == 'undefined') {
         isRoot = false;
     }
+    createRootNodeButton(dataset); // When we delete, will need to create the root node button again
 
     saveCoordinates();
     updateTapestrySize();
@@ -1812,6 +1820,9 @@ function buildPathAndButton() {
                 }
             }
         }
+
+        // Unhide delete button
+        $(".tapestry-delete-node-section").show();
 
         // Show the modal
         $("#createNewNodeModal").modal();
