@@ -590,12 +590,12 @@ function deleteNode() {
         }
 
         if (linkToBeDeleted != -1) {
-            var newLinks = JSON.parse(JSON.stringify(dataset.links));
-            newLinks.splice(linkToBeDeleted, 1);
+            var newestLinks = JSON.parse(JSON.stringify(dataset.links));
+            newestLinks.splice(linkToBeDeleted, 1);
             $.ajax({
                 url: apiUrl + "/tapestries/" + tapestryWpPostId + "/links/",
                 method: 'PUT',
-                data: JSON.stringify(newLinks),
+                data: JSON.stringify(newestLinks),
                 success: function(result) {
                     for (var j = 0; j < dataset.nodes.length; j++) {
                         if (dataset.nodes[j].id === nodeId) {
@@ -611,8 +611,7 @@ function deleteNode() {
                                             .data(dataset.links)
                                             .remove();
                                     dataset.nodes.splice(spliceIndex, 1);
-                                    dataset.links = newLinks;
-                                    console.log(newLinks);
+                                    dataset.links = newestLinks;
                                     tapestryHideAddNodeModal();
                                     redrawTapestryWithNewNode();
                                 },
