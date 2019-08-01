@@ -567,9 +567,9 @@ function deleteNode() {
         var linkToBeDeleted = -1;
         for (var i = 0; i < dataset.links.length; i++) {
             if (dataset.links[i].source.id === nodeId) {
-                var links = JSON.parse(JSON.stringify(dataset.links)); // deep copy
-                links.splice(i, 1);
-                var graph = buildGraph(links);
+                var newLinks = JSON.parse(JSON.stringify(dataset.links)); // deep copy
+                newLinks.splice(i, 1);
+                var graph = buildGraph(newLinks);
                 if(!hasPathBetweenNodes(dataset.rootId, dataset.links[i].target.id, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours)) {
                     alert("Cannot delete node");
                     return;
@@ -577,9 +577,9 @@ function deleteNode() {
                     linkToBeDeleted = i;
                 }
             } else if (dataset.links[i].target.id === nodeId) {
-                var links = JSON.parse(JSON.stringify(dataset.links)); // deep copy
-                links.splice(i, 1);
-                var graph = buildGraph(links);
+                var newLinks = JSON.parse(JSON.stringify(dataset.links)); // deep copy
+                newLinks.splice(i, 1);
+                var graph = buildGraph(newLinks);
                 if(!hasPathBetweenNodes(dataset.rootId, dataset.links[i].source.id, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours)) {
                     alert("Cannot delete node");
                     return;
@@ -590,14 +590,16 @@ function deleteNode() {
         }
 
         if (linkToBeDeleted != -1) {
-            links.splice(linkToBeDeleted, 1);
+            var newLinks = JSON.parse(JSON.stringify(dataset.links));
+            newLinks.splice(linkToBeDeleted, 1);
             $.ajax({
                 url: apiUrl + "/tapestries/" + tapestryWpPostId + "/links/",
                 method: 'PUT',
-                data: JSON.stringify(links),
+                data: JSON.stringify(newLinks),
                 success: function(result) {
                     for (var j = 0; j < dataset.nodes.length; j++) {
                         if (dataset.nodes[j].id === nodeId) {
+                            var spliceIndex = j;
                             $.ajax({
                                 url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
                                 method: 'DELETE',
@@ -605,7 +607,12 @@ function deleteNode() {
                                     svg.selectAll("g.node")
                                     .data(dataset.nodes)
                                     .remove();
-                                    dataset.nodes.splice(j, 1);
+                                    svg.selectAll('line')
+                                            .data(dataset.links)
+                                            .remove();
+                                    dataset.nodes.splice(spliceIndex, 1);
+                                    dataset.links = newLinks;
+                                    console.log(newLinks);
                                     tapestryHideAddNodeModal();
                                     redrawTapestryWithNewNode();
                                 },
