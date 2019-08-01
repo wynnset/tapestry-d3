@@ -1237,12 +1237,8 @@ function createLinks() {
                 .data(dataset.links)
                     .enter()
                     .append("line")
-                    .attr("stroke", function (d) {
-                        if (d.type === "grandchild") 
-                            return COLOR_GRANDCHILD;
-                        else if (d.secondary)
-                            return COLOR_SECONDARY_LINK;
-                        else return COLOR_LINK;
+                    .attr("stroke", function(d){
+                        return setLinkStroke(d);
                     })
                     .attr("stroke-width", LINK_THICKNESS)
                     .attr("style", function(d){
@@ -1269,15 +1265,19 @@ function createLinks() {
                         $("#link-lines-" + d.source.id + "-" + d.target.id).attr("stroke-width", LINK_THICKNESS + 5);
                     })
                     .on("mouseout", function(d) {
-                        $("#link-lines-" + d.source.id + "-" + d.target.id).attr("stroke", function (d) {
-                            if (d.type === "grandchild")
-                                return COLOR_GRANDCHILD;
-                            else if (d.secondary)
-                                return COLOR_SECONDARY_LINK;
-                            else return COLOR_LINK;
+                        $("#link-lines-" + d.source.id + "-" + d.target.id).attr("stroke", function(d){
+                            return setLinkStroke(d);
                         });
                         $("#link-lines-" + d.source.id + "-" + d.target.id).attr("stroke-width", LINK_THICKNESS);
                     });
+}
+
+function setLinkStroke(d) {
+    if (d.type === "grandchild")
+        return COLOR_GRANDCHILD;
+    else if (d.secondary)
+        return COLOR_SECONDARY_LINK;
+    else return COLOR_LINK;
 }
 
 function createNodes() {
