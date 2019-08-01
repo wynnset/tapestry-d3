@@ -77,6 +77,8 @@ jQuery.ajaxSetup({
 });
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
+    console.log(result);
+    console.log(tapestryWpPostId);
     dataset = result;	
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
@@ -380,7 +382,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         $("#tapestry-delete-node").on("click", function() {
             var result = confirm("Are you sure you want to delete this node?");
             if (result) {
-                console.log("delete");
+                deleteNode();
             }
         });
         
@@ -539,10 +541,71 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
     }
 });
 
-function addNodeChoicesToDeletion() {
-    var dropdownData = {};
-    var children = getChildren(root);
-    console.log(children);
+function deleteNode() {
+    var nodeId = root;
+    console.log(nodeId);
+    if (nodeId === dataset.rootId) {
+        console.log("handle root node case");
+    } else {
+        var linkToBeDeleted = -1;
+        for (var i = 0; i < dataset.links.length; i++) {
+            if (dataset.links[i].source.id === nodeId) {
+                var links = JSON.parse(JSON.stringify(dataset.links)); // deep copy
+                links.splice(i, 1);
+                var graph = buildGraph(links);
+                if(!hasPathBetweenNodes(dataset.rootId, dataset.links[i].target.id, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours)) {
+                    alert("Cannot delete node");
+                    return;
+                } else {
+                    linkToBeDeleted = i;
+                }
+            } else if (dataset.links[i].target.id === nodeId) {
+                var links = JSON.parse(JSON.stringify(dataset.links)); // deep copy
+                links.splice(i, 1);
+                var graph = buildGraph(links);
+                if(!hasPathBetweenNodes(dataset.rootId, dataset.links[i].source.id, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours)) {
+                    alert("Cannot delete node");
+                    return;
+                } else {
+                    linkToBeDeleted = i;
+                }
+            }
+        }
+
+        if (linkToBeDeleted != -1) {
+            links.splice(linkToBeDeleted, 1);
+            $.ajax({
+                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/links/",
+                method: 'PUT',
+                data: JSON.stringify(links),
+                success: function(result) {
+                    console.log("success");
+                    for (var j = 0; j < dataset.nodes.length; j++) {
+                        if (dataset.nodes[j].id === nodeId) {
+                            // call delete node endpoint
+                            $.ajax({
+                                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
+                                method: 'DELETE',
+                                success: function(e) {
+                                    dataset.nodes.splice(j, 1);
+                                    tapestryHideAddNodeModal();
+                                    redrawTapestryWithNewNode();
+                                    console.log("redrew");
+                                },
+                                error: function(e) {
+                                    console.error("Error removing link", e);
+                                }
+                            });
+
+                        }
+                    }
+                },
+                error: function(e) {
+                    console.error("Error removing link", e);
+                }
+            });
+        }
+    }
 }
 
 // Type is either "user" or "group"  
@@ -1647,7 +1710,6 @@ function buildPathAndButton() {
         if (dataset.nodes[findNodeIndex(root)].mediaType !== "video") {
             $("#appearsat-section").hide();
         }
-        addNodeChoicesToDeletion();
         // Show the modal
         $("#createNewNodeModal").modal();
     });
@@ -2435,7 +2497,7 @@ function addDepthToNodes(id, depth, visited) {
 /* Return the distance between a node and its farthest descendant node */
 function findMaxDepth(id) {
 
-    if ((dataset && dataset.nodes.length === 0) || !id)  {
+    if ((dataset && dataset.nodes.length === 0) || !id || (findNodeIndex(id) === -1))  {
         return 0;
     } else {
         // Create the .depth parameter for every node
@@ -2727,7 +2789,7 @@ function setAccessibleStatus(node, depth, parentNodeId, parentIsAccessible = tru
         var thisNode = getNodeById(childNodeId);
 
         // Do not traverse up the parent
-        if (parentNodeId != thisNode.id) {
+        if (thisNode && parentNodeId != thisNode.id) {
             // A node is accessible only if it's unlocked and its parent is accessible
             var isAccessible = thisNode.unlocked && parentIsAccessible;
             dataset.nodes[findNodeIndex(thisNode.id)].accessible = isAccessible;
