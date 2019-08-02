@@ -1397,6 +1397,13 @@ function rebuildNodeContents() {
 
 function buildPathAndButton() {
 
+    var iconWidth = 60/getNodeNumber().toString() + "px"
+    var mbWidth = 80/getNodeNumber().toString() + "px"
+    var iconHeight = 62/getNodeNumber().toString() + "px"
+    var mbHeight = 82/getNodeNumber().toString() + "px"
+    
+    
+
     /* Add progress pie inside each node */
     pieGenerator = d3.pie().sort(null).value(function (d) {
         return d.value;
@@ -1462,11 +1469,11 @@ function buildPathAndButton() {
         .attr("data-id", function (d) {
             return d.id;
         })
-        .attr("width", "60px")
-        .attr("height", "62px")
-        .attr("x", -27)
+        .attr("width", mbWidth)
+        .attr("height", mbHeight)
+        .attr("x", -27/getNodeNumber())
         .attr("y", function (d) {
-            return -NORMAL_RADIUS * adjustedRadiusRatio - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);
+            return (-NORMAL_RADIUS * adjustedRadiusRatio - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0))/(getNodeNumber()/2);
         })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
@@ -1496,11 +1503,11 @@ function buildPathAndButton() {
         .attr("data-id", function (d) {
             return d.id;
         })
-        .attr("width", "60px")
-        .attr("height", "62px")
-        .attr("x", -50)
+        .attr("width", iconWidth)
+        .attr("height", iconHeight)
+        .attr("x", -50/getNodeNumber())
         .attr("y", function (d) {
-            return NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30;
+            return (NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30)/(getNodeNumber()/2);
         })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" || d.nodeType === "child" ? "visibility: hidden" : "visibility: visible";
@@ -1564,11 +1571,11 @@ function buildPathAndButton() {
         .attr("data-id", function (d) {
             return d.id;
         })
-        .attr("width", "60px")
-        .attr("height", "62px")
-        .attr("x", 10)
+        .attr("width", iconWidth)
+        .attr("height", iconHeight)
+        .attr("x", 10/getNodeNumber())
         .attr("y", function (d) {
-            return NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30;
+            return (NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30)/(getNodeNumber()/2);
         })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" || d.nodeType === "child" ? "visibility: hidden" : "visibility: visible";
@@ -2217,9 +2224,16 @@ function changeConstants() {
 function alterText() {
 
     var nodeNumber = getNodeNumber();
-    var newFont = 40/nodeNumber;
+    var dongle = (40/nodeNumber).toString() + "px"
+
+    // var dewFont = ;
+    // var tewFont = 40/nodeNumber;
+    // var newFont = 40/nodeNumber;
     var titles;
-    var dongle = newFont.toString() + "px"
+    var mebFont = (40/nodeNumber).toString() + "px"
+    var editFont = (40/nodeNumber).toString() + "px"
+    var addFont = (40/nodeNumber).toString() + "px"
+  //  var tongle = 
 
 
     $(document).ready(function() {
@@ -2237,10 +2251,25 @@ function alterText() {
         var toob = document.getElementsByClassName('editNodeIcon');
         var noob = document.getElementsByClassName('addNodeIcon');
 
-        toob[0].style.fontSize = dongle;
-        noob[0].style.fontSize = dongle;
+        var mediaButton = document.getElementsByClassName('mediaButton');
 
-        console.log(doob,toob,noob);
+    //    console.log(mediaButton);
+
+    //     for (i = 0; i < mediaButton.length; i++) {
+    //         console.log(mediaButton[i].height);
+    //  //       mediaButton[i].height.animVal.value = dongle;
+    //         mediaButton[i].width = dongle;
+    //     }
+
+        for (i = 0; i < doob.length; i++) {
+            doob[i].style.fontSize = mebFont;
+
+        }
+
+        toob[0].style.fontSize = editFont;
+        noob[0].style.fontSize = addFont;
+
+    //    console.log(doob,toob,noob);
     });
 
 }
