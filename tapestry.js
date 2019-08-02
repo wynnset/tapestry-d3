@@ -612,6 +612,7 @@ function deleteNode() {
                                             .remove();
                                     dataset.nodes.splice(spliceIndex, 1);
                                     dataset.links = newestLinks;
+                                    root = dataset.rootId;
                                     tapestryHideAddNodeModal();
                                     redrawTapestryWithNewNode();
                                 },
