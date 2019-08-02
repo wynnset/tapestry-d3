@@ -541,96 +541,6 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
     }
 });
 
-function deleteNode() {
-    var nodeId = root;
-    if (nodeId === dataset.rootId) {
-        if (dataset.nodes && dataset.nodes.length > 1) {
-            alert("Root node can only be deleted if there are no other nodes in the tapestry");
-            return;
-        }
-        $.ajax({
-            url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
-            method: 'DELETE',
-            success: function(e) {
-                svg.selectAll("g.node")
-                .data(dataset.nodes)
-                .remove();
-                dataset.nodes.splice(0, 1);
-                tapestryHideAddNodeModal();
-                redrawTapestryWithNewNode();
-            },
-            error: function(e) {
-                console.error("Error deleting root node", e);
-            }
-        });
-    } else {
-        var linkToBeDeleted = -1;
-        for (var i = 0; i < dataset.links.length; i++) {
-            if (dataset.links[i].source.id === nodeId) {
-                var newLinks = JSON.parse(JSON.stringify(dataset.links)); // deep copy
-                newLinks.splice(i, 1);
-                var graph = buildGraph(newLinks);
-                if(!hasPathBetweenNodes(dataset.rootId, dataset.links[i].target.id, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours)) {
-                    alert("Cannot delete node");
-                    return;
-                } else {
-                    linkToBeDeleted = i;
-                }
-            } else if (dataset.links[i].target.id === nodeId) {
-                var newLinks = JSON.parse(JSON.stringify(dataset.links)); // deep copy
-                newLinks.splice(i, 1);
-                var graph = buildGraph(newLinks);
-                if(!hasPathBetweenNodes(dataset.rootId, dataset.links[i].source.id, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours)) {
-                    alert("Cannot delete node");
-                    return;
-                } else {
-                    linkToBeDeleted = i;
-                }
-            }
-        }
-
-        if (linkToBeDeleted != -1) {
-            var newestLinks = JSON.parse(JSON.stringify(dataset.links));
-            newestLinks.splice(linkToBeDeleted, 1);
-            $.ajax({
-                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/links/",
-                method: 'PUT',
-                data: JSON.stringify(newestLinks),
-                success: function(result) {
-                    for (var j = 0; j < dataset.nodes.length; j++) {
-                        if (dataset.nodes[j].id === nodeId) {
-                            var spliceIndex = j;
-                            $.ajax({
-                                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
-                                method: 'DELETE',
-                                success: function(e) {
-                                    svg.selectAll("g.node")
-                                    .data(dataset.nodes)
-                                    .remove();
-                                    svg.selectAll('line')
-                                            .data(dataset.links)
-                                            .remove();
-                                    dataset.nodes.splice(spliceIndex, 1);
-                                    dataset.links = newestLinks;
-                                    root = dataset.rootId;
-                                    tapestryHideAddNodeModal();
-                                    redrawTapestryWithNewNode();
-                                },
-                                error: function(e) {
-                                    console.error("Error deleting node " + nodeId, e);
-                                }
-                            });
-                        }
-                    }
-                },
-                error: function(e) {
-                    console.error("Error removing link", e);
-                }
-            });
-        }
-    }
-}
-
 // Type is either "user" or "group"  
 function appendPermissionsRow(id, type) {
     $('#permissions-table tbody').append(
@@ -1027,12 +937,12 @@ function addLink(source, target, value, appearsAt) {
 }
 
 function deleteLink(source, target) {
-    var links = JSON.parse(JSON.stringify(dataset.links));
-    for (var i = 0; i < links.length; i++) {
-        if (links[i].source.id === source && links[i].target.id === target) {
-            links.splice(i, 1);
+    var newLinks = JSON.parse(JSON.stringify(dataset.links));
+    for (var i = 0; i < newLinks.length; i++) {
+        if (newLinks[i].source.id === source && newLinks[i].target.id === target) {
+            newLinks.splice(i, 1);
 
-            var graph = buildGraph(links);
+            var graph = buildGraph(newLinks);
 
             // Check if there is a path from root to source and root to target, if true then we can delete the link
             if (hasPathBetweenNodes(dataset.rootId, source, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours) &&
@@ -1040,9 +950,10 @@ function deleteLink(source, target) {
                 $.ajax({
                     url: apiUrl + "/tapestries/" + tapestryWpPostId + "/links/",
                     method: 'PUT',
-                    data: JSON.stringify(links),
+                    data: JSON.stringify(newLinks),
                     success: function(result) {
-                        dataset.links = links;
+                        removeAllLinks();
+                        dataset.links = newLinks;
                         redrawTapestryWithNewNode();
                     },
                     error: function(e) {
@@ -1055,6 +966,90 @@ function deleteLink(source, target) {
         }
     }
 }
+
+function deleteNode() {
+    var nodeId = root;
+    if (nodeId === dataset.rootId) {
+        if (dataset.nodes && dataset.nodes.length > 1) {
+            alert("Root node can only be deleted if there are no other nodes in the tapestry");
+            return;
+        }
+        $.ajax({
+            url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
+            method: 'DELETE',
+            success: function(e) {
+                removeAllNodes();
+                dataset.nodes.splice(0, 1);
+                tapestryHideAddNodeModal();
+                redrawTapestryWithNewNode();
+            },
+            error: function(e) {
+                console.error("Error deleting root node", e);
+            }
+        });
+    } else if (getChildren(nodeId, 1) && getChildren(nodeId, 1).length > 1) {
+        alert("Can only delete nodes with one neighbouring node");
+    } else {
+        var linkToBeDeleted = -1;
+        for (var i = 0; i < dataset.links.length; i++) {
+            var linkedNodeId;
+            if (dataset.links[i].source.id === nodeId) {
+                linkedNodeId = dataset.links[i].target.id; // Node linked to the node to be deleted
+            } else if (dataset.links[i].target.id === nodeId) {
+                linkedNodeId = dataset.links[i].source.id // Node linked to the node to be deleted
+            } else {
+                continue;
+            }
+
+            var newLinks = JSON.parse(JSON.stringify(dataset.links)); // deep copy
+            newLinks.splice(i, 1); // remove the link and see if linkedNode is connected to root node
+            var graph = buildGraph(newLinks);
+            if(!hasPathBetweenNodes(dataset.rootId, linkedNodeId, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours)) {
+                alert("Cannot delete node");
+                return;
+            } else {
+                linkToBeDeleted = i;
+            }
+        }
+
+        if (linkToBeDeleted !== -1) {
+            var newestLinks = JSON.parse(JSON.stringify(dataset.links));
+            newestLinks.splice(linkToBeDeleted, 1);
+            $.ajax({
+                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/links/",
+                method: 'PUT',
+                data: JSON.stringify(newestLinks),
+                success: function(result) {
+                    for (var j = 0; j < dataset.nodes.length; j++) {
+                        if (dataset.nodes[j].id === nodeId) {
+                            var spliceIndex = j;
+                            $.ajax({
+                                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
+                                method: 'DELETE',
+                                success: function(e) {
+                                    removeAllNodes();
+                                    removeAllLinks();
+                                    dataset.nodes.splice(spliceIndex, 1);
+                                    dataset.links = newestLinks;
+                                    root = dataset.rootId;
+                                    tapestryHideAddNodeModal();
+                                    redrawTapestryWithNewNode();
+                                },
+                                error: function(e) {
+                                    console.error("Error deleting node " + nodeId, e);
+                                }
+                            });
+                        }
+                    }
+                },
+                error: function(e) {
+                    console.error("Error removing link", e);
+                }
+            });
+        }
+    }
+}
+
 
 // Set up neighbors and visited for BFS traversal
 function buildGraph(links) {
@@ -1223,13 +1218,25 @@ function updateSvgDimensions(containerId) {
     startForce();
 }
 
-function createLinks() {
-    /* Need to remove old links when redrawing graph */
+function removeAllLinks() {
     if (links !== undefined) {
         svg.selectAll('line')
             .data(dataset.links)
             .remove();
     }
+}
+
+function removeAllNodes() {
+    if (nodes !== undefined) {
+        svg.selectAll("g.node")
+            .data(dataset.nodes)
+            .remove();
+    }
+}
+
+function createLinks() {
+    /* Need to remove old links when redrawing graph */
+    removeAllLinks();
 
     /* Now, can draw the links */
     return svg.append("svg:g")
@@ -1283,11 +1290,7 @@ function setLinkStroke(d) {
 
 function createNodes() {
     /* Need to remove old nodes when redrawing graph */
-    if (nodes !== undefined) {
-        svg.selectAll("g.node")
-            .data(dataset.nodes)
-            .remove();
-    }
+    removeAllNodes();
 
     /* Now, can draw the nodes */
     return svg.selectAll("g.node")
