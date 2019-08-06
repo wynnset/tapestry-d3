@@ -80,8 +80,12 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;	
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
-        // always unlock root node
         for (var i=0; i<dataset.nodes.length; i++) {
+        	// change http:// to https:// in media URLs with // so it can work on both protocols without giving insecure content warnings
+			if (typeof dataset.nodes[i].typeData != "undefined" && typeof dataset.nodes[i].typeData.mediaURL != "undefined" && dataset.nodes[i].typeData.mediaURL.length > 0) {
+				dataset.nodes[i].typeData.mediaURL = dataset.nodes[i].typeData.mediaURL.replace(/(http(s?)):\/\//gi, '//');
+			}
+            // always unlock root node
             if (dataset.nodes[i].id == dataset.rootId) {
                 dataset.nodes[i].unlocked = true;
                 break;
