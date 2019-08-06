@@ -77,8 +77,6 @@ jQuery.ajaxSetup({
 });
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
-    console.log(result);
-    console.log(tapestryWpPostId);
     dataset = result;	
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
@@ -984,7 +982,7 @@ function deleteNode() {
         $.ajax({
             url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
             method: 'DELETE',
-            success: function(e) {
+            success: function() {
                 removeAllNodes();
                 dataset.nodes.splice(0, 1);
                 tapestryHideAddNodeModal();
@@ -1026,7 +1024,7 @@ function deleteNode() {
                     $.ajax({
                         url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
                         method: 'DELETE',
-                        success: function(e) {
+                        success: function() {
                             deleteLink(dataset.links[linkToBeDeleted].source.id, dataset.links[linkToBeDeleted].target.id, true, spliceIndex);
                         },
                         error: function(e) {
