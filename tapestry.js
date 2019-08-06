@@ -42,7 +42,7 @@ var // declared variables
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {},
     tapestryDepth = 2,                              // Default depth of Tapestry
-    autoLayout = true;
+    autoLayout = false;
 
 var // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
@@ -174,9 +174,10 @@ function init() {
     updateTapestrySize();
 
     $(window).resize(function() {
-        updateTapestrySize();
+        if (autoLayout) {
+            updateTapestrySize();
+        }
     });
-        
         
     //---------------------------------------------------
     // 3. SET NODES/LINKS AND CREATE THE SVG OBJECTS
@@ -549,7 +550,6 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         //         alert("Enter valid group id");
         //     }
         // });
-
     }
 });
 
