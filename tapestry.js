@@ -936,7 +936,7 @@ function addLink(source, target, value, appearsAt) {
     });
 }
 
-function deleteLink(source, target) {
+function deleteLink(source, target, isDeleteNode = false, spliceIndex) {
     var newLinks = JSON.parse(JSON.stringify(dataset.links));
     for (var i = 0; i < newLinks.length; i++) {
         if (newLinks[i].source.id === source && newLinks[i].target.id === target) {
@@ -945,8 +945,9 @@ function deleteLink(source, target) {
             var graph = buildGraph(newLinks);
 
             // Check if there is a path from root to source and root to target, if true then we can delete the link
-            if (hasPathBetweenNodes(dataset.rootId, source, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours) &&
-                hasPathBetweenNodes(dataset.rootId, target, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours)) {
+            if ( isDeleteNode ||
+                (hasPathBetweenNodes(dataset.rootId, source, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours) &&
+                hasPathBetweenNodes(dataset.rootId, target, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours))) {
                 $.ajax({
                     url: apiUrl + "/tapestries/" + tapestryWpPostId + "/links/",
                     method: 'PUT',
@@ -954,6 +955,12 @@ function deleteLink(source, target) {
                     success: function(result) {
                         removeAllLinks();
                         dataset.links = newLinks;
+                        if (isDeleteNode) {
+                            removeAllNodes();
+                            dataset.nodes.splice(spliceIndex, 1);
+                            root = dataset.rootId; // need to change root b/c deleting current root
+                            tapestryHideAddNodeModal();
+                        }
                         redrawTapestryWithNewNode();
                     },
                     error: function(e) {
@@ -1013,39 +1020,21 @@ function deleteNode() {
         }
 
         if (linkToBeDeleted !== -1) {
-            var newestLinks = JSON.parse(JSON.stringify(dataset.links));
-            newestLinks.splice(linkToBeDeleted, 1);
-            $.ajax({
-                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/links/",
-                method: 'PUT',
-                data: JSON.stringify(newestLinks),
-                success: function(result) {
-                    for (var j = 0; j < dataset.nodes.length; j++) {
-                        if (dataset.nodes[j].id === nodeId) {
-                            var spliceIndex = j;
-                            $.ajax({
-                                url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
-                                method: 'DELETE',
-                                success: function(e) {
-                                    removeAllNodes();
-                                    removeAllLinks();
-                                    dataset.nodes.splice(spliceIndex, 1);
-                                    dataset.links = newestLinks;
-                                    root = dataset.rootId;
-                                    tapestryHideAddNodeModal();
-                                    redrawTapestryWithNewNode();
-                                },
-                                error: function(e) {
-                                    console.error("Error deleting node " + nodeId, e);
-                                }
-                            });
+            for (var j = 0; j < dataset.nodes.length; j++) {
+                if (dataset.nodes[j].id === nodeId) {
+                    var spliceIndex = j;
+                    $.ajax({
+                        url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
+                        method: 'DELETE',
+                        success: function(e) {
+                            deleteLink(dataset.links[linkToBeDeleted].source.id, dataset.links[linkToBeDeleted].target.id, true, spliceIndex);
+                        },
+                        error: function(e) {
+                            console.error("Error deleting node " + nodeId, e);
                         }
-                    }
-                },
-                error: function(e) {
-                    console.error("Error removing link", e);
+                    });
                 }
-            });
+            }
         }
     }
 }
