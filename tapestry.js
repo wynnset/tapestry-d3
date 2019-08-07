@@ -38,7 +38,6 @@ var // declared constants
 
 var // declared variables
     root, svg, links, nodes,                        // Basics
-    originalDataset,                                // For saving the value of the original dataset pre-changes
     path, pieGenerator, arcGenerator,               // Donut
     linkForce, collideForce, force,                 // Force
     nodeCoordinates = [],                           // For saving the coordinates of the Tapestry pre transition to play mode
@@ -85,86 +84,7 @@ jQuery.ajaxSetup({
     }
 });
 
-jQuery.get(config.apiUrl + "/tapestries/" + config.wpPostId, function(result){
-    tapestry.dataset = result;
-    createRootNodeButton(tapestry.dataset);
-    if (tapestry.dataset && tapestry.dataset.nodes && tapestry.dataset.nodes.length > 0) {
-        for (var i=0; i<tapestry.dataset.nodes.length; i++) {
-        	// change http:// to https:// in media URLs with // so it can work on both protocols without giving insecure content warnings
-			if (typeof tapestry.dataset.nodes[i].typeData != "undefined" && typeof tapestry.dataset.nodes[i].typeData.mediaURL != "undefined" && tapestry.dataset.nodes[i].typeData.mediaURL.length > 0) {
-				tapestry.dataset.nodes[i].typeData.mediaURL = tapestry.dataset.nodes[i].typeData.mediaURL.replace(/(http(s?)):\/\//gi, '//');
-			}
-            // always unlock root node
-            if (tapestry.dataset.nodes[i].id == tapestry.dataset.rootId) {
-                tapestry.dataset.nodes[i].unlocked = true;
-                break;
-            }
-        }
-    }
-    for (var i=0; i < tapestry.dataset.nodes.length; i++) {
-        tapestry.dataset.nodes[i].fx = tapestry.dataset.nodes[i].coordinates.x;
-        tapestry.dataset.nodes[i].fy = tapestry.dataset.nodes[i].coordinates.y;
-    }
-    originalDataset = tapestry.dataset;
-
-    //---------------------------------------------------
-    // 1. GET PROGRESS FROM DATABASE OR COOKIE (IF ENABLED)
-    //---------------------------------------------------
-
-    tapestrySlug = tapestry.dataset.settings.tapestrySlug;
-    
-    if (saveProgress) {
-        // If user is logged in, get progress from database database
-        if (config.wpUserId) {
-
-            jQuery.get(USER_NODE_PROGRESS_URL, { "post_id": config.wpPostId }, function(result) {
-                if (result && !isEmptyObject(result)) {
-                    setDatasetProgress(JSON.parse(result));
-                    init();
-                }
-            }).fail(function(e) {
-                console.error("Error with retrieving node progress");
-                console.error(e);
-            });
-
-            jQuery.get(TAPESTRY_H5P_SETTINGS_URL, { "post_id": config.wpPostId }, function(result) {
-                if (result && !isEmptyObject(result)) {
-                    h5pVideoSettings = JSON.parse(result);
-                }
-            }).fail(function(e) {
-                console.error("Error with retrieving h5p video settings");
-                console.error(e);
-            });
-
-        }
-        else { 
-            // Update dataset with data from cookie (if any)
-            var cookieProgress = Cookies.get("progress-data-"+tapestrySlug);
-
-            if (cookieProgress) {
-                cookieProgress = JSON.parse( cookieProgress );
-                setDatasetProgress(cookieProgress);	
-            }
-
-            // Update H5P Video Settings from cookie (if any)
-            var cookieH5PVideoSettings = Cookies.get("h5p-video-settings");
-            if (cookieH5PVideoSettings) {
-                cookieH5PVideoSettings = JSON.parse( cookieH5PVideoSettings );
-                h5pVideoSettings = cookieH5PVideoSettings;
-            }
-
-            init();
-        }
-    }
-    else {
-        init();
-    }
-}).fail(function(e) {
-    console.error("Error with loading tapestries");
-    console.error(e);
-});
-
-function init() {
+this.init = function() {
     //---------------------------------------------------
     // 2. SIZE AND SCALE THE TAPESTRY AND SVG TO FIT WELL
     //---------------------------------------------------
@@ -2051,7 +1971,7 @@ function changeToViewMode(lightboxDimensions) {
     }
 
     inViewMode = true;
-    originalDataset = tapestry.dataset;
+    tapestry.originalDataset = tapestry.dataset;
     var children = getChildren(root);
     setViewModeRadiusRatio(lightboxDimensions.adjustedOn, children.length);
     var coordinates = getViewModeCoordinates(lightboxDimensions, children);
@@ -2244,7 +2164,7 @@ function getTapestryDimensions() {
     var tapestryWidth = $('#'+TAPESTRY_CONTAINER_ID).outerWidth();
     var tapestryHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
 
-    var nodeDimensions = getNodesDimensions(originalDataset);
+    var nodeDimensions = getNodesDimensions(tapestry.originalDataset);
 
     if (nodeDimensions.x > tapestryWidth || nodeDimensions.y > tapestryHeight) {
         var tapestryWidth = nodeDimensions.x;
@@ -2737,6 +2657,10 @@ function getChildrenData(parentId) {
  * 
  *******************************************************/
 
+tapestryTool.prototype.initialize = function () {
+    return this.init();
+}
+
 tapestryTool.prototype.getDataset = function() {
     return this.dataset;
 };
@@ -2744,6 +2668,10 @@ tapestryTool.prototype.getDataset = function() {
 tapestryTool.prototype.setDataset = function(newDataset) {
     this.dataset = newDataset;
 };
+
+tapestryTool.prototype.setOriginalDataset = function (dataset) {
+    this.originalDataset = dataset;
+}
 
 tapestryTool.prototype.redraw = function(isRoot) {
     return this.redrawTapestryWithNewNode(isRoot);
