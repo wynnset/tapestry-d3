@@ -186,6 +186,8 @@ function init(isReload = false) {
 
     if (!isReload) {
         svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
+    } else {
+        createRootNodeButton(dataset); //Redraw the root node if no more nodes and isReload
     }
     
     links = createLinks();
