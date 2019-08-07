@@ -270,38 +270,6 @@ function appendPermissionsRow(id, type) {
     });
 }
 
-// Resets the add/edit modal to default state
-function tapestryHideAddNodeModal() {
-    // Clear all text fields
-    $("#createNewNodeModalBody input[type='text']").val("");
-    $("#createNewNodeModalBody input[type='url']").val("");
-    // Remove Text Area for text node 
-    $("#tapestry-node-text-area").val("");
-    $(".permissions-dynamic-row").remove(); // remove the dynamically created permission rows
-    // Uncheck all public permissions except read
-    $('.public-checkbox').each(function() {
-        if ($(this).is(":checked") && this.name !== "read") {
-            $(this).prop('checked', false);
-        }
-    });
-    $("#tapestry-node-description-area").val("");
-    $("#createNewNodeModal").modal("hide");
-
-    // Reset all selections for dropdowns
-    $("#mediaType").val("default");
-    // Enable media type because edit disables it
-    $("#mediaType").removeAttr('disabled');
-
-    // Uncheck lock node label and hide appears at input
-    $("#tapestry-lock-node-checkbox").prop('checked', false);
-    $("#appears-at-label").hide();
-
-    $("#tapestry-text-content").hide();
-    $("#mp4-content").hide();
-    $("#h5p-content").hide();
-    $("#appearsat-section").show();
-}
-
 this.redrawTapestryWithNewNode = function(isRoot) {
 
     if (typeof isRoot == 'undefined') {
@@ -2360,7 +2328,7 @@ function tapestryValidateNewNode(formData, isRoot) {
                 break;
         }
 
-        if ($("#mediaType").val() === "video") {
+        if ($("#mediaFormat").val() === "mp4") {
             switch (fieldName) {
                 case "mp4-mediaURL":
                     if (fieldValue === "") {
@@ -2375,7 +2343,7 @@ function tapestryValidateNewNode(formData, isRoot) {
                 default:
                     break;
             }
-        } else if ($("#mediaType").val() === "h5p") {
+        } else if ($("#mediaFormat").val() === "h5p") {
             switch (fieldName) {
                 case "h5p-mediaURL":
                     if (fieldValue === "") {
@@ -2397,6 +2365,38 @@ function tapestryValidateNewNode(formData, isRoot) {
         errMsg += "Please enter a description under " + MAX_DESCRIPTION_LENGTH + " characters \n";
     }
     return errMsg;
+}
+
+// Resets the add/edit modal to default state
+function tapestryHideAddNodeModal() {
+    // Clear all text fields
+    $("#createNewNodeModalBody input[type='text']").val("");
+    $("#createNewNodeModalBody input[type='url']").val("");
+    // Remove Text Area for text node 
+    $("#tapestry-node-text-area").val("");
+    $(".permissions-dynamic-row").remove(); // remove the dynamically created permission rows
+    // Uncheck all public permissions except read
+    $('.public-checkbox').each(function() {
+        if ($(this).is(":checked") && this.name !== "read") {
+            $(this).prop('checked', false);
+        }
+    });
+    $("#tapestry-node-description-area").val("");
+    $("#createNewNodeModal").modal("hide");
+
+    // Reset all selections for dropdowns
+    $("#mediaType").val("default");
+    // Enable media type because edit disables it
+    $("#mediaType").removeAttr('disabled');
+
+    // Uncheck lock node label and hide appears at input
+    $("#tapestry-lock-node-checkbox").prop('checked', false);
+    $("#appears-at-label").hide();
+
+    $("#tapestry-text-content").hide();
+    $("#mp4-content").hide();
+    $("#h5p-content").hide();
+    $("#appearsat-section").show();
 }
 
 // Capture click events anywhere inside or outside tapestry
