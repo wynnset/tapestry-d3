@@ -540,7 +540,7 @@ body {font-family: Arial, Helvetica, sans-serif;}
     margin-top: 10px;
     margin-bottom: 10px;
     font-size: 15px;
-    width: 100%;
+    width: 50%;
     height: 30px;
 }
 
@@ -548,7 +548,7 @@ body {font-family: Arial, Helvetica, sans-serif;}
     margin-top: 10px;
     margin-bottom: 10px;
     font-size: 15px;
-    width: 100%;
+    width: 50%;
     height: 30px;
 }
 
@@ -602,9 +602,7 @@ body {font-family: Arial, Helvetica, sans-serif;}
     background: #ddd;
 }
 #permissions-details input#user-number-input {
-    width: 20%;
-    height: auto;
-    text-align: center;
+    width: 70px;
 }
 #user-permissions-btn, 
 #group-permissions-btn {
