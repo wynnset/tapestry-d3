@@ -229,240 +229,8 @@ if (config.wpUserId) {
  ****************************************************/
 
 //--------------------------------------------------
-// Insert the "Add Root Node" button if no nodes
-//--------------------------------------------------
-function createRootNodeButton(dataset) {
-
-    if (!dataset || dataset.nodes.length == 0) {
-        var rootNodeDiv = document.createElement("div");
-        rootNodeDiv.id = "root-node-container";
-        rootNodeDiv.innerHTML = '<div id="root-node-btn"><i class="fas fa-plus-circle fa-5x"></i><div id="root-node-label">Add Root Node</div></div>';
-
-        if (config.wpUserId) {
-            document.getElementById(TAPESTRY_CONTAINER_ID).append(rootNodeDiv);
-        }
-
-        $("#root-node-btn").on("click", function(e) {
-            // Populate title
-            $('#createNewNodeModalLabel').text("Add root node");
-            $("#submit-add-new-node").hide();
-            $("#submit-edit-node").hide();
-            $("#submit-add-root-node").show();
-            $("#appearsat-section").hide();
-            // Show the modal
-            $("#createNewNodeModal").modal();
-        });
-    }
-}
-
-//--------------------------------------------------
 // Insert the modal template
 //--------------------------------------------------
-
-var modalAddDiv = document.createElement("div");
-modalAddDiv.id = "tapestry-add-modal-div";
-document.getElementById(TAPESTRY_CONTAINER_ID).append(modalAddDiv);
-$("#tapestry-add-modal-div").load(config.addNodeModalUrl, function(responseTxt, statusTxt, xhr){
-    if (statusTxt == "success") {
-
-        // Adding Root Node
-        $("#submit-add-root-node").on("click", function(e) {
-            e.preventDefault(); // cancel the actual submit
-            var formData = $("form").serializeArray();
-            tapestryAddEditNode(formData, false, true);
-        });
-
-        // Adding New Nodes
-        $("#submit-add-new-node").on("click", function(e) {
-            e.preventDefault(); // cancel the actual submit
-            var formData = $("form").serializeArray();
-            tapestryAddEditNode(formData, false);
-        });
-
-        $("#mediaType").on("change", function() {
-            $("#tapestry-text-content").hide();
-            $("#mp4-content").hide();
-            $("#h5p-content").hide();
-            var selectedType = $(this).val();
-            switch(selectedType)
-            {
-                case "video":
-                    $("#mp4-content").show();
-                    break;
-                case "h5p":
-                    $("#h5p-content").show();
-                    break;
-                case "text":
-                    $("#tapestry-text-content").show();
-                    break;
-                default:
-                    break;
-            }
-        });
-
-        // Event for when user exits modal without clicking cancel
-        $('#createNewNodeModal').on('hidden.bs.modal', function () {
-            tapestryHideAddNodeModal();
-        });
-
-        $("#cancel-add-new-node").on("click", function() {
-            tapestryHideAddNodeModal();
-        });
-        
-        $("#submit-edit-node").on("click", function(e) {
-            e.preventDefault(); // cancel the actual submit
-            var formData = $("form").serializeArray();
-            tapestryAddEditNode(formData, true);
-        });
-
-        $("#tapestry-lock-node-checkbox").on("change", function(e) {
-            e.preventDefault();
-            if($(this).is(":checked")) {
-                $("#appears-at-label").show();
-            } else {
-                $("#appears-at-label").hide();
-            }
-        });
-
-        // Permissions Options
-
-        // Enable others when read is on, disable when read is off
-        $("#public-read-checkbox").change(function() {
-            if ($(this).is(":checked")) {
-                $('.public-checkbox').each(function() {
-                    if($(this).prop('disabled')) {
-                        $(this).prop('disabled', false);
-                    }
-                });
-                $(".user-checkbox").each(function() {
-                    if (this.name === "read") {
-                        $(this).prop("checked", true);
-                        $(this).prop("disabled", true);
-                    }
-                });
-            } else {
-                // Disable other permissinos for public
-                $('.public-checkbox').each(function() {
-                    if (this.id !== "public-read-checkbox") {
-                        $(this).prop('checked', false);
-                        $(this).prop('disabled', true);
-                    }
-                });
-                // Enable all checkboxes
-                $(".user-checkbox").each(function() {
-                    $(this).prop("disabled", false);
-                });
-            }
-        });
-
-        $("#public-add-checkbox").change(function() {
-            if ($(this).is(":checked")) {
-                $(".user-checkbox").each(function() {
-                    if (this.name === "add") {
-                        $(this).prop("checked", true);
-                        $(this).prop("disabled", true);
-                    }
-                });
-            } else {
-                $(".user-checkbox").each(function() {
-                    if (this.name === "add") {
-                        $(this).prop("disabled", false);
-                    }
-                });
-            }
-        });
-
-        $("#public-edit-checkbox").change(function() {
-            if ($(this).is(":checked")) {
-                $(".user-checkbox").each(function() {
-                    if (this.name === "edit") {
-                        $(this).prop("checked", true);
-                        $(this).prop("disabled", true);
-                    }
-                });
-            } else {
-                $(".user-checkbox").each(function() {
-                    if (this.name === "edit") {
-                        $(this).prop("disabled", false);
-                    }
-                });
-            }
-        });
-
-        $("#public-add-submit-checkbox").change(function() {
-            if ($(this).is(":checked")) {
-                $(".user-checkbox").each(function() {
-                    if (this.name === "add_submit") {
-                        $(this).prop("checked", true);
-                        $(this).prop("disabled", true);
-                    }
-                });
-            } else {
-                $(".user-checkbox").each(function() {
-                    if (this.name === "add_submit") {
-                        $(this).prop("disabled", false);
-                    }
-                });
-            }
-        });
-
-        $("#public-edit-submit-checkbox").change(function() {
-            if ($(this).is(":checked")) {
-                $(".user-checkbox").each(function() {
-                    if (this.name === "edit_submit") {
-                        $(this).prop("checked", true);
-                        $(this).prop("disabled", true);
-                    }
-                });
-            } else {
-                $(".user-checkbox").each(function() {
-                    if (this.name === "edit_submit") {
-                        $(this).prop("disabled", false);
-                    }
-                });
-            }
-        });
-
-        $("#public-approve-checkbox").change(function() {
-            if ($(this).is(":checked")) {
-                $(".user-checkbox").each(function() {
-                    if (this.name === "approve") {
-                        $(this).prop("checked", true);
-                        $(this).prop("disabled", true);
-                    }
-                });
-            } else {
-                $(".user-checkbox").each(function() {
-                    if (this.name === "approve") {
-                        $(this).prop("disabled", false);
-                    }
-                });
-            }
-        });
-
-
-        $("#user-permissions-btn").click(function() {
-            var userId = $("#user-number-input").val();
-            if (userId && onlyContainsDigits(userId) && $("#user-" + userId + "-editcell").val() != "") {
-                appendPermissionsRow(userId, "user");
-                $("#user-number-input").val("");
-            } else {
-                alert("Enter valid user id");
-            }
-        });
-
-        // $("#group-permissions-btn").click(function() {
-        //     var groupId = $("#group-number-input").val();
-        //     if (groupId && onlyContainsDigits(groupId) && $("#group-" + groupId + "-editcell").val() != "") {
-        //         appendPermissionsRow(groupId, "group");
-        //         $("#group-number-input").val("");
-        //     } else {
-        //         alert("Enter valid group id");
-        //     }
-        // });
-
-    }
-});
 
 // Type is either "user" or "group"  
 function appendPermissionsRow(id, type) {
@@ -500,217 +268,6 @@ function appendPermissionsRow(id, type) {
             $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('disabled', true);
         }
     });
-}
-
-// Adds node if no nodeId, edits if no nodeId
-function tapestryAddEditNode(formData, isEdit, isRoot) {
-
-    if (typeof isRoot == 'undefined') {
-        isRoot = false;
-    }
-
-    var errorMsg = tapestryValidateNewNode(formData, isRoot);
-    if (errorMsg) {
-        alert(errorMsg);
-        return;
-    }
-
-    // Add the node data first
-    var newNodeEntry = {
-        "type": "tapestry_node",
-        "description": "",
-        "status": "publish",
-        "nodeType": "",
-        "title": "",
-        "imageURL": "",
-        "mediaType": "",
-        "mediaFormat": "",
-        "mediaDuration": 0,
-        "typeId": 1,
-        "group": 1,
-        "typeData": {
-            "progress": [
-                {"group": "viewed", "value": 0},
-                {"group": "unviewed", "value": 1}
-            ],
-            "mediaURL": "",
-            "mediaWidth": 960,      //TODO: This needs to be flexible with H5P
-            "mediaHeight": 600
-        },
-        "unlocked": true,
-        "fx": getBrowserWidth(),
-        "fy": getBrowserHeight()
-    };
-
-    // Node ID exists, so edit case
-    if (isEdit) {
-        newNodeEntry.fx = tapestry.dataset.nodes[findNodeIndex(root)].fx;
-        newNodeEntry.fy = tapestry.dataset.nodes[findNodeIndex(root)].fy;
-    } else {
-        if (!isRoot) {
-            // Just put the node right under the current node
-            newNodeEntry.fx = tapestry.dataset.nodes[findNodeIndex(root)].fx;
-            newNodeEntry.fy = tapestry.dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
-        }
-    }
-
-    var appearsAt = 0;
-    for (var i = 0; i < formData.length; i++) {
-        var fieldName = formData[i].name;
-        var fieldValue = formData[i].value;
-
-        switch (fieldName) {
-            case "title":
-                newNodeEntry[fieldName] = fieldValue;
-                break;
-            case "imageURL":
-                newNodeEntry[fieldName] = fieldValue;
-                break;
-            case "mediaType":
-                if (fieldValue === "text") {
-                    newNodeEntry[fieldName] = fieldValue;
-                    newNodeEntry.typeData.textContent = $("#tapestry-node-text-area").val();
-                }
-                else if (fieldValue === "video") {
-                    newNodeEntry["mediaType"] = "video";
-                    newNodeEntry["mediaFormat"] = "mp4";
-                }
-                else if (fieldValue === "h5p") {
-                    newNodeEntry["mediaType"] = "video";
-                    newNodeEntry["mediaFormat"] = "h5p";
-                }
-                break;
-            case "mp4-mediaURL":
-                if (fieldValue !== "") {
-                    newNodeEntry.typeData.mediaURL = fieldValue;
-                }
-                break;
-            case "h5p-mediaURL":
-                if (fieldValue !== "") {
-                    newNodeEntry.typeData.mediaURL = fieldValue;
-                }
-                break;
-            case "mp4-mediaDuration":
-                if (fieldValue !== "") {
-                    newNodeEntry.mediaDuration = parseInt(fieldValue);
-                }
-                break;
-            case "h5p-mediaDuration":
-                if (fieldValue !== "") {
-                    newNodeEntry.mediaDuration = parseInt(fieldValue);
-                }
-                break;
-            case "appearsAt":
-                appearsAt = parseInt(fieldValue);
-                newNodeEntry.unlocked = !appearsAt || isRoot;
-                break;
-            default:
-                break;
-        }
-    }
-
-    // Add description to new node
-    newNodeEntry.description = $("#tapestry-node-description-area").val();
-
-    // Add permissions to new node
-    var permissionData = {
-        "public": []
-    };
-
-    $('.public-checkbox').each(function() {
-        if ($(this).is(":checked")) {
-            permissionData.public.push(this.name);
-        }
-    });
-
-    $('.user-checkbox').each(function() {
-        if ($(this).is(":checked")) {
-            var userId = extractDigitsFromString(this.id);
-            if (permissionData["user-" + userId]) {
-                permissionData["user-" + userId].push(this.name);
-            } else {
-                permissionData["user-" + userId] = [this.name];
-            }
-        }
-    });
-
-    $('.group-checkbox').each(function() {
-        if ($(this).is(":checked")) {
-            var groupId = extractDigitsFromString(this.id);
-            if (permissionData["group-" + groupId]) {
-                permissionData["group-" + groupId].push(this.name);
-            } else {
-                permissionData["group-" + groupId] = [this.name];
-            }
-        }
-    });
-
-    newNodeEntry.permissions = permissionData;
-
-    if (!isEdit) {
-
-        // Save to database, first save node then the link
-        jQuery.post(config.apiUrl + "/tapestries/" + config.wpPostId + "/nodes", JSON.stringify(newNodeEntry), function(result){
-            // only add link if it's for adding new node and not root node
-            // Add new node to dataset after getting the id
-            newNodeEntry.id = result.id;
-            tapestry.dataset.nodes.push(newNodeEntry);
-
-            if (!isRoot) {
-                // Get ID from callback and set it as target's id
-                var newLink = {"source": root, "target": result.id, "value": 1, "type": "", "appearsAt": appearsAt };
-
-                jQuery.post(config.apiUrl + "/tapestries/" + config.wpPostId + "/links", JSON.stringify(newLink), function(result) {
-
-                    // Add the new link to the dataset
-                    tapestry.dataset.links.push(newLink);
-
-                    tapestryHideAddNodeModal();
-                    tapestry.redrawTapestryWithNewNode();
-                }).fail(function(e) {
-                    console.error("Error with adding new link", e);
-                });
-            } else {
-                var newId = result.id;
-                $.ajax({
-                    url: config.apiUrl + "/tapestries/" + config.wpPostId + "/nodes/" + newId + "/permissions",
-                    method: API_PUT_METHOD,
-                    data: JSON.stringify(permissionData),
-                    complete: function(result) {
-                        // Redraw root node
-                        tapestry.dataset.rootId = newId;
-                        tapestryHideAddNodeModal();
-                        root = tapestry.dataset.rootId; // need to set root to newly created node
-    
-                        tapestry.redrawTapestryWithNewNode(true);
-                        $("#root-node-container").hide(); // hide the root node button after creating it.
-                    },
-                    error: function(e) {
-                        console.error("Error with adding permission to root node", e);
-                    }
-                });
-            }
-        }).fail(function(e) {
-            console.error("Error with adding new node");
-            console.error(e);
-        });
-    } else {
-        // Call endpoint for editing node
-        $.ajax({
-            url: config.apiUrl + "/tapestries/" + config.wpPostId + "/nodes/" + root,
-            method: API_PUT_METHOD,
-            data: JSON.stringify(newNodeEntry),
-            success: function(result) {
-                newNodeEntry.id = result.id;
-                tapestry.dataset.nodes[findNodeIndex(root)] = newNodeEntry;
-                tapestry.redrawTapestryWithNewNode();
-                tapestryHideAddNodeModal();
-            },
-            error: function(e) {
-                console.error("Error editing node", e);
-            }
-        });
-    }
 }
 
 // Resets the add/edit modal to default state
@@ -767,77 +324,6 @@ this.redrawTapestryWithNewNode = function(isRoot) {
     filterTapestry();
     
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
-}
-
-function tapestryValidateNewNode(formData, isRoot) {
-
-    if (typeof isRoot == 'undefined') {
-        isRoot = false;
-    }
-    
-    var errMsg = "";
-
-    for (var i = 0; i < formData.length; i++) {
-        var fieldName = formData[i].name;
-        var fieldValue = formData[i].value;
-
-        switch (fieldName) {
-            case "title":
-                if (fieldValue === "") {
-                    errMsg += "Please enter a title \n";
-                }
-                break;
-            case "imageURL":
-                if (fieldValue === "") {
-                    errMsg += "Please enter a thumbnail URL \n";
-                }
-                break;
-            case "appearsAt":
-                if (fieldValue.length > 0 && !onlyContainsDigits(fieldValue) && !isRoot) {
-                    errMsg += "Please enter numeric value for Appears At (or leave empty to not lock) \n";
-                }
-                break;
-            default:
-                break;
-        }
-
-        if ($("#mediaType").val() === "video") {
-            switch (fieldName) {
-                case "mp4-mediaURL":
-                    if (fieldValue === "") {
-                        errMsg += "Please enter a MP4 video URL \n";
-                    }
-                    break;
-                case "mp4-mediaDuration":
-                    if (!onlyContainsDigits(fieldValue)) {
-                        errMsg += "Please enter numeric value for media duration \n";
-                    }
-                    break;
-                default:
-                    break;
-            }
-        } else if ($("#mediaType").val() === "h5p") {
-            switch (fieldName) {
-                case "h5p-mediaURL":
-                    if (fieldValue === "") {
-                        errMsg += "Please enter a H5P URL \n";
-                    }
-                    break;
-                case "h5p-mediaDuration":
-                    if (!onlyContainsDigits(fieldValue)) {
-                        errMsg += "Please enter numeric value for media duration \n";
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-
-    if ($("#tapestry-node-description-area").val() && $("#tapestry-node-description-area").val().length > MAX_DESCRIPTION_LENGTH) {
-        errMsg += "Please enter a description under " + MAX_DESCRIPTION_LENGTH + " characters \n";
-    }
-    return errMsg;
 }
 
 // To establish two way connections
@@ -2840,6 +2326,77 @@ function onlyContainsDigits(string) {
 
 function extractDigitsFromString(string) {
     return string.replace(/[^0-9]/g,'');
+}
+
+function tapestryValidateNewNode(formData, isRoot) {
+    debugger
+    if (typeof isRoot == 'undefined') {
+        isRoot = false;
+    }
+    
+    var errMsg = "";
+
+    for (var i = 0; i < formData.length; i++) {
+        var fieldName = formData[i].name;
+        var fieldValue = formData[i].value;
+
+        switch (fieldName) {
+            case "title":
+                if (fieldValue === "") {
+                    errMsg += "Please enter a title \n";
+                }
+                break;
+            case "imageURL":
+                if (fieldValue === "") {
+                    errMsg += "Please enter a thumbnail URL \n";
+                }
+                break;
+            case "appearsAt":
+                if (fieldValue.length > 0 && !onlyContainsDigits(fieldValue) && !isRoot) {
+                    errMsg += "Please enter numeric value for Appears At (or leave empty to not lock) \n";
+                }
+                break;
+            default:
+                break;
+        }
+
+        if ($("#mediaType").val() === "video") {
+            switch (fieldName) {
+                case "mp4-mediaURL":
+                    if (fieldValue === "") {
+                        errMsg += "Please enter a MP4 video URL \n";
+                    }
+                    break;
+                case "mp4-mediaDuration":
+                    if (!onlyContainsDigits(fieldValue)) {
+                        errMsg += "Please enter numeric value for media duration \n";
+                    }
+                    break;
+                default:
+                    break;
+            }
+        } else if ($("#mediaType").val() === "h5p") {
+            switch (fieldName) {
+                case "h5p-mediaURL":
+                    if (fieldValue === "") {
+                        errMsg += "Please enter a H5P URL \n";
+                    }
+                    break;
+                case "h5p-mediaDuration":
+                    if (!onlyContainsDigits(fieldValue)) {
+                        errMsg += "Please enter numeric value for media duration \n";
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    if ($("#tapestry-node-description-area").val() && $("#tapestry-node-description-area").val().length > MAX_DESCRIPTION_LENGTH) {
+        errMsg += "Please enter a description under " + MAX_DESCRIPTION_LENGTH + " characters \n";
+    }
+    return errMsg;
 }
 
 // Capture click events anywhere inside or outside tapestry
