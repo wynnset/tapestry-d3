@@ -982,7 +982,7 @@ function buildPathAndButton() {
         $("#add-node-thumbnail-input").val(tapestry.dataset.nodes[findNodeIndex(root)].imageURL);
 
         // Load description
-        if (dataset.nodes[findNodeIndex(root)].description) {
+        if (tapestry.dataset.nodes[findNodeIndex(root)].description) {
             $("#tapestry-node-description-area").val(dataset.nodes[findNodeIndex(root)].description);
         }
 
@@ -996,12 +996,12 @@ function buildPathAndButton() {
             $("#tapestry-node-text-area").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.textContent);
         } else if (tapestry.dataset.nodes[findNodeIndex(root)].mediaType === "video") {
             if (tapestry.dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
-                $("#mediaType").val("video");
+                $("#mediaType option[value=video]").attr('selected', 'selected');
                 $("#mp4-mediaURL-input").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
                 $("#mp4-mediaDuration-input").val(tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration);
                 $("#mp4-content").show();
             } else if (tapestry.dataset.nodes[findNodeIndex(root)].mediaFormat === "h5p") {
-                $("#mediaType").val("h5p");
+                $("#mediaType option[value=h5p]").attr('selected', 'selected');
                 $("#h5p-mediaURL-input").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
                 $("#h5p-mediaDuration-input").val(tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration);
                 $("#h5p-content").show();
@@ -2113,7 +2113,7 @@ function getChildrenData(parentId) {
 
 tapestryTool.prototype.initialize = function () {
     return this.init();
-}
+};
 
 tapestryTool.prototype.getDataset = function() {
     return this.dataset;
@@ -2125,7 +2125,7 @@ tapestryTool.prototype.setDataset = function(newDataset) {
 
 tapestryTool.prototype.setOriginalDataset = function (dataset) {
     this.originalDataset = dataset;
-}
+};
 
 tapestryTool.prototype.redraw = function(isRoot) {
     return this.redrawTapestryWithNewNode(isRoot);
@@ -2296,76 +2296,75 @@ function extractDigitsFromString(string) {
     return string.replace(/[^0-9]/g,'');
 }
 
-function tapestryValidateNewNode(formData, isRoot) {
-    debugger
-    if (typeof isRoot == 'undefined') {
-        isRoot = false;
-    }
-    
-    var errMsg = "";
+function tapestryValidateNewNode(formData, isRoot) {	
+    if (typeof isRoot == 'undefined') {	
+       isRoot = false;	
+   }	
 
-    for (var i = 0; i < formData.length; i++) {
-        var fieldName = formData[i].name;
-        var fieldValue = formData[i].value;
+    var errMsg = "";	
 
-        switch (fieldName) {
-            case "title":
-                if (fieldValue === "") {
-                    errMsg += "Please enter a title \n";
-                }
-                break;
-            case "imageURL":
-                if (fieldValue === "") {
-                    errMsg += "Please enter a thumbnail URL \n";
-                }
-                break;
-            case "appearsAt":
-                if (fieldValue.length > 0 && !onlyContainsDigits(fieldValue) && !isRoot) {
-                    errMsg += "Please enter numeric value for Appears At (or leave empty to not lock) \n";
-                }
-                break;
-            default:
-                break;
-        }
+    for (var i = 0; i < formData.length; i++) {	
+       var fieldName = formData[i].name;	
+       var fieldValue = formData[i].value;	
 
-        if ($("#mediaFormat").val() === "mp4") {
-            switch (fieldName) {
-                case "mp4-mediaURL":
-                    if (fieldValue === "") {
-                        errMsg += "Please enter a MP4 video URL \n";
-                    }
-                    break;
-                case "mp4-mediaDuration":
-                    if (!onlyContainsDigits(fieldValue)) {
-                        errMsg += "Please enter numeric value for media duration \n";
-                    }
-                    break;
-                default:
-                    break;
-            }
-        } else if ($("#mediaFormat").val() === "h5p") {
-            switch (fieldName) {
-                case "h5p-mediaURL":
-                    if (fieldValue === "") {
-                        errMsg += "Please enter a H5P URL \n";
-                    }
-                    break;
-                case "h5p-mediaDuration":
-                    if (!onlyContainsDigits(fieldValue)) {
-                        errMsg += "Please enter numeric value for media duration \n";
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
+        switch (fieldName) {	
+           case "title":	
+               if (fieldValue === "") {	
+                   errMsg += "Please enter a title \n";	
+               }	
+               break;	
+           case "imageURL":	
+               if (fieldValue === "") {	
+                   errMsg += "Please enter a thumbnail URL \n";	
+               }	
+               break;	
+           case "appearsAt":	
+               if (fieldValue.length > 0 && !onlyContainsDigits(fieldValue) && !isRoot) {	
+                   errMsg += "Please enter numeric value for Appears At (or leave empty to not lock) \n";	
+               }	
+               break;	
+           default:	
+               break;	
+       }	
 
-    if ($("#tapestry-node-description-area").val() && $("#tapestry-node-description-area").val().length > MAX_DESCRIPTION_LENGTH) {
-        errMsg += "Please enter a description under " + MAX_DESCRIPTION_LENGTH + " characters \n";
-    }
-    return errMsg;
-}
+        if ($("#mediaType").val() === "video") {	
+           switch (fieldName) {	
+               case "mp4-mediaURL":	
+                   if (fieldValue === "") {	
+                       errMsg += "Please enter a MP4 video URL \n";	
+                   }	
+                   break;	
+               case "mp4-mediaDuration":	
+                   if (!onlyContainsDigits(fieldValue)) {	
+                       errMsg += "Please enter numeric value for media duration \n";	
+                   }	
+                   break;	
+               default:	
+                   break;	
+           }	
+       } else if ($("#mediaType").val() === "h5p") {	
+           switch (fieldName) {	
+               case "h5p-mediaURL":	
+                   if (fieldValue === "") {	
+                       errMsg += "Please enter a H5P URL \n";	
+                   }	
+                   break;	
+               case "h5p-mediaDuration":	
+                   if (!onlyContainsDigits(fieldValue)) {	
+                       errMsg += "Please enter numeric value for media duration \n";	
+                   }	
+                   break;	
+               default:	
+                   break;	
+           }	
+       }	
+   }	
+
+    if ($("#tapestry-node-description-area").val() && $("#tapestry-node-description-area").val().length > MAX_DESCRIPTION_LENGTH) {	
+       errMsg += "Please enter a description under " + MAX_DESCRIPTION_LENGTH + " characters \n";	
+   }	
+   return errMsg;	
+}	
 
 // Resets the add/edit modal to default state
 function tapestryHideAddNodeModal() {
