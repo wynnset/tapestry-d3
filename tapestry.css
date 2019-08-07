@@ -196,16 +196,6 @@ div.modal {
     height: 100%;
 }
 
-/* comment out because we are adding the description to sidebar */
-/* #tapestry-node-description-text[data-media-type=video] {
-    color: white;
-}
-
-#tapestry-text-node-hr {
-    height: 100%;
-    border: 1px solid;
-} */
-
 /* Text Node Styling */
 #text-light-box-title > h3 {
     margin: 1em 0 1em 15px;

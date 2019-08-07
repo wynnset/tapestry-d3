@@ -78,7 +78,7 @@ jQuery.ajaxSetup({
 });
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
-    dataset = result;	
+    dataset = result;
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
         // always unlock root node
@@ -904,7 +904,7 @@ function tapestryValidateNewNode(formData, isRoot) {
     }
 
     if ($("#tapestry-node-description-area").val() && $("#tapestry-node-description-area").val().length > MAX_DESCRIPTION_LENGTH) {
-        errMsg += "Please enter a description under 250 characters \n";
+        errMsg += "Please enter a description under " + MAX_DESCRIPTION_LENGTH + " characters \n";
     }
     return errMsg;
 }
@@ -2175,24 +2175,6 @@ function exitViewMode() {
     }
     startForce();
 }
-
-// Comment out because we want to add description to sidebar now
-// function createLightBoxFooter(description, mediaType) {
-//     if (description) {
-//         var descriptionContent = document.createElement("div");
-//         if (mediaType === "text") {
-//             var hr = document.createElement("hr");
-//             hr.setAttribute("id", "tapestry-text-node-hr");
-//             descriptionContent.append(hr);
-//         }
-//         var descriptionText = document.createElement("p");
-//         descriptionText.setAttribute("id", "tapestry-node-description-text");
-//         descriptionText.setAttribute("data-media-type", mediaType);
-//         descriptionText.appendChild(document.createTextNode(description));
-//         descriptionContent.append(descriptionText);
-//         return descriptionContent;
-//     }
-// }
 
 /****************************************************
  * HELPER FUNCTIONS
