@@ -38,6 +38,7 @@ var // declared variables
     tapestrySlug, 
     saveProgress = true, progressLastSaved = new Date(), // Saving Progress
     enablePopupNodes = false, inViewMode = false,   // Pop-up nodes
+    tapestryDimensionsBeforeDrag,
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
@@ -195,7 +196,7 @@ function init() {
     //---------------------------------------------------
     
     // Ensure tapestry size fits well into the browser and start force
-    updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+    updateSvgDimensions();
 
 
     //---------------------------------------------------
@@ -259,6 +260,7 @@ tapestryDepthSlider.onchange = function() {
     setLinkTypes(root);
 
     filterTapestry();
+    updateSvgDimensions();
 };
 
 tapestryControlsDiv.appendChild(depthSliderWrapper);
@@ -280,6 +282,7 @@ setAttributes(viewLockedCheckbox,{
 });
 viewLockedCheckbox.onchange = function() {
     filterTapestry();
+    updateSvgDimensions();
 };
 
 // Create label element
@@ -839,7 +842,7 @@ function redrawTapestryWithNewNode(isRoot) {
     buildNodeContents();
     filterTapestry();
     
-    updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+    updateSvgDimensions();
 }
 
 function tapestryValidateNewNode(formData, isRoot) {
@@ -1025,8 +1028,8 @@ function dragstarted(d) {
 
 function dragged(d) {
     var tapestryDimensions = getTapestryDimensions();
-    d.fx = getBoundedCoord(d3.event.x, tapestryDimensions.width);
-    d.fy = getBoundedCoord(d3.event.y, tapestryDimensions.height);
+    d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
+    d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
 }
 
 function dragended(d) {
@@ -1051,19 +1054,21 @@ function dragended(d) {
     recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
-function createSvgContainer(containerId) {
+function createSvgContainer() {
     var tapestryDimensions = getTapestryDimensions();
-    return d3.select("#"+containerId)
+    tapestryDimensionsBeforeDrag = tapestryDimensions;
+    return d3.select("#"+TAPESTRY_CONTAINER_ID)
                 .append("svg:svg")
-                .attr("id", containerId+"-svg")
+                .attr("id", TAPESTRY_CONTAINER_ID+"-svg")
                 .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height)
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g");
 }
 
-function updateSvgDimensions(containerId) {
+function updateSvgDimensions() {
     var tapestryDimensions = getTapestryDimensions();
-    d3.select("#"+containerId+"-svg")
+    tapestryDimensionsBeforeDrag = tapestryDimensions;
+    d3.select("#"+TAPESTRY_CONTAINER_ID+"-svg")
         .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height);
     startForce();
 }
@@ -2217,17 +2222,17 @@ function getNodesDimensions(dataset) {
     for (var index in dataset.nodes) {
         
         // save max point so we can calculate our tapestry width and height
-        if (dataset.nodes[index].fx > maxPointX) {
+        if (getViewable(dataset.nodes[index]) && dataset.nodes[index].fx > maxPointX) {
             maxPointX = dataset.nodes[index].fx;
         }
-        if (dataset.nodes[index].fy > maxPointY) {
+        if (getViewable(dataset.nodes[index]) && dataset.nodes[index].fy > maxPointY) {
             maxPointY = dataset.nodes[index].fy;
         }
     }
 
     return {
-        'x': maxPointX + MAX_RADIUS,
-        'y': maxPointY + MAX_RADIUS
+        'x': maxPointX,
+        'y': maxPointY
     };
 }
 
@@ -2245,8 +2250,8 @@ function getTapestryDimensions() {
     }
 
     return {
-        'width': tapestryWidth,
-        'height': tapestryHeight
+        'width': tapestryWidth + MAX_RADIUS,
+        'height': tapestryHeight + MAX_RADIUS
     };
 }
 
@@ -2267,7 +2272,7 @@ function updateTapestrySize() {
         }
 
         // Update svg dimensions to the new dimensions of the browser
-        updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+        updateSvgDimensions();
     }
 }
 
