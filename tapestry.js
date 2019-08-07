@@ -34,6 +34,7 @@ var // declared variables
     nodeCoordinates = [],                           // For saving the coordinates of the Tapestry pre transition to play mode
     adjustedRadiusRatio = 1,                        // Radius adjusted for view mode
     tapestrySlug, 
+    tapestryDimensionsBeforeDrag,
     saveProgress = true, progressLastSaved = new Date(), // Saving Progress
     enablePopupNodes = false, inViewMode = false,   // Pop-up nodes
     nodeImageHeight = 420,
@@ -92,6 +93,10 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
         dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
     }
     originalDataset = dataset;
+
+    var tapestryDimensionsBeforeDrag = getTapestryDimensions();
+
+
     saveCoordinates();
 
 
@@ -189,7 +194,7 @@ function init() {
     //---------------------------------------------------
     
     // Ensure tapestry size fits well into the browser and start force
-    updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+    updateSvgDimensions();
 
 
     //---------------------------------------------------
@@ -253,6 +258,7 @@ tapestryDepthSlider.onchange = function() {
     setLinkTypes(root);
 
     filterTapestry();
+    updateSvgDimensions();
 };
 
 tapestryControlsDiv.appendChild(depthSliderWrapper);
@@ -274,6 +280,7 @@ setAttributes(viewLockedCheckbox,{
 });
 viewLockedCheckbox.onchange = function() {
     filterTapestry();
+    updateSvgDimensions();
 };
 
 // Create label element
@@ -827,7 +834,7 @@ function redrawTapestryWithNewNode(isRoot) {
     buildNodeContents();
     filterTapestry();
     
-    updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+    updateSvgDimensions();
 }
 
 function tapestryValidateNewNode(formData, isRoot) {
@@ -999,18 +1006,17 @@ function ticked() {
 }
 
 function dragstarted(d) {
-    var tapestryDimensions = getTapestryDimensions();
     if (!d3.event.active) force.alphaTarget(0.2).restart();
-    d.fx = getBoundedCoord(d.x, tapestryDimensions.width);
-    d.fy = getBoundedCoord(d.y, tapestryDimensions.height);
+    d.fx = getBoundedCoord(d.x, tapestryDimensionsBeforeDrag.width);
+    d.fy = getBoundedCoord(d.y, tapestryDimensionsBeforeDrag.height);
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
 function dragged(d) {
-    var tapestryDimensions = getTapestryDimensions();
-    d.fx = getBoundedCoord(d3.event.x, tapestryDimensions.width);
-    d.fy = getBoundedCoord(d3.event.y, tapestryDimensions.height);
+   // var tapestryDimensions = getTapestryDimensions();
+    d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
+    d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
 }
 
 function dragended(d) {
@@ -1035,19 +1041,19 @@ function dragended(d) {
     recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
-function createSvgContainer(containerId) {
+function createSvgContainer() {
     var tapestryDimensions = getTapestryDimensions();
-    return d3.select("#"+containerId)
+    return d3.select("#"+TAPESTRY_CONTAINER_ID)
                 .append("svg:svg")
-                .attr("id", containerId+"-svg")
+                .attr("id", TAPESTRY_CONTAINER_ID+"-svg")
                 .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height)
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g");
 }
 
-function updateSvgDimensions(containerId) {
+function updateSvgDimensions() {
     var tapestryDimensions = getTapestryDimensions();
-    d3.select("#"+containerId+"-svg")
+    d3.select("#"+TAPESTRY_CONTAINER_ID+"-svg")
         .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height);
     startForce();
 }
@@ -1109,7 +1115,7 @@ function createNodes() {
  */
 function filterTapestry(freshBuild=false) {
 
-    changeConstants();
+   // changeConstants();
 
     // Show Links
 
@@ -1397,13 +1403,6 @@ function rebuildNodeContents() {
 
 function buildPathAndButton() {
 
-    var iconWidth = 60/getNodeNumber().toString() + "px"
-    var mbWidth = 80/getNodeNumber().toString() + "px"
-    var iconHeight = 62/getNodeNumber().toString() + "px"
-    var mbHeight = 82/getNodeNumber().toString() + "px"
-    
-    
-
     /* Add progress pie inside each node */
     pieGenerator = d3.pie().sort(null).value(function (d) {
         return d.value;
@@ -1469,11 +1468,11 @@ function buildPathAndButton() {
         .attr("data-id", function (d) {
             return d.id;
         })
-        .attr("width", mbWidth)
-        .attr("height", mbHeight)
-        .attr("x", -27/getNodeNumber())
+        .attr("width", "60px")
+        .attr("height", "62px")
+        .attr("x", -27)
         .attr("y", function (d) {
-            return (-NORMAL_RADIUS * adjustedRadiusRatio - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0))/(getNodeNumber()/2);
+            return (-NORMAL_RADIUS * adjustedRadiusRatio - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0));
         })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
@@ -1503,11 +1502,11 @@ function buildPathAndButton() {
         .attr("data-id", function (d) {
             return d.id;
         })
-        .attr("width", iconWidth)
-        .attr("height", iconHeight)
-        .attr("x", -50/getNodeNumber())
+        .attr("width", "60px")
+        .attr("height", "62px")
+        .attr("x", -50)
         .attr("y", function (d) {
-            return (NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30)/(getNodeNumber()/2);
+            return (NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30);
         })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" || d.nodeType === "child" ? "visibility: hidden" : "visibility: visible";
@@ -1571,11 +1570,11 @@ function buildPathAndButton() {
         .attr("data-id", function (d) {
             return d.id;
         })
-        .attr("width", iconWidth)
-        .attr("height", iconHeight)
-        .attr("x", 10/getNodeNumber())
+        .attr("width", "60px")
+        .attr("height", "62px")
+        .attr("x", 10)
         .attr("y", function (d) {
-            return (NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30)/(getNodeNumber()/2);
+            return (NORMAL_RADIUS + ROOT_RADIUS_DIFF - 30);
         })
         .attr("style", function (d) {
             return d.nodeType === "grandchild" || d.nodeType === "child" ? "visibility: hidden" : "visibility: visible";
@@ -1644,9 +1643,6 @@ function buildPathAndButton() {
         // Show the modal
         $("#createNewNodeModal").modal();
     });
-
-    // Resize text & buttons based on size
-    alterText();
 }
 
 function updateViewedProgress() {
@@ -2180,22 +2176,23 @@ function exitViewMode() {
 
  // Returns number of viewable nodes that aren't grandchildren
 function getNodeNumber() {
+    var nodes = dataset.nodes;
     var nodesToShow = nodes.filter(function (d) {
         return getViewable(d) && d.nodeType != "grandchild";
     });
 
+    console.log(nodesToShow);
+
     var viewable = 0;
 
-    for (i = 0; i < nodesToShow._groups[0].length; i++) {
+    for (i = 0; i < nodesToShow[0].length; i++) {
         viewable = viewable + 1;
     }
 
     console.log(viewable);
 
-    viewable *= 0.6
-
-    if (viewable < 1.8) {
-        viewable = 1.8;
+    if (viewable < 1) {
+        viewable = 1;
     }
 
     return viewable;
@@ -2218,7 +2215,6 @@ function changeConstants() {
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
     innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
     outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2);
-
 }
 
 function alterText() {
@@ -2239,7 +2235,7 @@ function alterText() {
     $(document).ready(function() {
         titles = document.getElementsByClassName("title");
 
-        console.log(titles);
+     //   console.log(titles);
 
         for (i = 0; i < titles.length; i++) {
             titles[i].style.fontSize = dongle;
@@ -2247,9 +2243,9 @@ function alterText() {
     
       //  var buttons = document.querySelectorAll(,,');
         
-        var doob = document.getElementsByClassName('mediaButtonIcon');
-        var toob = document.getElementsByClassName('editNodeIcon');
-        var noob = document.getElementsByClassName('addNodeIcon');
+        var mediaButtons = document.getElementsByClassName('mediaButtonIcon');
+        var editButtons = document.getElementsByClassName('editNodeIcon');
+        var addButtons = document.getElementsByClassName('addNodeIcon');
 
         var mediaButton = document.getElementsByClassName('mediaButton');
 
@@ -2261,15 +2257,17 @@ function alterText() {
     //         mediaButton[i].width = dongle;
     //     }
 
-        for (i = 0; i < doob.length; i++) {
-            doob[i].style.fontSize = mebFont;
+        console.log(mediaButtons);
 
+        for (i = 0; i < mediaButtons.length; i++) {
+            mediaButtons[i].offsetParent.width = 40;
+            console.log(mediaButtons[i].offsetParent);
+
+            mediaButtons[i].style.fontSize = "10px";
         }
 
-        toob[0].style.fontSize = editFont;
-        noob[0].style.fontSize = addFont;
-
-    //    console.log(doob,toob,noob);
+        editButtons[0].style.fontSize = editFont;
+        addButtons[0].style.fontSize = addFont;
     });
 
 }
@@ -2304,13 +2302,16 @@ function getAspectRatio() {
 function getNodesDimensions(dataset) {
     var maxPointX = 0;
     var maxPointY = 0;
+
+  //  num = getNodeNumber();
+
     for (var index in dataset.nodes) {
         
         // save max point so we can calculate our tapestry width and height
-        if (dataset.nodes[index].fx > maxPointX) {
+        if (getViewable(dataset.nodes[index]) && dataset.nodes[index].fx > maxPointX) {
             maxPointX = dataset.nodes[index].fx;
         }
-        if (dataset.nodes[index].fy > maxPointY) {
+        if (getViewable(dataset.nodes[index]) && dataset.nodes[index].fy > maxPointY) {
             maxPointY = dataset.nodes[index].fy;
         }
     }
@@ -2357,7 +2358,7 @@ function updateTapestrySize() {
         }
 
         // Update svg dimensions to the new dimensions of the browser
-        updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+        updateSvgDimensions();
     }
 }
 
