@@ -259,8 +259,17 @@ tapestryDepthSlider.onchange = function() {
     setNodeTypes(root);
     setLinkTypes(root);
 
+    var tapdim = getTapestryDimensions();
+
+    addBuffer(tapdim.width,tapdim.height);
+
+    console.log(tapdim);
+
     filterTapestry();
     updateSvgDimensions();
+
+
+
 };
 
 tapestryControlsDiv.appendChild(depthSliderWrapper);
@@ -2189,6 +2198,14 @@ function exitViewMode() {
  * HELPER FUNCTIONS
  ****************************************************/
 
+function getNodeNumber() {
+    var nodes = dataset.nodes;
+    var nodesToShow = nodes.filter(function (d) {
+        return getViewable(d) && d.nodeType != "grandchild";
+    });
+    return nodesToShow.length;
+}
+
 // Set multiple attributes for an HTML element at once
 function setAttributes(elem, obj) {
     for (var prop in obj) {
@@ -2217,8 +2234,14 @@ function getAspectRatio() {
 }
 
 function getNodesDimensions(dataset) {
+
     var maxPointX = 0;
     var maxPointY = 0;
+    var minPointX = 3000;
+    var minPointY = 3000;
+
+    var ok = getNodeNumber();
+
     for (var index in dataset.nodes) {
         
         // save max point so we can calculate our tapestry width and height
@@ -2228,12 +2251,38 @@ function getNodesDimensions(dataset) {
         if (getViewable(dataset.nodes[index]) && dataset.nodes[index].fy > maxPointY) {
             maxPointY = dataset.nodes[index].fy;
         }
+
+        if (getViewable(dataset.nodes[index]) && dataset.nodes[index].fx < minPointX) {
+            minPointX = dataset.nodes[index].fx;
+        }
+        if (getViewable(dataset.nodes[index]) && dataset.nodes[index].fy < minPointY) {
+            minPointY = dataset.nodes[index].fy;
+        }
     }
+
+ //   addBuffer(maxPointX,maxPointY);
 
     return {
         'x': maxPointX,
         'y': maxPointY
     };
+}
+
+
+// add a buffer if the node is in the first or fourth quartile (for resizing)
+function addBuffer(maxPointX,maxPointY) {
+    var q3x = maxPointX*(3/4);
+    var q3y = maxPointY*(3/4);
+
+    for (var index in dataset.nodes) {
+        if ((q3x < dataset.nodes[index].fx && dataset.nodes[index].fx < maxPointX)) {
+            console.log(q3x," < ",dataset.nodes[index].fx, " < ",maxPointX);
+            dataset.nodes[index].fx = dataset.nodes[index].fx - q3x/2;
+        }
+        if ((q3y < dataset.nodes[index].fy && dataset.nodes[index].fy < maxPointY)) {
+            dataset.nodes[index].fy = dataset.nodes[index].fy - - q3y;
+        }
+    }
 }
 
 /* Gets the boundary of the tapestry */
