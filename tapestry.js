@@ -32,7 +32,7 @@ var // declared constants
     API_PUT_METHOD = 'PUT',
     USER_NODE_PROGRESS_URL = config.apiUrl + "/users/progress",
     USER_NODE_UNLOCKED_URL = config.apiUrl + "/users/unlocked",
-    TAPESTRY_H5P_SETTINGS_URL = config.apiUrl + "/users/h5psettings"
+    TAPESTRY_H5P_SETTINGS_URL = config.apiUrl + "/users/h5psettings";
   
 
 var // declared variables
@@ -959,12 +959,12 @@ function buildPathAndButton() {
             $("#tapestry-node-text-area").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.textContent);
         } else if (tapestry.dataset.nodes[findNodeIndex(root)].mediaType === "video") {
             if (tapestry.dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
-                $("#mediaType").val('video');
+                $("#mediaType").val("video");
                 $("#mp4-mediaURL-input").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
                 $("#mp4-mediaDuration-input").val(tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration);
                 $("#mp4-content").show();
             } else if (tapestry.dataset.nodes[findNodeIndex(root)].mediaFormat === "h5p") {
-                $("#mediaType").val('h5p');                
+                $("#mediaType").val("h5p");
                 $("#h5p-mediaURL-input").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
                 $("#h5p-mediaDuration-input").val(tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration);
                 $("#h5p-content").show();
@@ -2026,7 +2026,7 @@ function checkPermission(node, permissionType) {
     }
 
     if (config.wpUserId && config.wpUserId !== "") {
-        const userIndex = "user-" + config.wpUserId;
+        var userIndex = "user-" + config.wpUserId;
         if (node.permissions[userIndex] && node.permissions[userIndex].includes(permissionType)) {
             return node.nodeType === "root";
         }
@@ -2260,7 +2260,7 @@ function extractDigitsFromString(string) {
 }
 
 function tapestryValidateNewNode(formData, isRoot) {
-    const MAX_DESCRIPTION_LENGTH = 250;
+    var MAX_DESCRIPTION_LENGTH = 250;
     
     if (typeof isRoot == 'undefined') {	
        isRoot = false;	
