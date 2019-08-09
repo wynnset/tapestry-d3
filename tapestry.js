@@ -261,7 +261,7 @@ tapestryDepthSlider.onchange = function() {
 
     var tapdim = getTapestryDimensions();
 
-    addBuffer(tapdim.width,tapdim.height);
+ //   addBuffer(tapdim.width,tapdim.height);
 
     console.log(tapdim);
 
@@ -1029,16 +1029,30 @@ function ticked() {
 function dragstarted(d) {
     var tapestryDimensions = getTapestryDimensions();
     if (!d3.event.active) force.alphaTarget(0.2).restart();
-    d.fx = getBoundedCoord(d.x, tapestryDimensions.width);
-    d.fy = getBoundedCoord(d.y, tapestryDimensions.height);
+
+    if (tapestryWpIsAdmin) {
+        d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width+200);
+        d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height+200);
+    } else {
+        d.fx = getBoundedCoord(d.x, tapestryDimensions.width);
+        d.fy = getBoundedCoord(d.y, tapestryDimensions.height);
+    }
+
+
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
 function dragged(d) {
+    if (tapestryWpIsAdmin) {
+        d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width+200);
+        d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height+200);
+    } else {
+        d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
+        d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
+    }
     var tapestryDimensions = getTapestryDimensions();
-    d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
-    d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
+
 }
 
 function dragended(d) {
@@ -2274,14 +2288,12 @@ function addBuffer(maxPointX,maxPointY) {
     var q3x = maxPointX*(3/4);
     var q3y = maxPointY*(3/4);
 
-    for (var index in dataset.nodes) {
-        if ((q3x < dataset.nodes[index].fx && dataset.nodes[index].fx < maxPointX)) {
-            console.log(q3x," < ",dataset.nodes[index].fx, " < ",maxPointX);
-            dataset.nodes[index].fx = dataset.nodes[index].fx - q3x/2;
-        }
-        if ((q3y < dataset.nodes[index].fy && dataset.nodes[index].fy < maxPointY)) {
-            dataset.nodes[index].fy = dataset.nodes[index].fy - - q3y;
-        }
+    if ((q3x < dataset.nodes[rootId].fx && dataset.nodes[index].fx < maxPointX)) {
+        console.log(q3x," < ",dataset.nodes[rootId].fx, " < ",maxPointX);
+        dataset.nodes[rootId].fx = dataset.nodes[rootId].fx - q3x/2;
+    }
+    if ((q3y < dataset.nodes[rootId].fy && dataset.nodes[rootId].fy < maxPointY)) {
+        dataset.nodes[rootId].fy = dataset.nodes[rootId].fy - q3y/2;
     }
 }
 
