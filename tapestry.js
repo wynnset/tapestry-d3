@@ -259,17 +259,8 @@ tapestryDepthSlider.onchange = function() {
     setNodeTypes(root);
     setLinkTypes(root);
 
-    var tapdim = getTapestryDimensions();
-
- //   addBuffer(tapdim.width,tapdim.height);
-
-    console.log(tapdim);
-
     filterTapestry();
     updateSvgDimensions();
-
-
-
 };
 
 tapestryControlsDiv.appendChild(depthSliderWrapper);
@@ -545,7 +536,6 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         //         alert("Enter valid group id");
         //     }
         // });
-
     }
 });
 
@@ -1038,8 +1028,6 @@ function dragstarted(d) {
         d.fy = getBoundedCoord(d.y, tapestryDimensions.height);
     }
 
-
-
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
@@ -1051,8 +1039,6 @@ function dragged(d) {
         d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
         d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
     }
-    var tapestryDimensions = getTapestryDimensions();
-
 }
 
 function dragended(d) {
@@ -1072,8 +1058,9 @@ function dragended(d) {
                 console.error(e);
             }
         });
-    }
 
+        updateSvgDimensions();
+    }
     recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
@@ -2273,28 +2260,10 @@ function getNodesDimensions(dataset) {
             minPointY = dataset.nodes[index].fy;
         }
     }
-
- //   addBuffer(maxPointX,maxPointY);
-
     return {
         'x': maxPointX,
         'y': maxPointY
     };
-}
-
-
-// add a buffer if the node is in the first or fourth quartile (for resizing)
-function addBuffer(maxPointX,maxPointY) {
-    var q3x = maxPointX*(3/4);
-    var q3y = maxPointY*(3/4);
-
-    if ((q3x < dataset.nodes[rootId].fx && dataset.nodes[index].fx < maxPointX)) {
-        console.log(q3x," < ",dataset.nodes[rootId].fx, " < ",maxPointX);
-        dataset.nodes[rootId].fx = dataset.nodes[rootId].fx - q3x/2;
-    }
-    if ((q3y < dataset.nodes[rootId].fy && dataset.nodes[rootId].fy < maxPointY)) {
-        dataset.nodes[rootId].fy = dataset.nodes[rootId].fy - q3y/2;
-    }
 }
 
 /* Gets the boundary of the tapestry */
@@ -2406,7 +2375,6 @@ function addDepthToNodes(id, depth, visited) {
             }
         }
     }
-    
 }
 
 /* Return the distance between a node and its farthest descendant node */
