@@ -32,8 +32,7 @@ var // declared constants
     API_PUT_METHOD = 'PUT',
     USER_NODE_PROGRESS_URL = config.apiUrl + "/users/progress",
     USER_NODE_UNLOCKED_URL = config.apiUrl + "/users/unlocked",
-    TAPESTRY_H5P_SETTINGS_URL = config.apiUrl + "/users/h5psettings",
-    MAX_DESCRIPTION_LENGTH = 250;
+    TAPESTRY_H5P_SETTINGS_URL = config.apiUrl + "/users/h5psettings"
   
 
 var // declared variables
@@ -232,47 +231,9 @@ if (config.wpUserId) {
 // Insert the modal template
 //--------------------------------------------------
 
-// Type is either "user" or "group"  
-function appendPermissionsRow(id, type) {
-    $('#permissions-table tbody').append(
-        '<tr class="permissions-dynamic-row">' +
-        '<td>' + capitalizeFirstLetter(type) + " " + id + '</td>' +
-        '<td id="' + type + "-" + id + "-editcell" + '"' + '></td>' +
-        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-checkbox" name="add" type="checkbox"></td>' +
-        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-edit-checkbox" name="edit" type="checkbox"></td>' +
-        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-submit-checkbox" name="add_submit" type="checkbox"></td>' +
-        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox"+ '"' + 'id="user-' + id +'-edit-submit-checkbox" name="edit_submit" type="checkbox"></td>' +
-        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-approve-checkbox" name="approve" type="checkbox"></td>' +
-        '</tr>'
-    );
-    $('<input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-read-checkbox" name="read" type="checkbox" checked>').on("change", function() {
-        if ($(this).is(":checked")) {
-            $("." + type + "-" + id + "-checkbox").each(function() {
-                if($(this).prop('disabled')) {
-                    $(this).prop('disabled', false);
-                }
-            });
-        } else {
-            $("." + type + "-" + id + "-checkbox").each(function() {
-                if (this.id !== "user-" + id + "-read-checkbox") {
-                    $(this).prop('checked', false);
-                    $(this).prop('disabled', true);
-                }
-            });
-        }
-    }).appendTo("#" + type + "-" + id + "-editcell");
-
-    $('.public-checkbox').each(function() {
-        if ($(this).is(":checked")) {
-            $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('checked', true);
-            $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('disabled', true);
-        }
-    });
-}
-
 this.redrawTapestryWithNewNode = function(isRoot) {
 
-    if (typeof isRoot == 'undefined') {
+    if (!isRoot) {
         isRoot = false;
     }
 
@@ -983,7 +944,7 @@ function buildPathAndButton() {
 
         // Load description
         if (tapestry.dataset.nodes[findNodeIndex(root)].description) {
-            $("#tapestry-node-description-area").val(dataset.nodes[findNodeIndex(root)].description);
+            $("#tapestry-node-description-area").val(tapestry.dataset.nodes[findNodeIndex(root)].description);
         }
 
         $("#mp4-content").hide();
@@ -996,12 +957,12 @@ function buildPathAndButton() {
             $("#tapestry-node-text-area").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.textContent);
         } else if (tapestry.dataset.nodes[findNodeIndex(root)].mediaType === "video") {
             if (tapestry.dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
-                $("#mediaType option[value=video]").attr('selected', 'selected');
+                $("#mediaType").val('video');
                 $("#mp4-mediaURL-input").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
                 $("#mp4-mediaDuration-input").val(tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration);
                 $("#mp4-content").show();
             } else if (tapestry.dataset.nodes[findNodeIndex(root)].mediaFormat === "h5p") {
-                $("#mediaType option[value=h5p]").attr('selected', 'selected');
+                $("#mediaType").val('h5p');                
                 $("#h5p-mediaURL-input").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
                 $("#h5p-mediaDuration-input").val(tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration);
                 $("#h5p-content").show();
@@ -2296,10 +2257,12 @@ function extractDigitsFromString(string) {
     return string.replace(/[^0-9]/g,'');
 }
 
-function tapestryValidateNewNode(formData, isRoot) {	
+function tapestryValidateNewNode(formData, isRoot) {
+    const MAX_DESCRIPTION_LENGTH = 250;
+    
     if (typeof isRoot == 'undefined') {	
        isRoot = false;	
-   }	
+    }	
 
     var errMsg = "";	
 
@@ -2396,6 +2359,44 @@ function tapestryHideAddNodeModal() {
     $("#mp4-content").hide();
     $("#h5p-content").hide();
     $("#appearsat-section").show();
+}
+
+// Type is either "user" or "group"  
+function appendPermissionsRow(id, type) {
+    $('#permissions-table tbody').append(
+        '<tr class="permissions-dynamic-row">' +
+        '<td>' + capitalizeFirstLetter(type) + " " + id + '</td>' +
+        '<td id="' + type + "-" + id + "-editcell" + '"' + '></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-checkbox" name="add" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-edit-checkbox" name="edit" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-submit-checkbox" name="add_submit" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox"+ '"' + 'id="user-' + id +'-edit-submit-checkbox" name="edit_submit" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-approve-checkbox" name="approve" type="checkbox"></td>' +
+        '</tr>'
+    );
+    $('<input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-read-checkbox" name="read" type="checkbox" checked>').on("change", function() {
+        if ($(this).is(":checked")) {
+            $("." + type + "-" + id + "-checkbox").each(function() {
+                if($(this).prop('disabled')) {
+                    $(this).prop('disabled', false);
+                }
+            });
+        } else {
+            $("." + type + "-" + id + "-checkbox").each(function() {
+                if (this.id !== "user-" + id + "-read-checkbox") {
+                    $(this).prop('checked', false);
+                    $(this).prop('disabled', true);
+                }
+            });
+        }
+    }).appendTo("#" + type + "-" + id + "-editcell");
+
+    $('.public-checkbox').each(function() {
+        if ($(this).is(":checked")) {
+            $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('checked', true);
+            $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('disabled', true);
+        }
+    });
 }
 
 // Capture click events anywhere inside or outside tapestry
