@@ -42,7 +42,7 @@ var // declared variables
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {},
     tapestryDepth = 2,                              // Default depth of Tapestry
-    autoLayout = false;
+    autoLayout = true;
 
 var // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
@@ -76,7 +76,6 @@ jQuery.ajaxSetup({
         }
     }
 });
-
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     dataset = result;	
@@ -627,7 +626,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
         "unlocked": true
     }
 
-    // Add the node data first
+    // Add the node data first, use fx & fy if autoLayout is false
     if (autoLayout) {
         newNodeEntry.x = getBrowserWidth();
         newNodeEntry.y = getBrowserHeight();
@@ -636,7 +635,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
         newNodeEntry.fy = getBrowserHeight();
     }
 
-    // Node ID exists, so edit case
+    // Node ID exists, so edit case, use fx & fy if autoLayout is false
     if (isEdit) {
         if (autoLayout) {
             newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x;
@@ -963,7 +962,7 @@ function addLink(source, target, value, appearsAt) {
  ****************************************************/
 
 
-/* Delete or add fx and fy parameters depending on whether or not autoLayout is turned on */
+/* Delete or add fx and fy parameters depending on whether or not autoLayout true */
 function adjustCoordinates() {
     if (autoLayout) {
         d3.selectAll('g.node').each(function(d){
