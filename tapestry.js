@@ -637,19 +637,20 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
     }
 
     // Node ID exists, so edit case
-    if (isEdit && autoLayout) {
-        newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x;
-        newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y; 
-    } else if (isEdit && !autoLayout) {
-        newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].x; 
-        newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].y; 
-    }
-    else {
-        if (!isRoot && autoLayout) {
+    if (isEdit) {
+        if (autoLayout) {
+            newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x;
+            newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y; 
+        } else {
+            newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].x; 
+            newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].y; 
+        }
+    } else if (!isRoot) {
+        if (autoLayout) {
             // Just put the node right under the current node
             newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x; 
             newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
-        } else if (!isRoot && !autoLayout) {
+        } else {
             newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx; 
             newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
         }
