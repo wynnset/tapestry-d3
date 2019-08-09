@@ -1021,8 +1021,8 @@ function dragstarted(d) {
     if (!d3.event.active) force.alphaTarget(0.2).restart();
 
     if (tapestryWpIsAdmin) {
-        d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width+200);
-        d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height+200);
+        d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width+(MAX_RADIUS*2));
+        d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height+(MAX_RADIUS*2));
     } else {
         d.fx = getBoundedCoord(d.x, tapestryDimensions.width);
         d.fy = getBoundedCoord(d.y, tapestryDimensions.height);
@@ -1033,8 +1033,8 @@ function dragstarted(d) {
 
 function dragged(d) {
     if (tapestryWpIsAdmin) {
-        d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width+200);
-        d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height+200);
+        d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width+(MAX_RADIUS*2));
+        d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height+(MAX_RADIUS*2));
     } else {
         d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
         d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
