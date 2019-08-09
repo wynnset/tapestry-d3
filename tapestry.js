@@ -233,9 +233,11 @@ if (config.wpUserId) {
 
 this.redrawTapestryWithNewNode = function(isRoot) {
 
-    if (!isRoot) {
+    if (typeof isRoot == 'undefined') {
         isRoot = false;
     }
+
+    root = tapestry.dataset.rootId;
 
     saveCoordinates();
     updateTapestrySize();
