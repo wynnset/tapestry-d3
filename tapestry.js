@@ -42,7 +42,7 @@ var // declared variables
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {},
     tapestryDepth = 2,                              // Default depth of Tapestry
-    autoLayout = true;
+    autoLayout = false;
 
 var // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
@@ -630,7 +630,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
     if (autoLayout) {
         newNodeEntry.x = getBrowserWidth();
         newNodeEntry.y = getBrowserHeight();
-    } else {
+    } else if (!autoLayout) {
         newNodeEntry.fx = getBrowserWidth();
         newNodeEntry.fy = getBrowserHeight();
     }
@@ -640,7 +640,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
         if (autoLayout) {
             newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x;
             newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y; 
-        } else {
+        } else if (!autoLayout) {
             newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].x; 
             newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].y; 
         }
@@ -648,10 +648,10 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
         if (autoLayout) {
             // Just put the node right under the current node
             newNodeEntry.x = dataset.nodes[findNodeIndex(root)].x; 
-            newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
-        } else {
+            newNodeEntry.y = dataset.nodes[findNodeIndex(root)].y + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 100;
+        } else if (!autoLayout) {
             newNodeEntry.fx = dataset.nodes[findNodeIndex(root)].fx; 
-            newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 50;
+            newNodeEntry.fy = dataset.nodes[findNodeIndex(root)].fy + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 100;
         }
     }
 
@@ -1068,7 +1068,7 @@ function dragstarted(d) {
     if (autoLayout) {
         d.x = getBoundedCoord(d.x, tapestryDimensions.width);
         d.y = getBoundedCoord(d.y, tapestryDimensions.height);
-    } else {
+    } else if (!autoLayout) {
         d.fx = getBoundedCoord(d.x, tapestryDimensions.width);
         d.fy = getBoundedCoord(d.y, tapestryDimensions.height);
     }
@@ -1082,7 +1082,7 @@ function dragged(d) {
     if (autoLayout) {
         d.x = getBoundedCoord(d3.event.x, tapestryDimensions.width);
         d.y = getBoundedCoord(d3.event.y, tapestryDimensions.height);
-    } else {
+    } else if (!autoLayout) {
         d.fx = getBoundedCoord(d3.event.x, tapestryDimensions.width);
         d.fy = getBoundedCoord(d3.event.y, tapestryDimensions.height);
     }
@@ -2286,7 +2286,7 @@ function getNodesDimensions(dataset) {
         maxPointX = Math.pow(dataset.nodes.length, 1/maxDepth) * MAX_RADIUS * maxDepth * getAspectRatio();
         maxPointY = Math.pow(dataset.nodes.length, 1/maxDepth) * MAX_RADIUS * maxDepth;
     }
-    else {
+    else if (!autoLayout) {
         for (var index in dataset.nodes) {
             // save max point so we can calculate our tapestry width and height
             if (dataset.nodes[index].fx > maxPointX) {
@@ -2297,9 +2297,11 @@ function getNodesDimensions(dataset) {
             }
         }
     }
+    console.log(maxPointX,maxPointY);
+
     return {
-        'x': maxPointX,
-        'y': maxPointY
+        'x': maxPointX + MAX_RADIUS,
+        'y': maxPointY + MAX_RADIUS
     };
 }
 
