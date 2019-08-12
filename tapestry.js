@@ -929,7 +929,7 @@ function deleteLink(source, target, isDeleteNode = false, spliceIndex) {
     for (var i = 0; i < newLinks.length; i++) {
         if (newLinks[i].source.id === source && newLinks[i].target.id === target) {
             newLinks.splice(i, 1);
-
+            var linkToRemove = i;
             var graph = buildGraph(newLinks);
 
             // Check if there is a path from root to source and root to target, if true then we can delete the link
@@ -938,10 +938,10 @@ function deleteLink(source, target, isDeleteNode = false, spliceIndex) {
                 hasPathBetweenNodes(dataset.rootId, target, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours))) {
                 $.ajax({
                     url: apiUrl + "/tapestries/" + tapestryWpPostId + "/links/",
-                    method: 'PUT',
-                    data: JSON.stringify(newLinks),
+                    method: 'DELETE',
+                    data: JSON.stringify(linkToRemove),
                     success: function(result) {
-                        dataset.links = newLinks;
+                        dataset.links.splice(linkToRemove, 1);
                         if (isDeleteNode) {
                             dataset.nodes.splice(spliceIndex, 1);
                             root = dataset.rootId; // need to change root b/c deleting current root
