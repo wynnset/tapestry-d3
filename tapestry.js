@@ -22,6 +22,7 @@ var // declared constants
     TIME_BETWEEN_SAVE_PROGRESS = 5, // Means the number of seconds between each save progress call
     NODE_UNLOCK_TIMEFRAME = 2, // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
     API_PUT_METHOD = 'PUT',
+    API_DELETE_METHOD = 'DELETE',
     USER_NODE_PROGRESS_URL = apiUrl + "/users/progress",
     USER_NODE_UNLOCKED_URL = apiUrl + "/users/unlocked",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings",
@@ -532,7 +533,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
                 appendPermissionsRow(userId, "user");
                 $("#user-number-input").val("");
             } else {
-                alert("Enter valid user id");
+                alert("Enter valid user id.");
             }
         });
 
@@ -542,7 +543,7 @@ $("#tapestry-add-modal-div").load(ADD_NODE_MODAL_URL, function(responseTxt, stat
         //         appendPermissionsRow(groupId, "group");
         //         $("#group-number-input").val("");
         //     } else {
-        //         alert("Enter valid group id");
+        //         alert("Enter valid group id.");
         //     }
         // });
 
@@ -910,7 +911,7 @@ function addLink(source, target, value, appearsAt) {
     for (var i = 0; i < dataset.links.length; i++) {
         // Check if link in dataset exists
         if ((dataset.links[i].source.id === source && dataset.links[i].target.id === target) || (dataset.links[i].source.id === target && dataset.links[i].target.id === source)) {
-            alert("Link already exists");
+            alert("Link already exists.");
             return;
         }
     }
@@ -919,7 +920,7 @@ function addLink(source, target, value, appearsAt) {
         dataset.links.push({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt });
         init(true);
     }).fail(function(e) {
-        alert("Sorry, there was a problem adding the new link");
+        alert("Sorry, there was a problem adding the new link.");
         console.error("Error with adding new link", e);
     });
 }
@@ -930,15 +931,13 @@ function deleteLink(source, target, isDeleteNode = false, spliceIndex) {
         if (newLinks[i].source.id === source && newLinks[i].target.id === target) {
             newLinks.splice(i, 1);
             var linkToRemove = i;
-            var graph = buildGraph(newLinks);
 
             // Check if there is a path from root to source and root to target, if true then we can delete the link
             if ( isDeleteNode ||
-                (hasPathBetweenNodes(dataset.rootId, source, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours) &&
-                hasPathBetweenNodes(dataset.rootId, target, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours))) {
+                (hasPathBetweenNodes(dataset.rootId, source, newLinks) && hasPathBetweenNodes(dataset.rootId, target, newLinks))) {
                 $.ajax({
                     url: apiUrl + "/tapestries/" + tapestryWpPostId + "/links/",
-                    method: 'DELETE',
+                    method: API_DELETE_METHOD,
                     data: JSON.stringify(linkToRemove),
                     success: function(result) {
                         dataset.links.splice(linkToRemove, 1);
@@ -964,12 +963,12 @@ function deleteNode() {
     var nodeId = root;
     if (nodeId === dataset.rootId) {
         if (dataset.nodes && dataset.nodes.length > 1) {
-            alert("Root node can only be deleted if there are no other nodes in the tapestry");
+            alert("Root node can only be deleted if there are no other nodes in the tapestry.");
             return;
         }
         $.ajax({
             url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
-            method: 'DELETE',
+            method: API_DELETE_METHOD,
             success: function() {
                 removeAllNodes();
                 dataset.nodes.splice(0, 1);
@@ -981,7 +980,7 @@ function deleteNode() {
             }
         });
     } else if (getChildren(nodeId, 1) && getChildren(nodeId, 1).length > 1) {
-        alert("Can only delete nodes with one neighbouring node");
+        alert("Can only delete nodes with one neighbouring node.");
     } else {
         var linkToBeDeleted = -1;
         for (var i = 0; i < dataset.links.length; i++) {
@@ -996,9 +995,8 @@ function deleteNode() {
 
             var newLinks = JSON.parse(JSON.stringify(dataset.links)); // deep copy
             newLinks.splice(i, 1); // remove the link and see if linkedNode is connected to root node
-            var graph = buildGraph(newLinks);
-            if(!hasPathBetweenNodes(dataset.rootId, linkedNodeId, JSON.parse(JSON.stringify(graph.visited)), graph.neighbours)) {
-                alert("Cannot delete node");
+            if(!hasPathBetweenNodes(dataset.rootId, linkedNodeId, newLinks)) {
+                alert("Cannot delete node.");
                 return;
             } else {
                 linkToBeDeleted = i;
@@ -1011,7 +1009,7 @@ function deleteNode() {
                     var spliceIndex = j;
                     $.ajax({
                         url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
-                        method: 'DELETE',
+                        method: API_DELETE_METHOD,
                         success: function() {
                             deleteLink(dataset.links[linkToBeDeleted].source.id, dataset.links[linkToBeDeleted].target.id, true, spliceIndex);
                         },
@@ -1025,42 +1023,33 @@ function deleteNode() {
     }
 }
 
-
-// Set up neighbors and visited for BFS traversal
-function buildGraph(links) {
-    var graph = {};
-    graph.visited = {};
-    graph.neighbours = {};
+// Checks if there is a path between the start and target nodes
+function hasPathBetweenNodes(startNode, targetNode, links) {
+    var visited = [];
+    var queue = [];
+    var neighbours = {};
 
     for (var j = 0; j < dataset.nodes.length; j++) {
-        graph.visited[dataset.nodes[j].id] = false;
-        graph.neighbours[dataset.nodes[j].id] = [];
+        neighbours[dataset.nodes[j].id] = [];
     }
-
     for (var k = 0; k < links.length; k++) {
-        graph.neighbours[links[k].source.id].push(links[k].target.id);
-        graph.neighbours[links[k].target.id].push(links[k].source.id);
+        neighbours[links[k].source.id].push(links[k].target.id);
+        neighbours[links[k].target.id].push(links[k].source.id);
     }
-    return graph;
-}
+    visited.push(startNode);
+    queue.push(startNode);
 
-// Checks if there is a path between the source and target nodes
-function hasPathBetweenNodes(startNode, targetNode, visited, graph) {
-    if (startNode === targetNode) {
-        return true;
-    }
-    var foundNode = false;
-    if (!visited[startNode]) {
-        visited[startNode] = true;
-        for (var i = 0; i < graph[startNode].length; i++) {
-            if (!visited[graph[startNode][i]]) {
-                currentChild = hasPathBetweenNodes(graph[startNode][i], targetNode, visited, graph);
-                foundNode = currentChild || foundNode;
+    while (queue.length > 0) {
+        var nodeId = queue.shift();
+        for (var i = 0; i < neighbours[nodeId].length; i++) {
+            if (!visited.includes(neighbours[nodeId][i])) {
+                visited.push(neighbours[nodeId][i]);
+                queue.push(neighbours[nodeId][i]);
             }
         }
     }
 
-    return foundNode;
+    return visited.includes(targetNode);
 }
 
 /****************************************************
