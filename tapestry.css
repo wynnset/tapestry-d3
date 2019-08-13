@@ -131,6 +131,10 @@ body {
     opacity: 1
 }
 
+#tapestry-settings-btn {
+    cursor: pointer;
+}
+
 #footer {
     width: 100%;
     font-size: 0.7em;
@@ -516,11 +520,11 @@ body {font-family: Arial, Helvetica, sans-serif;}
     opacity: 0.8;
 }
 
-#submit-add-new-node, #submit-add-root-node {
+#submit-add-new-node, #submit-add-root-node, #tapestry-submit-edit-setting {
     color: white;
 }
 
-#cancel-add-new-node {
+#cancel-add-new-node, #tapestry-cancel-edit-setting {
     color: white;
     background-color: #dc3545;
 }

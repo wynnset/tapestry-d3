@@ -26,6 +26,7 @@ var // declared constants
     USER_NODE_UNLOCKED_URL = apiUrl + "/users/unlocked",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings",
     ADD_NODE_MODAL_URL = addNodeModalUrl,
+    SETTING_MODAL_URL = settingModalUrl,
     MAX_DESCRIPTION_LENGTH = 250;
 
 var // declared variables
@@ -296,6 +297,46 @@ if (tapestryWpUserId) {
     // Append the new element in its wrapper to the tapestry container
     tapestryControlsDiv.appendChild(viewLockedCheckboxWrapper);
 }
+
+// Create Settings Button
+// Create wrapper div
+var tapestrySettingsWrapper = document.createElement("div");
+tapestrySettingsWrapper.id = "tapestry-settings-wrapper";
+
+// Create input element
+var tapestrySettingsDiv = document.createElement("div");
+tapestrySettingsDiv.innerHTML = '<i class="fas fa-cog" id="tapestry-settings-btn"></i> Settings';
+tapestrySettingsDiv.onclick = function() {
+    $("#tapestrySettingModal").modal();
+};
+
+tapestrySettingsWrapper.appendChild(tapestrySettingsDiv);
+tapestryControlsDiv.appendChild(tapestrySettingsWrapper);
+
+var modalSettingDiv = document.createElement("div");
+modalSettingDiv.id = "tapestry-setting-modal-div";
+document.getElementById(TAPESTRY_CONTAINER_ID).append(modalSettingDiv);
+$("#tapestry-setting-modal-div").load(SETTING_MODAL_URL, function(responseTxt, statusTxt, xhr){
+    if (statusTxt == "success") {
+
+        $("#tapestry-submit-edit-setting").on("click", function() {
+            if ($("#tapestry-background-img-input").val()) {
+                document.body.style.background = "url('" + $("#tapestry-background-img-input").val() + "') no-repeat center center fixed";
+                $('body').css("background-size", "cover");
+            }
+        });
+
+        $("#tapestry-cancel-edit-setting").on("click", function() {
+            $("#tapestrySettingModal").modal("hide");
+        });
+
+        // Event for when user exits modal without clicking cancel
+        $('#tapestrySettingModal').on('hidden.bs.modal', function () {
+            $("#tapestrySettingModal").modal("hide");
+        });
+    }
+});
+
 
 /****************************************************
  * ADD EDITOR ELEMENTS
