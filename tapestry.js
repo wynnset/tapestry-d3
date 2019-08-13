@@ -324,7 +324,12 @@ var tapestrySettingsDiv = document.createElement("div");
 tapestrySettingsDiv.innerHTML = '<i class="fas fa-cog" id="tapestry-settings-btn"></i> Settings';
 tapestrySettingsDiv.onclick = function() {
     if (tapestrySettings) {
-        
+        if (tapestrySettings.background) {
+            $("#tapestry-background-img-input").val(tapestrySettings.background);
+        }
+        if (tapestrySettings.autolayout) {
+            $("#tapestry-auto-layout-checkbox").prop("checked", tapestrySettings.autolayout);
+        }
     }
     $("#tapestrySettingModal").modal();
 };
@@ -359,6 +364,7 @@ $("#tapestry-setting-modal-div").load(SETTING_MODAL_URL, function(responseTxt, s
                 data: JSON.stringify(tapestrySettingsObj),
                 success: function(result) {
                     setTapestryBackgroundImage($("#tapestry-background-img-input").val());
+                    tapestrySettings = tapestrySettingsObj;
                     $("#tapestrySettingModal").modal("hide");
                 },
                 error: function(e) {
