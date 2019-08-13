@@ -26,7 +26,8 @@ var // declared constants
     USER_NODE_PROGRESS_URL = apiUrl + "/users/progress",
     USER_NODE_UNLOCKED_URL = apiUrl + "/users/unlocked",
     TAPESTRY_H5P_SETTINGS_URL = apiUrl + "/users/h5psettings",
-    ADD_NODE_MODAL_URL = addNodeModalUrl;
+    ADD_NODE_MODAL_URL = addNodeModalUrl,
+    MAX_DESCRIPTION_LENGTH = 250;
 
 var // declared variables
     dataset, root, svg, links, nodes,               // Basics
@@ -604,6 +605,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
     // Add the node data first
     var newNodeEntry = {
         "type": "tapestry_node",
+        "description": "",
         "status": "publish",
         "nodeType": "",
         "title": "",
@@ -694,6 +696,10 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
         }
     }
 
+    // Add description to new node
+    newNodeEntry.description = $("#tapestry-node-description-area").val();
+
+    // Add permissions to new node
     var permissionData = {
         "public": []
     };
@@ -814,6 +820,7 @@ function tapestryHideAddNodeModal() {
             $(this).prop('checked', false);
         }
     });
+    $("#tapestry-node-description-area").val("");
     $("#createNewNodeModal").modal("hide");
 
     // Reset all selections for dropdowns
@@ -897,6 +904,10 @@ function tapestryValidateNewNode(formData, isRoot) {
                     break;
             }
         }
+    }
+
+    if ($("#tapestry-node-description-area").val() && $("#tapestry-node-description-area").val().length > MAX_DESCRIPTION_LENGTH) {
+        errMsg += "Please enter a description under " + MAX_DESCRIPTION_LENGTH + " characters \n";
     }
     return errMsg;
 }
@@ -1746,6 +1757,11 @@ function buildPathAndButton() {
         $("#add-node-title-input").val(dataset.nodes[findNodeIndex(root)].title);
         $("#add-node-thumbnail-input").val(dataset.nodes[findNodeIndex(root)].imageURL);
 
+        // Load description
+        if (dataset.nodes[findNodeIndex(root)].description) {
+            $("#tapestry-node-description-area").val(dataset.nodes[findNodeIndex(root)].description);
+        }
+
         $("#mp4-content").hide();
         $("#h5p-content").hide();
         $("#tapestry-text-content").hide();
@@ -1861,7 +1877,6 @@ function adjustProgressBarRadii(d) {
 function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     // Adjust the width and height here before passing it into setup media
     var lightboxDimensions = getLightboxDimensions(height, width);
-
     width = lightboxDimensions.width;
     height = lightboxDimensions.height;
     var media = setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height);
@@ -2156,7 +2171,6 @@ function setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height) {
 
 function createTextNodeElement(title, str) {
     var lightboxContent = document.createElement("div");
-
     var titleSection = document.createElement("div");
     titleSection.setAttribute("id", "text-light-box-title");
 
