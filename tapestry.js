@@ -43,7 +43,8 @@ var // declared variables
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {},
-    tapestryDepth = 2;                              // Default depth of Tapestry
+    tapestryDepth = 2
+    tapestrySettings = {};                              // Default depth of Tapestry
 
 var // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
@@ -100,6 +101,21 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
     }
     originalDataset = dataset;
     saveCoordinates();
+
+    // Get tapestry settings from database
+    $.ajax({
+        url: apiUrl + "/users/settings/" + tapestryWpPostId,
+        method: "GET",
+        success: function(result) {
+            tapestrySettings = JSON.parse(result);
+            if (tapestrySettings && tapestrySettings.background) {
+                setTapestryBackgroundImage(tapestrySettings.background);
+            }
+        },
+        error: function(e) {
+            console.error("Error with retrieving tapestry settings", e);
+        }
+    });
 
     //---------------------------------------------------
     // 1. GET PROGRESS FROM DATABASE OR COOKIE (IF ENABLED)
@@ -307,23 +323,48 @@ tapestrySettingsWrapper.id = "tapestry-settings-wrapper";
 var tapestrySettingsDiv = document.createElement("div");
 tapestrySettingsDiv.innerHTML = '<i class="fas fa-cog" id="tapestry-settings-btn"></i> Settings';
 tapestrySettingsDiv.onclick = function() {
+    if (tapestrySettings) {
+        
+    }
     $("#tapestrySettingModal").modal();
 };
 
 tapestrySettingsWrapper.appendChild(tapestrySettingsDiv);
-tapestryControlsDiv.appendChild(tapestrySettingsWrapper);
+
+if (tapestryWpUserId) {
+    tapestryControlsDiv.appendChild(tapestrySettingsWrapper);
+}
+
 
 var modalSettingDiv = document.createElement("div");
 modalSettingDiv.id = "tapestry-setting-modal-div";
 document.getElementById(TAPESTRY_CONTAINER_ID).append(modalSettingDiv);
 $("#tapestry-setting-modal-div").load(SETTING_MODAL_URL, function(responseTxt, statusTxt, xhr){
     if (statusTxt == "success") {
-
+        var tapestrySettingsObj = {};
         $("#tapestry-submit-edit-setting").on("click", function() {
             if ($("#tapestry-background-img-input").val()) {
-                document.body.style.background = "url('" + $("#tapestry-background-img-input").val() + "') no-repeat center center fixed";
-                $('body').css("background-size", "cover");
+                tapestrySettingsObj.background = $("#tapestry-background-img-input").val();
             }
+
+            if($("#tapestry-auto-layout-checkbox").is(":checked")) {
+                tapestrySettingsObj.autolayout = true;
+            } else {
+                tapestrySettingsObj.autolayout = false;
+            }
+
+            $.ajax({
+                url: apiUrl + "/users/settings/" + tapestryWpPostId,
+                method: "POST",
+                data: JSON.stringify(tapestrySettingsObj),
+                success: function(result) {
+                    setTapestryBackgroundImage($("#tapestry-background-img-input").val());
+                    $("#tapestrySettingModal").modal("hide");
+                },
+                error: function(e) {
+                    console.error("Error saving tapestry settings", e);
+                }
+            });
         });
 
         $("#tapestry-cancel-edit-setting").on("click", function() {
@@ -337,6 +378,10 @@ $("#tapestry-setting-modal-div").load(SETTING_MODAL_URL, function(responseTxt, s
     }
 });
 
+function setTapestryBackgroundImage(imageUrl) {
+    $("#" + TAPESTRY_CONTAINER_ID).css("background", "url('" + imageUrl + "') no-repeat center center fixed");
+    $("#" + TAPESTRY_CONTAINER_ID).css("background-size", "cover");
+}
 
 /****************************************************
  * ADD EDITOR ELEMENTS
