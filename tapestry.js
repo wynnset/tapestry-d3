@@ -365,7 +365,7 @@ $("#tapestry-setting-modal-div").load(SETTING_MODAL_URL, function(responseTxt, s
                 success: function(result) {
                     setTapestryBackgroundImage($("#tapestry-background-img-input").val());
                     tapestrySettings = tapestrySettingsObj;
-                    $("#tapestrySettingModal").modal("hide");
+                    closeSettingModal();
                 },
                 error: function(e) {
                     console.error("Error saving tapestry settings", e);
@@ -374,15 +374,19 @@ $("#tapestry-setting-modal-div").load(SETTING_MODAL_URL, function(responseTxt, s
         });
 
         $("#tapestry-cancel-edit-setting").on("click", function() {
-            $("#tapestrySettingModal").modal("hide");
+            closeSettingModal();
         });
 
         // Event for when user exits modal without clicking cancel
         $('#tapestrySettingModal').on('hidden.bs.modal', function () {
-            $("#tapestrySettingModal").modal("hide");
+            closeSettingModal();
         });
     }
 });
+
+function closeSettingModal() {
+    $("#tapestrySettingModal").modal("hide");
+}
 
 function setTapestryBackgroundImage(imageUrl) {
     $("#" + TAPESTRY_CONTAINER_ID).css("background", "url('" + imageUrl + "') no-repeat center center fixed");
