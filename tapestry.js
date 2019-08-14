@@ -43,7 +43,7 @@ var // declared variables
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
     h5pVideoSettings = {},
-    tapestryDepth = 2
+    tapestryDepth = 2,
     tapestrySettings = {};                              // Default depth of Tapestry
 
 var // calculated
