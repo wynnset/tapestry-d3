@@ -1775,16 +1775,6 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
         media.on(loadEvent, function() {
             changeToViewMode(lightboxDimensions);
             window.setTimeout(function(){
-                height = $('#spotlight-content > *').outerHeight();
-                width = $('#spotlight-content > *').outerWidth();
-
-                $('#spotlight-content').css({
-                    width: width,
-                    height: height,
-                    transitionDuration: "0.2s"
-                });
-            }, 2000);
-            window.setTimeout(function(){
                 $('#spotlight-content').css({
                     transitionDuration: "1s"
                 });
