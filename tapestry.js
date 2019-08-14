@@ -611,6 +611,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
             "mediaHeight": 600
         },
         "unlocked": true,
+        "hideTitle": $("#tapestry-hide-title-checkbox").is(":checked"),
         "fx": getBrowserWidth(),
         "fy": getBrowserHeight()
     };
@@ -811,6 +812,8 @@ function tapestryHideAddNodeModal() {
     // Uncheck lock node label and hide appears at input
     $("#tapestry-lock-node-checkbox").prop('checked', false);
     $("#appears-at-label").hide();
+    // Uncheck hide title
+    $("#tapestry-hide-title-checkbox").prop("checked", false);
 
     $("#tapestry-text-content").hide();
     $("#mp4-content").hide();
@@ -1434,7 +1437,7 @@ function buildPathAndButton() {
     /* Create the node titles */
     nodes
         .filter(function (d){
-            return getViewable(d);
+            return getViewable(d) && !d.hideTitle;
         })
         .append('foreignObject')
         .attr("width", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
@@ -1631,6 +1634,12 @@ function buildPathAndButton() {
         $("#mediaType").attr('disabled','disabled');
         $("#hiddenMediaType").removeAttr('disabled');
         $("#hiddenMediaType").val($("#mediaType").val());
+
+        //Populate Appearance checkboxes
+
+        if (dataset.nodes[findNodeIndex(root)].hideTitle) {
+            $("#tapestry-hide-title-checkbox").prop("checked", dataset.nodes[findNodeIndex(root)].hideTitle);
+        }
 
         // Permissions table
         if (dataset.nodes[findNodeIndex(root)].permissions) {
