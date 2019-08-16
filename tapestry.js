@@ -30,6 +30,7 @@ var // declared constants
 var // declared variables
     dataset, root, svg, links, nodes,               // Basics
     originalDataset,                                // For saving the value of the original dataset pre-changes
+    originalDimensions,
     path, pieGenerator, arcGenerator,               // Donut
     simulation,                                     // Force
     nodeCoordinates = [],                           // For saving the coordinates of the Tapestry pre transition to play mode
@@ -94,6 +95,8 @@ jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
         dataset.nodes[i].fy = dataset.nodes[i].coordinates.y;
     }
     originalDataset = dataset;
+
+    originalDimensions = getNodesDimensions(originalDataset);
     saveCoordinates();
 
     //---------------------------------------------------
@@ -1062,29 +1065,33 @@ function ticked() {
 
 // D3 DRAGGING FUNCTIONS
 function dragstarted(d) {
-    var tapestryDimensions = getTapestryDimensions();
+  // var tapestryDimensions = getTapestryDimensions();
+    console.log(originalDimensions)
+
     if (!d3.event.active) simulation.alphaTarget(0.2).restart();
 
     if (autoLayout) {
-        d.x = getBoundedCoord(d.x, tapestryDimensions.width);
-        d.y = getBoundedCoord(d.y, tapestryDimensions.height);
+        d.x = getBoundedCoord(d.x, originalDimensions.x);
+        d.y = getBoundedCoord(d.y, originalDimensions.y);
     } else if (!autoLayout) {
-        d.fx = getBoundedCoord(d.x, tapestryDimensions.width);
-        d.fy = getBoundedCoord(d.y, tapestryDimensions.height);
+        d.fx = getBoundedCoord(d.x, originalDimensions.x);
+        d.fy = getBoundedCoord(d.y, originalDimensions.y);
     }
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
 function dragged(d) {
-    var tapestryDimensions = getTapestryDimensions();
+  //  var tapestryDimensions = getTapestryDimensions();
+
+  //console.log(originalDimensions);
 
     if (autoLayout) {
-        d.x = getBoundedCoord(d3.event.x, tapestryDimensions.width);
-        d.y = getBoundedCoord(d3.event.y, tapestryDimensions.height);
+        d.x = getBoundedCoord(d3.event.x, originalDimensions.x);
+        d.y = getBoundedCoord(d3.event.y, originalDimensions.y);
     } else if (!autoLayout) {
-        d.fx = getBoundedCoord(d3.event.x, tapestryDimensions.width);
-        d.fy = getBoundedCoord(d3.event.y, tapestryDimensions.height);
+        d.fx = getBoundedCoord(d3.event.x, originalDimensions.x);
+        d.fy = getBoundedCoord(d3.event.y, originalDimensions.y);
     }
 
 }
@@ -1874,8 +1881,8 @@ function getLightboxDimensions(videoHeight, videoWidth) {
     }
 
     var nodeSpace = (NORMAL_RADIUS * 2) * 1.3;     // Calculate the amount of space we need to reserve for nodes
-    var adjustedVideoHeight = getBrowserHeight() - nodeSpace;               // Max height for the video
-    var adjustedVideoWidth = getBrowserWidth() - nodeSpace;                 // Max width for the video
+    var adjustedVideoHeight = getBrowserHeight() - nodeSpace;             // Max height for the video
+    var adjustedVideoWidth = getBrowserWidth() - nodeSpace;               // Max width for the video
 
     if (adjustedVideoHeight > videoHeight) {
         adjustedVideoHeight = videoHeight;
