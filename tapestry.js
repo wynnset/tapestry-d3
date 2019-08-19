@@ -38,6 +38,7 @@ var // declared variables
     tapestrySlug, 
     saveProgress = true, progressLastSaved = new Date(), // Saving Progress
     enablePopupNodes = true, inViewMode = false,   // Pop-up nodes
+    tapestryDimensionsBeforeDrag,
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
@@ -1065,37 +1066,26 @@ function ticked() {
 
 // D3 DRAGGING FUNCTIONS
 function dragstarted(d) {
-    var width = getBrowserWidth();
-    var height = getBrowserHeight();
-
-  // var tapestryDimensions = getTapestryDimensions();
-    console.log(originalDimensions)
-
     if (!d3.event.active) simulation.alphaTarget(0.2).restart();
 
     if (autoLayout) {
-        d.x = getBoundedCoord(d.x, width);
-        d.y = getBoundedCoord(d.y, height);
+        d.x = getBoundedCoord(d.x, tapestryDimensionsBeforeDrag.width);
+        d.y = getBoundedCoord(d.y, tapestryDimensionsBeforeDrag.height);
     } else if (!autoLayout) {
-        d.fx = getBoundedCoord(d.x, width);
-        d.fy = getBoundedCoord(d.y, height);
+        d.fx = getBoundedCoord(d.x, tapestryDimensionsBeforeDrag.width);
+        d.fy = getBoundedCoord(d.y, tapestryDimensionsBeforeDrag.height);
     }
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
 function dragged(d) {
-    var width = getBrowserWidth();
-    var height = getBrowserHeight();
-
-  //console.log(originalDimensions);
-
     if (autoLayout) {
-        d.x = getBoundedCoord(d3.event.x, width);
-        d.y = getBoundedCoord(d3.event.y, height);
+        d.x = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
+        d.y = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
     } else if (!autoLayout) {
-        d.fx = getBoundedCoord(d3.event.x, width);
-        d.fy = getBoundedCoord(d3.event.y, height);
+        d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
+        d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
     }
 
 }
@@ -1132,6 +1122,7 @@ function dragended(d) {
 // creates SVG that tapestry is displayed on 
 function createSvgContainer(containerId) {
     var tapestryDimensions = getTapestryDimensions();
+    tapestryDimensionsBeforeDrag = tapestryDimensions;
     return d3.select("#"+containerId)
                 .append("svg:svg")
                 .attr("id", containerId+"-svg")
@@ -1142,6 +1133,7 @@ function createSvgContainer(containerId) {
 
 function updateSvgDimensions(containerId) {
     var tapestryDimensions = getTapestryDimensions();
+    tapestryDimensionsBeforeDrag = tapestryDimensions;
     d3.select("#"+containerId+"-svg")
         .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height);
     startForce();
