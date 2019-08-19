@@ -78,6 +78,7 @@ jQuery.ajaxSetup({
 });
 
 jQuery.get(apiUrl + "/tapestries/" + tapestryWpPostId, function(result){
+    console.log(result);
     dataset = result;	
     createRootNodeButton(dataset);
     if (dataset && dataset.nodes && dataset.nodes.length > 0) {
@@ -612,6 +613,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
         },
         "unlocked": true,
         "hideTitle": $("#tapestry-hide-title-checkbox").is(":checked"),
+        "hideProgress": $("#tapestry-hide-progress-checkbox").is(":checked"),
         "fx": getBrowserWidth(),
         "fy": getBrowserHeight()
     };
@@ -1211,7 +1213,9 @@ function buildNodeContents() {
             return d.id;
         })
         .attr("stroke-width", function (d) {
-            return PROGRESS_THICKNESS * adjustedRadiusRatio;
+            if (!d.hideProgress) {
+                return PROGRESS_THICKNESS * adjustedRadiusRatio;
+            }
         })
         .attr("stroke", function (d) {
             if (!getViewable(d))
@@ -1252,7 +1256,10 @@ function buildNodeContents() {
         })
         .attr("r", function (d) {
             var rad = getRadius(d);
-            if (rad > PROGRESS_THICKNESS/2)
+            if (d.hideProgress) {
+                return rad;
+            }
+            else if (rad > PROGRESS_THICKNESS/2)
                 return rad - PROGRESS_THICKNESS/2;
             else
                 return 0;
@@ -1330,7 +1337,9 @@ function rebuildNodeContents() {
             .duration(TRANSITION_DURATION/2)
             .attr("r", function (d) {
                 var rad = getRadius(d);
-                if (rad > (PROGRESS_THICKNESS * adjustedRadiusRatio)/2)
+                if (d.hideProgress) {
+                    return rad;
+                } else if (rad > (PROGRESS_THICKNESS * adjustedRadiusRatio)/2)
                     return rad - (PROGRESS_THICKNESS * adjustedRadiusRatio)/2;
                 else
                     return 0;
@@ -1385,7 +1394,9 @@ function rebuildNodeContents() {
                 return "url('#node-thumb-" + d.id + "')";
             })
             .attr("stroke-width", function (d) {
-                return PROGRESS_THICKNESS * adjustedRadiusRatio;
+                if (!d.hideProgress) {
+                    return PROGRESS_THICKNESS * adjustedRadiusRatio;
+                }
             });
     
     /* Attach images to be used within each node */
@@ -1639,6 +1650,10 @@ function buildPathAndButton() {
 
         if (dataset.nodes[findNodeIndex(root)].hideTitle) {
             $("#tapestry-hide-title-checkbox").prop("checked", dataset.nodes[findNodeIndex(root)].hideTitle);
+        }
+
+        if (dataset.nodes[findNodeIndex(root)].hideProgress) {
+            $("#tapestry-hide-progress-checkbox").prop("checked", dataset.nodes[findNodeIndex(root)].hideProgress);
         }
 
         // Permissions table
