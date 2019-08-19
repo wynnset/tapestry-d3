@@ -1065,33 +1065,37 @@ function ticked() {
 
 // D3 DRAGGING FUNCTIONS
 function dragstarted(d) {
+    var width = getBrowserWidth();
+    var height = getBrowserHeight();
+
   // var tapestryDimensions = getTapestryDimensions();
     console.log(originalDimensions)
 
     if (!d3.event.active) simulation.alphaTarget(0.2).restart();
 
     if (autoLayout) {
-        d.x = getBoundedCoord(d.x, originalDimensions.x);
-        d.y = getBoundedCoord(d.y, originalDimensions.y);
+        d.x = getBoundedCoord(d.x, width);
+        d.y = getBoundedCoord(d.y, height);
     } else if (!autoLayout) {
-        d.fx = getBoundedCoord(d.x, originalDimensions.x);
-        d.fy = getBoundedCoord(d.y, originalDimensions.y);
+        d.fx = getBoundedCoord(d.x, width);
+        d.fy = getBoundedCoord(d.y, height);
     }
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
 function dragged(d) {
-  //  var tapestryDimensions = getTapestryDimensions();
+    var width = getBrowserWidth();
+    var height = getBrowserHeight();
 
   //console.log(originalDimensions);
 
     if (autoLayout) {
-        d.x = getBoundedCoord(d3.event.x, originalDimensions.x);
-        d.y = getBoundedCoord(d3.event.y, originalDimensions.y);
+        d.x = getBoundedCoord(d3.event.x, width);
+        d.y = getBoundedCoord(d3.event.y, height);
     } else if (!autoLayout) {
-        d.fx = getBoundedCoord(d3.event.x, originalDimensions.x);
-        d.fy = getBoundedCoord(d3.event.y, originalDimensions.y);
+        d.fx = getBoundedCoord(d3.event.x, width);
+        d.fy = getBoundedCoord(d3.event.y, height);
     }
 
 }
@@ -1120,6 +1124,7 @@ function dragended(d) {
             }
         });
     }
+ //   updateSvgDimensions();
 
     recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
 }
