@@ -198,7 +198,6 @@ function init() {
     // Ensure tapestry size fits well into the browser and start force
     updateSvgDimensions();
 
-
     //---------------------------------------------------
     // 5. SET UP EDITING STUFF
     //---------------------------------------------------
@@ -908,7 +907,6 @@ function tapestryValidateNewNode(formData, isRoot) {
             }
         }
     }
-
     if ($("#tapestry-node-description-area").val() && $("#tapestry-node-description-area").val().length > MAX_DESCRIPTION_LENGTH) {
         errMsg += "Please enter a description under " + MAX_DESCRIPTION_LENGTH + " characters \n";
     }
@@ -982,7 +980,6 @@ function resizeNodes(id) {
     getChildren(id);
     setNodeTypes(id);
     setLinkTypes(id);
-
     filterTapestry();
 
     /* Restart force */
