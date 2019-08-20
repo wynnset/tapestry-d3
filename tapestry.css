@@ -625,3 +625,7 @@ input[type="checkbox"][disabled] {
 #locked-container {
     margin-bottom: 10px;
 }
+
+#tapestry-settings-btn {
+    cursor: pointer;
+}
