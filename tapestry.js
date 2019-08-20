@@ -284,6 +284,11 @@ this.redrawTapestryWithNewNode = function(isRoot) {
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
 }
 
+this.setTapestryBackground = function(imageUrl) {
+    $("#" + TAPESTRY_CONTAINER_ID).css("background", "url('" + imageUrl + "') no-repeat center center fixed");
+    $("#" + TAPESTRY_CONTAINER_ID).css("background-size", "cover");
+}
+
 // To establish two way connections
 function addLink(source, target, value, appearsAt) {
     if (target === source) {
@@ -2120,6 +2125,10 @@ tapestryTool.prototype.setOriginalDataset = function (dataset) {
 tapestryTool.prototype.redraw = function(isRoot) {
     return this.redrawTapestryWithNewNode(isRoot);
 };
+
+tapestryTool.prototype.setBackground = function(imageUrl) {
+    this.setTapestryBackground(imageUrl);
+}
 
 /*******************************************************
  * 
