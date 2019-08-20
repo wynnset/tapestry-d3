@@ -249,6 +249,7 @@ if (config.wpUserId) {
     tapestryControlsDiv.appendChild(tapestrySettingsWrapper);
 }
 
+
 /****************************************************
  * ADD EDITOR ELEMENTS
  ****************************************************/
@@ -2425,6 +2426,10 @@ function appendPermissionsRow(id, type) {
             $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('disabled', true);
         }
     });
+}
+
+function closeSettingModal(){
+    $("#tapestrySettingModal").modal("hide");
 }
 
 // Capture click events anywhere inside or outside tapestry
