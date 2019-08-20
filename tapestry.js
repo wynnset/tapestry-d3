@@ -223,6 +223,32 @@ if (config.wpUserId) {
     tapestryControlsDiv.appendChild(viewLockedCheckboxWrapper);
 }
 
+// Create Settings Button
+// Create wrapper div
+var tapestrySettingsWrapper = document.createElement("div");
+tapestrySettingsWrapper.id = "tapestry-settings-wrapper";
+
+ // Create input element
+var tapestrySettingsDiv = document.createElement("div");
+tapestrySettingsDiv.innerHTML = '<i class="fas fa-cog" id="tapestry-settings-btn"></i> Settings';
+tapestrySettingsDiv.onclick = function() {
+    // if (tapestrySettings) {
+    //     if (tapestrySettings.background) {
+    //         $("#tapestry-background-img-input").val(tapestrySettings.background);
+    //     }
+    //     if (tapestrySettings.autolayout) {
+    //         $("#tapestry-auto-layout-checkbox").prop("checked", tapestrySettings.autolayout);
+    //     }
+    // }
+    $("#tapestrySettingModal").modal();
+};
+
+tapestrySettingsWrapper.appendChild(tapestrySettingsDiv);
+
+if (config.wpUserId) {
+    tapestryControlsDiv.appendChild(tapestrySettingsWrapper);
+}
+
 /****************************************************
  * ADD EDITOR ELEMENTS
  ****************************************************/
