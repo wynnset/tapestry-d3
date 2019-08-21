@@ -38,6 +38,7 @@ var // declared variables
     tapestrySlug, 
     saveProgress = true, progressLastSaved = new Date(), // Saving Progress
     enablePopupNodes = false, inViewMode = false,   // Pop-up nodes
+    tapestryDimensionsBeforeDrag,
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
@@ -1017,16 +1018,16 @@ function ticked() {
 function dragstarted(d) {
     var tapestryDimensions = getTapestryDimensions();
     if (!d3.event.active) force.alphaTarget(0.2).restart();
-    d.fx = getBoundedCoord(d.x, tapestryDimensions.width);
-    d.fy = getBoundedCoord(d.y, tapestryDimensions.height);
+    d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
+    d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
 function dragged(d) {
-    var tapestryDimensions = getTapestryDimensions();
-    d.fx = getBoundedCoord(d3.event.x, tapestryDimensions.width);
-    d.fy = getBoundedCoord(d3.event.y, tapestryDimensions.height);
+//    var tapestryDimensions = getTapestryDimensions();
+    d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
+    d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
 }
 
 function dragended(d) {
@@ -1053,6 +1054,7 @@ function dragended(d) {
 
 function createSvgContainer(containerId) {
     var tapestryDimensions = getTapestryDimensions();
+    tapestryDimensionsBeforeDrag = tapestryDimensions;
     return d3.select("#"+containerId)
                 .append("svg:svg")
                 .attr("id", containerId+"-svg")
@@ -1063,6 +1065,7 @@ function createSvgContainer(containerId) {
 
 function updateSvgDimensions(containerId) {
     var tapestryDimensions = getTapestryDimensions();
+    tapestryDimensionsBeforeDrag = tapestryDimensions;
     d3.select("#"+containerId+"-svg")
         .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height);
     startForce();
@@ -1319,6 +1322,7 @@ function buildNodeContents() {
 
 function rebuildNodeContents() {
     /* Remove text before transition animation */
+    $(".timecode").remove();
     $(".title").remove();
 
     /* Commence transition animation */
@@ -1448,6 +1452,39 @@ function buildPathAndButton() {
             .attr("class","title")
             .html(function(d){
                 return "<p>" + d.title + "</p>";
+            });
+
+    /* Create timecodes */
+    nodes
+        .filter(function (d){
+            return getViewable(d);
+        })
+        .append('foreignObject')
+        .attr("width", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
+        .attr("height", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
+        .attr("style", function (d) {
+            return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
+        })
+        .attr("x", -NORMAL_RADIUS * NODE_TEXT_RATIO)
+        .attr("y", -NORMAL_RADIUS * NODE_TEXT_RATIO - 60)
+        .append("xhtml:div")
+            .attr("class","timecode")
+            .style('bottom',function(d){
+                if (d.nodeType === "root") {
+                    return "85" + "px"
+                } else {
+                    return "20" + "px"
+                }
+            })
+            .style('position','relative')
+            .html(function(d){
+                console.log(d)
+                if (d.mediaType === "video") {
+                    var minutes = Math.floor(d.mediaDuration / 60);
+                    var seconds = d.mediaDuration % 60;
+                    console.log("this is: ", minutes, ":", seconds);
+                    return "<p>" + minutes + ":" + seconds + "</p>";
+                }
             });
         
     updateViewedProgress();

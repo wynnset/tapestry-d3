@@ -243,6 +243,24 @@ div.modal {
     margin: 15px 0;
 }
 
+.node .timecode {
+    color: #a9a9a9;
+    min-height: 100%;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction:column;
+    text-align: center;
+    font-size: 20px;
+    text-shadow: -1px -1px 0 #072d42, 1px -1px 0 #072d42, -1px 1px 0 #072d42, 1px 1px 0 #072d42;
+}
+.node .timecode p {
+    padding-bottom: 30px;
+    padding-left: 5px;
+    margin: 15px 0;
+}
+
 .imageOverlay {
     opacity: 0.5;
 }
