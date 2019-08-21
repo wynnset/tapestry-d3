@@ -1478,11 +1478,9 @@ function buildPathAndButton() {
             })
             .style('position','relative')
             .html(function(d){
-                console.log(d)
                 if (d.mediaType === "video") {
                     var minutes = Math.floor(d.mediaDuration / 60);
                     var seconds = d.mediaDuration % 60;
-                    console.log("this is: ", minutes, ":", seconds);
                     return "<p>" + minutes + ":" + seconds + "</p>";
                 }
             });
