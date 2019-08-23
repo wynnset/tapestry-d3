@@ -1471,9 +1471,9 @@ function buildPathAndButton() {
             .attr("class","timecode")
             .style('bottom',function(d){
                 if (d.nodeType === "root") {
-                    return "85" + "px"
+                    return "85px";
                 } else {
-                    return "20" + "px"
+                    return "20px";
                 }
             })
             .style('position','relative')
