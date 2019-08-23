@@ -90,14 +90,16 @@ jQuery.get(config.apiUrl + "/tapestries/" + config.wpPostId, function(result){
     createRootNodeButton(tapestry.dataset);
     if (tapestry.dataset && tapestry.dataset.nodes && tapestry.dataset.nodes.length > 0) {
         for (var i=0; i<tapestry.dataset.nodes.length; i++) {
-        	// change http:// to https:// in media URLs with // so it can work on both protocols without giving insecure content warnings
+        	// change http(s):// to // in media URLs and image URLs
 			if (typeof tapestry.dataset.nodes[i].typeData != "undefined" && typeof tapestry.dataset.nodes[i].typeData.mediaURL != "undefined" && tapestry.dataset.nodes[i].typeData.mediaURL.length > 0) {
 				tapestry.dataset.nodes[i].typeData.mediaURL = tapestry.dataset.nodes[i].typeData.mediaURL.replace(/(http(s?)):\/\//gi, '//');
+			}
+			if (typeof tapestry.dataset.nodes[i].imageURL != "undefined" && tapestry.dataset.nodes[i].imageURL.length > 0) {
+				tapestry.dataset.nodes[i].imageURL = tapestry.dataset.nodes[i].imageURL.replace(/(http(s?)):\/\//gi, '//');
 			}
             // always unlock root node
             if (tapestry.dataset.nodes[i].id == tapestry.dataset.rootId) {
                 tapestry.dataset.nodes[i].unlocked = true;
-                break;
             }
         }
     }
@@ -107,38 +109,41 @@ jQuery.get(config.apiUrl + "/tapestries/" + config.wpPostId, function(result){
     }
     originalDataset = tapestry.dataset;
 
-    //---------------------------------------------------
-    // 1. GET PROGRESS FROM DATABASE OR COOKIE (IF ENABLED)
-    //---------------------------------------------------
-
     tapestrySlug = tapestry.dataset.settings.tapestrySlug;
+    root = tapestry.dataset.rootId;
     
     if (saveProgress) {
-        // If user is logged in, get progress from database database
-        if (config.wpUserId) {
 
-            jQuery.get(USER_NODE_PROGRESS_URL, { "post_id": config.wpPostId }, function(result) {
-                if (result && !isEmptyObject(result)) {
-                    setDatasetProgress(JSON.parse(result));
-                    init();
+        //---------------------------------------------------
+        // GET PROGRESS FROM DATABASE OR COOKIE (IF ENABLED)
+        //---------------------------------------------------
+        
+        if (config.wpUserId) { // Get from database if user is logged in
+
+            jQuery.get(USER_NODE_PROGRESS_URL, { "post_id": config.wpPostId }, function(retrievedUserProgress) {
+
+                if (retrievedUserProgress && !isEmptyObject(retrievedUserProgress)) {
+                    setDatasetProgress(JSON.parse(retrievedUserProgress));
                 }
+
+                jQuery.get(TAPESTRY_H5P_SETTINGS_URL, { "post_id": tapestryWpPostId }, function(retrievedH5PSettings) {
+                    if (retrievedH5PSettings && !isEmptyObject(retrievedH5PSettings)) {
+                        h5pVideoSettings = JSON.parse(retrievedH5PSettings);
+                    }
+                }).fail(function(e) {
+                    console.error("Error with retrieving h5p video settings");
+                    console.error(e);
+                }).complete(function(){
+                    tapestry.init();
+                });
+
             }).fail(function(e) {
                 console.error("Error with retrieving node progress");
                 console.error(e);
             });
-
-            jQuery.get(TAPESTRY_H5P_SETTINGS_URL, { "post_id": config.wpPostId }, function(result) {
-                if (result && !isEmptyObject(result)) {
-                    h5pVideoSettings = JSON.parse(result);
-                }
-            }).fail(function(e) {
-                console.error("Error with retrieving h5p video settings");
-                console.error(e);
-            });
-
         }
-        else { 
-            // Update dataset with data from cookie (if any)
+        else {  // Get from cookie if user is NOT logged in
+            
             var cookieProgress = Cookies.get("progress-data-"+tapestrySlug);
 
             if (cookieProgress) {
@@ -153,18 +158,18 @@ jQuery.get(config.apiUrl + "/tapestries/" + config.wpPostId, function(result){
                 h5pVideoSettings = cookieH5PVideoSettings;
             }
 
-            init();
+            tapestry.init();
         }
     }
     else {
-        init();
+        tapestry.init();
     }
 }).fail(function(e) {
     console.error("Error with loading tapestries");
     console.error(e);
 });
 
-function init() {
+this.init = function(isReload = false) {
     //---------------------------------------------------
     // 2. SIZE AND SCALE THE TAPESTRY AND SVG TO FIT WELL
     //---------------------------------------------------
@@ -175,8 +180,6 @@ function init() {
     //---------------------------------------------------
     // 3. SET NODES/LINKS AND CREATE THE SVG OBJECTS
     //---------------------------------------------------
-
-    root = tapestry.dataset.rootId;
 
     setNodeTypes(root);
     setLinkTypes(root);
@@ -191,7 +194,10 @@ function init() {
         rootNodeImageHeightDiff += tapestry.dataset.settings.thumbRootDiff;
     }
 
-    svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
+    if (!isReload) {
+        svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
+    }
+    
     links = createLinks();
     nodes = createNodes();
 
@@ -204,15 +210,15 @@ function init() {
     // Ensure tapestry size fits well into the browser and start force
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
 
-
-    //---------------------------------------------------
-    // 5. SET UP EDITING STUFF
-    //---------------------------------------------------
-
-    // Attach the link line to the tapestry SVG (it won't appear for now)
-    $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
-
-    recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
+    if (!isReload) {
+        //---------------------------------------------------
+        // 5. SET UP EDITING STUFF
+        //---------------------------------------------------
+    
+        // Attach the link line to the tapestry SVG (it won't appear for now)
+        $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
+        recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
+    }
 }
 
 /****************************************************
@@ -746,7 +752,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
                     tapestry.dataset.links.push(newLink);
 
                     tapestryHideAddNodeModal();
-                    tapestry.redrawTapestryWithNewNode();
+                    tapestry.init(true);
                 }).fail(function(e) {
                     console.error("Error with adding new link", e);
                 });
@@ -759,10 +765,10 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
                     complete: function(result) {
                         // Redraw root node
                         tapestry.dataset.rootId = newId;
-                        tapestryHideAddNodeModal();
                         root = tapestry.dataset.rootId; // need to set root to newly created node
     
-                        tapestry.redrawTapestryWithNewNode(true);
+                        tapestry.init(true);
+                        tapestryHideAddNodeModal();
                         $("#root-node-container").hide(); // hide the root node button after creating it.
                     },
                     error: function(e) {
@@ -780,10 +786,18 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
             url: config.apiUrl + "/tapestries/" + config.wpPostId + "/nodes/" + root,
             method: API_PUT_METHOD,
             data: JSON.stringify(newNodeEntry),
-            success: function(result) {
-                newNodeEntry.id = result.id;
-                tapestry.dataset.nodes[findNodeIndex(root)] = newNodeEntry;
-                tapestry.redrawTapestryWithNewNode();
+            success: function() {
+                // Merge new changes into the old object
+                var thisNodeIndex = findNodeIndex(root);
+                oldNodeEntry = tapestry.dataset.nodes[thisNodeIndex];
+                for (let key in oldNodeEntry) {
+                    if (newNodeEntry.hasOwnProperty(key)) {
+                        tapestry.dataset.nodes[thisNodeIndex][key] = newNodeEntry[key];
+                    }
+                }
+                // Set this node as the currently selected node
+                tapestry.dataset.nodes[thisNodeIndex].nodeType = "root";
+                tapestry.init(true);
                 tapestryHideAddNodeModal();
             },
             error: function(e) {
@@ -823,30 +837,6 @@ function tapestryHideAddNodeModal() {
     $("#mp4-content").hide();
     $("#h5p-content").hide();
     $("#appearsat-section").show();
-}
-
-this.redrawTapestryWithNewNode = function(isRoot) {
-
-    if (typeof isRoot == 'undefined') {
-        isRoot = false;
-    }
-
-    saveCoordinates();
-    updateTapestrySize();
-
-    setNodeTypes(root);
-    setLinkTypes(root);
-    setUnlocked();
-    setAccessibleStatus();
-
-    // Rebuild the nodes and links
-    links = createLinks();
-    nodes = createNodes();
-
-    buildNodeContents();
-    filterTapestry();
-    
-    updateSvgDimensions(TAPESTRY_CONTAINER_ID);
 }
 
 function tapestryValidateNewNode(formData, isRoot) {
@@ -935,10 +925,9 @@ function addLink(source, target, value, appearsAt) {
         }
     }
 
-    jQuery.post(config.apiUrl + "/tapestries/" + config.wpPostId + "/links", JSON.stringify({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt }), function(result) {
+    jQuery.post(config.apiUrl + "/tapestries/" + config.wpPostId + "/links", JSON.stringify({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt }), function() {
         tapestry.dataset.links.push({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt });
-        tapestry.redrawTapestryWithNewNode();
-
+        tapestry.init(true);
     }).fail(function(e) {
         alert("Sorry, there was a problem adding the new link");
         console.error("Error with adding new link", e);
@@ -1079,7 +1068,6 @@ function createLinks() {
     /* Need to remove old links when redrawing graph */
     if (links !== undefined) {
         svg.selectAll('line')
-            .data(tapestry.dataset.links)
             .remove();
     }
 
@@ -1111,7 +1099,6 @@ function createNodes() {
     /* Need to remove old nodes when redrawing graph */
     if (nodes !== undefined) {
         svg.selectAll("g.node")
-            .data(tapestry.dataset.nodes)
             .remove();
     }
 
