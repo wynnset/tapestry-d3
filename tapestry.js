@@ -2,9 +2,9 @@ function tapestryTool(config){
 
 this.dataset = {
     'settings': {},
-    'nodes': {},
-    'links': {},
-    'groups': {}
+    'nodes':    [],
+    'links':    [],
+    'groups':   []
 };
 var tapestry = this;
 
