@@ -91,6 +91,28 @@ body {
     height: 10px;
     opacity: 0.7;
     transition: opacity .2s;
+    position: relative;
+    margin: 0 37px 0 37px;
+}
+
+#tapestry-depth-slider::before {
+    position: absolute;
+    content: "";
+    width: 40px;
+    height: 40px;
+    background-image: url("img/zoom-in.png");
+    left: -42px;
+    bottom: -17.5px;
+}
+
+#tapestry-depth-slider::after {
+    position: absolute;
+    content: "";
+    width: 40px;
+    height: 40px;
+    background-image: url("img/zoom-out.png");
+    right: -42px;
+    bottom: -17px;
 }
 
 #tapestry-depth-slider {
