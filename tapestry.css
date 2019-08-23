@@ -418,12 +418,12 @@ i {
     background: none;
     position: absolute;
     font-weight: 300;
-    font-size: 12px;
-    display: block;
+    font-size: 16px;
+    display: inline-block;
     border: none;
-    color: white;
-    top: -22px;
-    right: 0.5%;
+    color: black;
+    top: 10px;
+    right: 2%;
     text-align: right;
     box-shadow: none;
 }
