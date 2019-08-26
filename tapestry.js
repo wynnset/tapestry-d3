@@ -1075,6 +1075,12 @@ function createLinks() {
 
     console.log(actPoints());
 
+    var lineGenerator = d3.line();
+
+    var pathData = lineGenerator(actPoints());
+
+    console.log(pathData);
+
     /* Now, can draw the links */
     return svg.append("svg:g")
                 .attr("class", "links")
@@ -1082,6 +1088,7 @@ function createLinks() {
                 .data(tapestry.dataset.links)
                     .enter()
                     .append("path")
+                    .attr("d",pathData)
                     .attr("stroke", function (d) {
                         if (d.type === "grandchild") 
                             return COLOR_GRANDCHILD;
