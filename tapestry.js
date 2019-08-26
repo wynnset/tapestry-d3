@@ -46,6 +46,7 @@ var // declared variables
     tapestrySlug, 
     saveProgress = true, progressLastSaved = new Date(), // Saving Progress
     enablePopupNodes = false, inViewMode = false,   // Pop-up nodes
+    tapestryDimensionsBeforeDrag,
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
@@ -126,7 +127,7 @@ jQuery.get(config.apiUrl + "/tapestries/" + config.wpPostId, function(result){
                     setDatasetProgress(JSON.parse(retrievedUserProgress));
                 }
 
-                jQuery.get(TAPESTRY_H5P_SETTINGS_URL, { "post_id": tapestryWpPostId }, function(retrievedH5PSettings) {
+                jQuery.get(TAPESTRY_H5P_SETTINGS_URL, { "post_id": config.wpPostId }, function(retrievedH5PSettings) {
                     if (retrievedH5PSettings && !isEmptyObject(retrievedH5PSettings)) {
                         h5pVideoSettings = JSON.parse(retrievedH5PSettings);
                     }
@@ -1020,9 +1021,8 @@ function dragstarted(d) {
 }
 
 function dragged(d) {
-    var tapestryDimensions = getTapestryDimensions();
-    d.fx = getBoundedCoord(d3.event.x, tapestryDimensions.width);
-    d.fy = getBoundedCoord(d3.event.y, tapestryDimensions.height);
+    d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
+    d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
 }
 
 function dragended(d) {
@@ -1049,6 +1049,7 @@ function dragended(d) {
 
 function createSvgContainer(containerId) {
     var tapestryDimensions = getTapestryDimensions();
+    tapestryDimensionsBeforeDrag = tapestryDimensions;
     return d3.select("#"+containerId)
                 .append("svg:svg")
                 .attr("id", containerId+"-svg")
@@ -1059,6 +1060,7 @@ function createSvgContainer(containerId) {
 
 function updateSvgDimensions(containerId) {
     var tapestryDimensions = getTapestryDimensions();
+    tapestryDimensionsBeforeDrag = tapestryDimensions;
     d3.select("#"+containerId+"-svg")
         .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height);
     startForce();
@@ -1071,13 +1073,15 @@ function createLinks() {
             .remove();
     }
 
+    console.log(actPoints());
+
     /* Now, can draw the links */
     return svg.append("svg:g")
                 .attr("class", "links")
                 .selectAll("line")
                 .data(tapestry.dataset.links)
                     .enter()
-                    .append("line")
+                    .append("path")
                     .attr("stroke", function (d) {
                         if (d.type === "grandchild") 
                             return COLOR_GRANDCHILD;
@@ -1093,6 +1097,19 @@ function createLinks() {
                         else return "";
                     })
                     .attr("stroke-width", LINK_THICKNESS);
+}
+
+function actPoints() {
+    ps = [];
+    for (var i in tapestry.dataset.nodes) {
+        ps.push(
+            [
+                tapestry.dataset.nodes[i].fx,
+                tapestry.dataset.nodes[i].fy
+            ]
+        );
+    }
+    return ps;
 }
 
 function createNodes() {
