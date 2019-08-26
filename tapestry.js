@@ -30,6 +30,7 @@ var // declared constants
     TIME_BETWEEN_SAVE_PROGRESS = 5, // Means the number of seconds between each save progress call
     NODE_UNLOCK_TIMEFRAME = 2, // Time in seconds. User should be within 2 seconds of appearsAt time for unlocked nodes
     API_PUT_METHOD = 'PUT',
+    API_DELETE_METHOD = 'DELETE',
     USER_NODE_PROGRESS_URL = config.apiUrl + "/users/progress",
     USER_NODE_UNLOCKED_URL = config.apiUrl + "/users/unlocked",
     TAPESTRY_H5P_SETTINGS_URL = config.apiUrl + "/users/h5psettings";
@@ -83,7 +84,7 @@ jQuery.ajaxSetup({
     }
 });
 
-this.init = function() {
+this.init = function(isReload = false) {
     //---------------------------------------------------
     // 2. SIZE AND SCALE THE TAPESTRY AND SVG TO FIT WELL
     //---------------------------------------------------
@@ -110,7 +111,9 @@ this.init = function() {
         rootNodeImageHeightDiff += tapestry.dataset.settings.thumbRootDiff;
     }
 
-    svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
+    if (!isReload) {
+        svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
+    }
     links = createLinks();
     nodes = createNodes();
 
@@ -124,14 +127,15 @@ this.init = function() {
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
 
 
-    //---------------------------------------------------
-    // 5. SET UP EDITING STUFF
-    //---------------------------------------------------
-
-    // Attach the link line to the tapestry SVG (it won't appear for now)
-    $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
-
-    recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
+    if (!isReload) {
+        //---------------------------------------------------
+        // 5. SET UP EDITING STUFF
+        //---------------------------------------------------
+    
+        // Attach the link line to the tapestry SVG (it won't appear for now)
+        $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
+        recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
+    }
 }
 
 /****************************************************
@@ -282,6 +286,133 @@ function addLink(source, target, value, appearsAt) {
     });
 }
 
+function deleteLink(source, target, isDeleteNode = false, spliceIndex) {
+    var newLinks = JSON.parse(JSON.stringify(tapestry.dataset.links));
+    for (var i = 0; i < newLinks.length; i++) {
+        if (newLinks[i].source.id === source && newLinks[i].target.id === target) {
+            newLinks.splice(i, 1);
+            var linkToRemove = i;
+
+             // Check if there is a path from root to source and root to target, if true then we can delete the link
+            if ( isDeleteNode ||
+                (hasPathBetweenNodes(tapestry.dataset.rootId, source, newLinks) && hasPathBetweenNodes(tapestry.dataset.rootId, target, newLinks))) {
+                $.ajax({
+                    url: apiUrl + "/tapestries/" + config.wpPostId + "/links/",
+                    method: API_DELETE_METHOD,
+                    data: JSON.stringify(linkToRemove),
+                    success: function(result) {
+                       tapestry.dataset.links.splice(linkToRemove, 1);
+                        if (isDeleteNode) {
+                            tapestry.dataset.nodes.splice(spliceIndex, 1);
+                            root = tapestry.dataset.rootId; // need to change root b/c deleting current root
+                            tapestryHideAddNodeModal();
+                        }
+                        tapestry.init(true);
+                    },
+                    error: function(e) {
+                        console.error("Error removing link", e);
+                    }
+                });
+            } else {
+                alert("Link cannot be removed.");
+            }
+        }
+    }
+}
+
+function tapestryDeleteNode() {
+    var nodeId = root;
+    if (nodeId === tapestry.dataset.rootId) {
+        if (tapestry.dataset.nodes && tapestry.dataset.nodes.length > 1) {
+            alert("Root node can only be deleted if there are no other nodes in the tapestry.");
+            return;
+        }
+        $.ajax({
+            url: apiUrl + "/tapestries/" + config.wpPostId + "/nodes/" + nodeId,
+            method: API_DELETE_METHOD,
+            success: function() {
+                removeAllNodes();
+                dataset.nodes.splice(0, 1);
+                tapestryHideAddNodeModal();
+                tapestry.init(true);
+            },
+            error: function(e) {
+                console.error("Error deleting root node", e);
+            }
+        });
+    } else if (getChildren(nodeId, 1) && getChildren(nodeId, 1).length > 1) {
+        alert("Can only delete nodes with one neighbouring node.");
+    } else {
+        var linkToBeDeleted = -1;
+        for (var i = 0; i < tapestry.dataset.links.length; i++) {
+            var linkedNodeId;
+            if (tapestry.dataset.links[i].source.id === nodeId) {
+                linkedNodeId = tapestry.dataset.links[i].target.id; // Node linked to the node to be deleted
+            } else if (tapestry.dataset.links[i].target.id === nodeId) {
+                linkedNodeId = tapestry.dataset.links[i].source.id // Node linked to the node to be deleted
+            } else {
+                continue;
+            }
+
+            var newLinks = JSON.parse(JSON.stringify(tapestry.dataset.links)); // deep copy
+            newLinks.splice(i, 1); // remove the link and see if linkedNode is connected to root node
+            if(!hasPathBetweenNodes(tapestry.dataset.rootId, linkedNodeId, newLinks)) {
+                alert("Cannot delete node.");
+                return;
+            } else {
+                linkToBeDeleted = i;
+            }
+        }
+
+         if (linkToBeDeleted !== -1) {
+            for (var j = 0; j < tapestry.dataset.nodes.length; j++) {
+                if (tapestry.dataset.nodes[j].id === nodeId) {
+                    var spliceIndex = j;
+                    $.ajax({
+                        url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
+                        method: API_DELETE_METHOD,
+                        success: function() {
+                            deleteLink(tapestry.dataset.links[linkToBeDeleted].source.id, tapestry.dataset.links[linkToBeDeleted].target.id, true, spliceIndex);
+                        },
+                        error: function(e) {
+                            console.error("Error deleting node " + nodeId, e);
+                        }
+                    });
+                }
+            }
+        }
+    }
+}
+
+ // Checks if there is a path between the start and target nodes
+function hasPathBetweenNodes(startNode, targetNode, links) {
+    var visited = [];
+    var queue = [];
+    var neighbours = {};
+
+     for (var j = 0; j < tapestry.dataset.nodes.length; j++) {
+        neighbours[tapestry.dataset.nodes[j].id] = [];
+    }
+    for (var k = 0; k < links.length; k++) {
+        neighbours[links[k].source.id].push(links[k].target.id);
+        neighbours[links[k].target.id].push(links[k].source.id);
+    }
+    visited.push(startNode);
+    queue.push(startNode);
+
+     while (queue.length > 0) {
+        var nodeId = queue.shift();
+        for (var i = 0; i < neighbours[nodeId].length; i++) {
+            if (!visited.includes(neighbours[nodeId][i])) {
+                visited.push(neighbours[nodeId][i]);
+                queue.push(neighbours[nodeId][i]);
+            }
+        }
+    }
+
+     return visited.includes(targetNode);
+}
+
 /****************************************************
  * D3 RELATED FUNCTIONS
  ****************************************************/
@@ -427,13 +558,10 @@ function createLinks() {
                 .data(tapestry.dataset.links)
                     .enter()
                     .append("line")
-                    .attr("stroke", function (d) {
-                        if (d.type === "grandchild") 
-                            return COLOR_GRANDCHILD;
-                        else if (d.secondary)
-                            return COLOR_SECONDARY_LINK;
-                        else return COLOR_LINK;
+                    .attr("stroke", function(d){
+                        return setLinkStroke(d);
                     })
+                    .attr("stroke-width", LINK_THICKNESS)
                     .attr("style", function(d){
                         if (d.type === "")
                             return "display: none"
@@ -441,7 +569,36 @@ function createLinks() {
                             return CSS_OPTIONAL_LINK;
                         else return "";
                     })
-                    .attr("stroke-width", LINK_THICKNESS);
+                    .attr("class", function(d) {
+                        return "link-lines";
+                    })
+                    .attr("id", function(d) {
+                        return "link-lines-" + d.source.id + "-" + d.target.id;
+                    })
+                    .on("click", function(d) {
+                        var result = confirm("Are you sure you want to delete this link? (" + tapestry.dataset.nodes[findNodeIndex(d.source.id)].title + "-" + tapestry.dataset.nodes[findNodeIndex(d.target.id)].title + ")");
+                        if (result) {
+                            deleteLink(d.source.id, d.target.id);
+                        }
+                    })
+                    .on("mouseover", function(d) {
+                        $("#link-lines-" + d.source.id + "-" + d.target.id).attr("stroke", "red");
+                        $("#link-lines-" + d.source.id + "-" + d.target.id).attr("stroke-width", LINK_THICKNESS + 5);
+                    })
+                    .on("mouseout", function(d) {
+                        $("#link-lines-" + d.source.id + "-" + d.target.id).attr("stroke", function(d){
+                            return setLinkStroke(d);
+                        });
+                        $("#link-lines-" + d.source.id + "-" + d.target.id).attr("stroke-width", LINK_THICKNESS);
+                    });
+}
+
+function setLinkStroke(d) {
+    if (d.type === "grandchild")
+        return COLOR_GRANDCHILD;
+    else if (d.secondary)
+        return COLOR_SECONDARY_LINK;
+    else return COLOR_LINK;
 }
 
 function createNodes() {
@@ -996,10 +1153,17 @@ function buildPathAndButton() {
             }
         }
 
+        // Unhide delete button
+        $(".tapestry-delete-node-section").show();
+
         // Show the modal
         $("#createNewNodeModal").modal();
     });
 }
+
+$('#createNewNodeModal').on('hidden.bs.modal', function () {
+    tapestryHideAddNodeModal();
+});
 
 function updateViewedProgress() {
     path = nodes
@@ -1690,7 +1854,7 @@ function addDepthToNodes(id, depth, visited) {
 /* Return the distance between a node and its farthest descendant node */
 function findMaxDepth(id) {
 
-    if ((tapestry.dataset && tapestry.dataset.nodes.length === 0) || !id)  {
+    if ((tapestry.dataset && tapestry.dataset.nodes.length === 0) || !id || (findNodeIndex(id) === -1))  {
         return 0;
     } else {
         // Create the .depth parameter for every node
@@ -2361,6 +2525,9 @@ function tapestryHideAddNodeModal() {
     $("#mp4-content").hide();
     $("#h5p-content").hide();
     $("#appearsat-section").show();
+
+    // Hide delete button
+    $(".tapestry-delete-node-section").hide();
 }
 
 // Type is either "user" or "group"  

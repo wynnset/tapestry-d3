@@ -267,6 +267,10 @@ div.modal {
     stroke-opacity: 5;
 }
 
+.link-lines{
+    cursor: pointer;
+}
+
 /* MEDIA BUTTON */
 
 .mediaButton {
@@ -520,7 +524,7 @@ body {font-family: Arial, Helvetica, sans-serif;}
     color: white;
 }
 
-#cancel-add-new-node {
+#cancel-add-new-node, #tapestry-delete-node {
     color: white;
     background-color: #dc3545;
 }
