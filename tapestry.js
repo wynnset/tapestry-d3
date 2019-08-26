@@ -223,6 +223,33 @@ if (config.wpUserId) {
     tapestryControlsDiv.appendChild(viewLockedCheckboxWrapper);
 }
 
+// Create Settings Button
+// Create wrapper div
+var tapestrySettingsWrapper = document.createElement("div");
+tapestrySettingsWrapper.id = "tapestry-settings-wrapper";
+
+ // Create input element
+var tapestrySettingsDiv = document.createElement("div");
+tapestrySettingsDiv.innerHTML = '<i class="fas fa-cog" id="tapestry-settings-btn"></i> Settings';
+tapestrySettingsDiv.onclick = function() {
+    // if (tapestrySettings) {
+    //     if (tapestrySettings.background) {
+    //         $("#tapestry-background-img-input").val(tapestrySettings.background);
+    //     }
+    //     if (tapestrySettings.autolayout) {
+    //         $("#tapestry-auto-layout-checkbox").prop("checked", tapestrySettings.autolayout);
+    //     }
+    // }
+    $("#tapestrySettingModal").modal();
+};
+
+tapestrySettingsWrapper.appendChild(tapestrySettingsDiv);
+
+if (config.wpUserId) {
+    tapestryControlsDiv.appendChild(tapestrySettingsWrapper);
+}
+
+
 /****************************************************
  * ADD EDITOR ELEMENTS
  ****************************************************/
@@ -255,6 +282,11 @@ this.redrawTapestryWithNewNode = function(isRoot) {
     filterTapestry();
     
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+}
+
+this.setTapestryBackground = function(imageUrl) {
+    $("#" + TAPESTRY_CONTAINER_ID).css("background", "url('" + imageUrl + "') no-repeat center center fixed");
+    $("#" + TAPESTRY_CONTAINER_ID).css("background-size", "cover");
 }
 
 // To establish two way connections
@@ -2094,6 +2126,10 @@ tapestryTool.prototype.redraw = function(isRoot) {
     return this.redrawTapestryWithNewNode(isRoot);
 };
 
+tapestryTool.prototype.setBackground = function(imageUrl) {
+    this.setTapestryBackground(imageUrl);
+}
+
 /*******************************************************
  * 
  * NON-CLASS FUNCTIONS (could be moved to a separate file)
@@ -2399,6 +2435,10 @@ function appendPermissionsRow(id, type) {
             $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('disabled', true);
         }
     });
+}
+
+function closeSettingModal(){
+    $("#tapestrySettingModal").modal("hide");
 }
 
 // Capture click events anywhere inside or outside tapestry
