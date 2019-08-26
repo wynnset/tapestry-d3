@@ -301,13 +301,13 @@ function deleteLink(source, target, isDeleteNode = false, spliceIndex) {
                     method: API_DELETE_METHOD,
                     data: JSON.stringify(linkToRemove),
                     success: function(result) {
-                       tapestry.dataset.links.splice(linkToRemove, 1);
+                        tapestry.dataset.links.splice(linkToRemove, 1);
                         if (isDeleteNode) {
                             tapestry.dataset.nodes.splice(spliceIndex, 1);
                             root = tapestry.dataset.rootId; // need to change root b/c deleting current root
                             tapestryHideAddNodeModal();
                         }
-                        tapestry.init(true);
+                        tapestry.reinitialize();
                     },
                     error: function(e) {
                         console.error("Error removing link", e);
@@ -320,7 +320,7 @@ function deleteLink(source, target, isDeleteNode = false, spliceIndex) {
     }
 }
 
-function tapestryDeleteNode() {
+this.tapestryDeleteNode = function() {
     var nodeId = root;
     if (nodeId === tapestry.dataset.rootId) {
         if (tapestry.dataset.nodes && tapestry.dataset.nodes.length > 1) {
@@ -332,9 +332,10 @@ function tapestryDeleteNode() {
             method: API_DELETE_METHOD,
             success: function() {
                 removeAllNodes();
-                dataset.nodes.splice(0, 1);
+                tapestry.dataset.nodes.splice(0, 1);
+                tapestry.dataset.rootId = undefined;
                 tapestryHideAddNodeModal();
-                tapestry.init(true);
+                tapestry.reinitialize();
             },
             error: function(e) {
                 console.error("Error deleting root node", e);
@@ -369,7 +370,7 @@ function tapestryDeleteNode() {
                 if (tapestry.dataset.nodes[j].id === nodeId) {
                     var spliceIndex = j;
                     $.ajax({
-                        url: apiUrl + "/tapestries/" + tapestryWpPostId + "/nodes/" + nodeId,
+                        url: apiUrl + "/tapestries/" + config.wpPostId + "/nodes/" + nodeId,
                         method: API_DELETE_METHOD,
                         success: function() {
                             deleteLink(tapestry.dataset.links[linkToBeDeleted].source.id, tapestry.dataset.links[linkToBeDeleted].target.id, true, spliceIndex);
@@ -543,13 +544,23 @@ function updateSvgDimensions(containerId) {
     startForce();
 }
 
-function createLinks() {
-    /* Need to remove old links when redrawing graph */
+function removeAllLinks() {
     if (links !== undefined) {
         svg.selectAll('line')
-            .data(tapestry.dataset.links)
             .remove();
     }
+}
+
+function removeAllNodes() {
+    if (nodes !== undefined) {
+        svg.selectAll("g.node")
+            .remove();
+    }
+}
+
+function createLinks() {
+    /* Need to remove old links when redrawing graph */
+    removeAllLinks();
 
     /* Now, can draw the links */
     return svg.append("svg:g")
@@ -603,11 +614,7 @@ function setLinkStroke(d) {
 
 function createNodes() {
     /* Need to remove old nodes when redrawing graph */
-    if (nodes !== undefined) {
-        svg.selectAll("g.node")
-            .data(tapestry.dataset.nodes)
-            .remove();
-    }
+    removeAllNodes();
 
     /* Now, can draw the nodes */
     return svg.selectAll("g.node")
@@ -2242,6 +2249,10 @@ tapestryTool.prototype.initialize = function () {
     return this.init();
 };
 
+tapestryTool.prototype.reinitialize = function () {
+    return this.init(true);
+};
+
 tapestryTool.prototype.getDataset = function() {
     return this.dataset;
 };
@@ -2256,6 +2267,10 @@ tapestryTool.prototype.setOriginalDataset = function (dataset) {
 
 tapestryTool.prototype.redraw = function(isRoot) {
     return this.redrawTapestryWithNewNode(isRoot);
+};
+
+tapestryTool.prototype.deleteNodeFromTapestry = function() {
+   this.tapestryDeleteNode();
 };
 
 /*******************************************************
