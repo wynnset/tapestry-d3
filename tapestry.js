@@ -96,7 +96,6 @@ this.init = function() {
     //---------------------------------------------------
 
     root = tapestry.dataset.rootId;
-
     setNodeTypes(root);
     setLinkTypes(root);
     setUnlocked();
@@ -552,7 +551,9 @@ function buildNodeContents() {
             return d.id;
         })
         .attr("stroke-width", function (d) {
-            return PROGRESS_THICKNESS * adjustedRadiusRatio;
+            if (!d.hideProgress) {
+                return PROGRESS_THICKNESS * adjustedRadiusRatio;
+            }
         })
         .attr("stroke", function (d) {
             if (!getViewable(d))
@@ -593,7 +594,10 @@ function buildNodeContents() {
         })
         .attr("r", function (d) {
             var rad = getRadius(d);
-            if (rad > PROGRESS_THICKNESS/2)
+            if (d.hideProgress) {
+                return rad;
+            }
+            else if (rad > PROGRESS_THICKNESS/2)
                 return rad - PROGRESS_THICKNESS/2;
             else
                 return 0;
@@ -671,7 +675,9 @@ function rebuildNodeContents() {
             .duration(TRANSITION_DURATION/2)
             .attr("r", function (d) {
                 var rad = getRadius(d);
-                if (rad > (PROGRESS_THICKNESS * adjustedRadiusRatio)/2)
+                if (d.hideProgress) {
+                    return rad;
+                } else if (rad > (PROGRESS_THICKNESS * adjustedRadiusRatio)/2)
                     return rad - (PROGRESS_THICKNESS * adjustedRadiusRatio)/2;
                 else
                     return 0;
@@ -726,7 +732,9 @@ function rebuildNodeContents() {
                 return "url('#node-thumb-" + d.id + "')";
             })
             .attr("stroke-width", function (d) {
-                return PROGRESS_THICKNESS * adjustedRadiusRatio;
+                if (!d.hideProgress) {
+                    return PROGRESS_THICKNESS * adjustedRadiusRatio;
+                }            
             });
     
     /* Attach images to be used within each node */
@@ -977,9 +985,12 @@ function buildPathAndButton() {
         $("#hiddenMediaType").val($("#mediaType").val());
 
         //Populate Appearance checkboxes
-
-         if (tapestry.dataset.nodes[findNodeIndex(root)].hideTitle) {
+        if (tapestry.dataset.nodes[findNodeIndex(root)].hideTitle) {
             $("#tapestry-hide-title-checkbox").prop("checked", tapestry.dataset.nodes[findNodeIndex(root)].hideTitle);
+        }
+
+        if (tapestry.dataset.nodes[findNodeIndex(root)].hideProgress) {
+            $("#tapestry-hide-progress-checkbox").prop("checked", tapestry.dataset.nodes[findNodeIndex(root)].hideProgress);
         }
 
         // Permissions table
@@ -2364,6 +2375,7 @@ function tapestryHideAddNodeModal() {
     $("#appears-at-label").hide();
     // Uncheck hide title
     $("#tapestry-hide-title-checkbox").prop("checked", false);
+    $("#tapestry-hide-progress-checkbox").prop("checked", false);
 
     $("#tapestry-text-content").hide();
     $("#mp4-content").hide();
