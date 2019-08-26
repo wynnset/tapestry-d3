@@ -807,7 +807,7 @@ function buildPathAndButton() {
     // Append mediaButton
     nodes
         .filter(function (d) {
-            return getViewable(d);
+            return getViewable(d) && !d.hideMedia;
         })
         .append("svg:foreignObject")
         .html(function (d) {
@@ -991,6 +991,10 @@ function buildPathAndButton() {
 
         if (tapestry.dataset.nodes[findNodeIndex(root)].hideProgress) {
             $("#tapestry-hide-progress-checkbox").prop("checked", tapestry.dataset.nodes[findNodeIndex(root)].hideProgress);
+        }
+
+        if (tapestry.dataset.nodes[findNodeIndex(root)].hideMedia) {
+            $("#tapestry-hide-media-checkbox").prop("checked", tapestry.dataset.nodes[findNodeIndex(root)].hideMedia);
         }
 
         // Permissions table
@@ -2376,6 +2380,8 @@ function tapestryHideAddNodeModal() {
     // Uncheck hide title
     $("#tapestry-hide-title-checkbox").prop("checked", false);
     $("#tapestry-hide-progress-checkbox").prop("checked", false);
+    $("#tapestry-hide-media-checkbox").prop("checked", false);
+
 
     $("#tapestry-text-content").hide();
     $("#mp4-content").hide();
