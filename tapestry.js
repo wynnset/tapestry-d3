@@ -1111,7 +1111,7 @@ function createSvgContainer(containerId) {
                     .attr("cx","3")
                     .attr("cy","3")
                     .attr("r","3")
-                    .attr("fill",COLOR_STROKE)
+                    .attr("fill",COLOR_STROKE);
 
     return svgContainer;
 }
@@ -1139,9 +1139,8 @@ function createLinks() {
                     .enter()
                     .append("polyline")
                     .attr('points', function (d) {
-                        var midX = (d.source.fx + d.target.fx)/2
-                        var midY = (d.source.fy + d.target.fy)/2
-
+                        var midX = (d.source.fx + d.target.fx)/2;
+                        var midY = (d.source.fy + d.target.fy)/2;
                         return d.source.fx + "," + d.source.fy + " " + midX + "," + midY + " " + d.target.fx + "," + d.target.fy;
                     })
                     .attr("stroke", function (d) {
