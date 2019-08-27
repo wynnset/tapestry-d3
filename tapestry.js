@@ -1083,14 +1083,34 @@ function dragended(d) {
 }
 
 function createSvgContainer(containerId) {
+
     var tapestryDimensions = getTapestryDimensions();
     tapestryDimensionsBeforeDrag = tapestryDimensions;
-    return d3.select("#"+containerId)
+
+
+
+    var svgContainer = d3.select("#"+containerId)
                 .append("svg:svg")
                 .attr("id", containerId+"-svg")
                 .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height)
                 .attr("preserveAspectRatio", "xMidYMid meet")
                 .append("svg:g");
+
+    svgContainer.append("defs")
+                .append("marker")
+                .attr("id","midmarker")
+                .attr("markerWidth","8")
+                .attr("markerHeight","8")
+                .attr("refX","4")
+                .attr("refY","4")
+                .attr("viewBox","0 0 8 8")
+                .append("circle")
+                .attr("cx","4")
+                .attr("cy","4")
+                .attr("r","4")
+                .attr("fill","#000000")
+
+    return svgContainer;
 }
 
 function updateSvgDimensions(containerId) {
@@ -1132,7 +1152,10 @@ function createLinks() {
                     .enter()
                     .append("polyline")
                     .attr('points', function (d) {
-                        return d.source.fx + "," + d.source.fy + " " + d.target.fx + "," + d.target.fy
+                        var midX = (d.source.fx + d.target.fx)/2
+                        var midY = (d.source.fy + d.target.fy)/2
+
+                        return d.source.fx + "," + d.source.fy + " " + midX + "," + midY + " " + d.target.fx + "," + d.target.fy;
                     })
                     .attr("stroke", function (d) {
                         if (d.type === "grandchild") 
@@ -1148,7 +1171,10 @@ function createLinks() {
                             return CSS_OPTIONAL_LINK;
                         else return "";
                     })
-                    .attr("stroke-width", LINK_THICKNESS);
+                    .attr("stroke-width", LINK_THICKNESS)
+                    .attr("marker-mid",function(d){
+                        return "url(#midmarker)"
+                    });
 }
 
 function actPoints() {
@@ -1326,8 +1352,9 @@ function buildNodeContents() {
         });
 
     /* Attach images to be used within each node */
-    nodes.append("defs")
-        .append("pattern")
+    var nodeDefs = nodes.append("defs");
+
+    nodeDefs.append("pattern")
         .attr("id", function (d) {
             return "node-thumb-" + d.id;
         })
