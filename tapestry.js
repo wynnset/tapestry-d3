@@ -1053,7 +1053,10 @@ function updatePath(node,xco,yco) {
                     return d.target.id === node.id;
                 })
                 .attr("stroke","#000000")
-                .attr("points",lineData2)
+                .attr("points", function(d){
+                    console.log("THIS IS :   ", d.source);
+                    return d.source.x.toString() + "," + d.source.y.toString() + " " + nodeDataCo;
+                });
                 // .enter()
                 // .attr('x2',xco)
                 // .attr('y2',yco)
@@ -1071,11 +1074,12 @@ function updatePath(node,xco,yco) {
                 .filter(function(d){
                     return d.source.id === node.id;
                 })
+                .attr("stroke","#000000")
+                .attr("points", function(d){
+                    return nodeDataCo + " " + d.target.x.toString() + "," + d.target.y.toString();
+                });
             // .attr('x1',xco)
             // .attr('y1',yco)
-            .attr('points', function (d) {
-                return d.x1 + "," + d.y1 + " " + d.x2 + "," + d.y2;
-            });
             // update the source coordinates in the link
         }
     }
