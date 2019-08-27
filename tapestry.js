@@ -1023,10 +1023,10 @@ function dragstarted(d) {
 function dragged(d) {
     d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
     d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
-    updatePath(d,d.fx,d.fy);
+    updatePolyline(d,d.fx,d.fy);
 }
 
-function updatePath(node,xco,yco) {
+function updatePolyline(node,xco,yco) {
     linkData = tapestry.dataset.links;
 
     nodeDataCo = xco.toString() + "," + yco.toString();
@@ -1042,8 +1042,9 @@ function updatePath(node,xco,yco) {
                 })
                 .attr("stroke",COLOR_LINK)
                 .attr("points", function(d){
-                    console.log("THIS IS :   ", d.source);
-                    return d.source.x.toString() + "," + d.source.y.toString() + " " + nodeDataCo;
+                    var midX = (d.source.x + xco)/2;
+                    var midY = (d.source.y + yco)/2;
+                    return d.source.x.toString() + "," + d.source.y.toString() + " " + midX + "," + midY + " " + nodeDataCo;
                 });
 
         }
@@ -1054,7 +1055,9 @@ function updatePath(node,xco,yco) {
                 })
                 .attr("stroke",COLOR_LINK)
                 .attr("points", function(d){
-                    return nodeDataCo + " " + d.target.x.toString() + "," + d.target.y.toString();
+                    var midX = (d.target.x + xco)/2;
+                    var midY = (d.target.y + yco)/2;
+                    return nodeDataCo + " " + midX + "," + midY + " " + d.target.x.toString() + "," + d.target.y.toString();
                 });
         }
     }
