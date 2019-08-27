@@ -1031,56 +1031,31 @@ function updatePath(node,xco,yco) {
 
     nodeDataCo = xco.toString() + "," + yco.toString();
 
-    console.log("NDC",nodeDataCo);
-
-    lineData = [{
-         "x1": 100,
-         "y1": 300,
-         "x2": 300,
-         "y2": 400
-    }]
-    lineData2 =  "100,300 300,400";
-
     // loop through the links and find links that are conencted to this node (d)
     for (var i in linkData) {
-      //  console.log(linkData[i].target,"<- TARGET SOURCE -> ",linkData[i].source);
         if (linkData[i].target == node) {
-        //    console.log("link.target == node: ",node.id);
             // update the target coordinates in the link
             svg.selectAll("polyline")
                 .filter(function(d){
                     console.log(d.target);
                     return d.target.id === node.id;
                 })
-                .attr("stroke","#000000")
+                .attr("stroke",COLOR_LINK)
                 .attr("points", function(d){
                     console.log("THIS IS :   ", d.source);
                     return d.source.x.toString() + "," + d.source.y.toString() + " " + nodeDataCo;
                 });
-                // .enter()
-                // .attr('x2',xco)
-                // .attr('y2',yco)
-                // .filter(function(d){
-                //     console.log(d,node);
-                //     if (d.target == node) {
-                //         console.log("UESSSS")
-                //     }
-                //     return d.target.id === node.id;
-                // })
+
         }
         else if (linkData[i].source == node) {
-     //       console.log("source = node: ",node.id)
             svg.selectAll("polyline")
                 .filter(function(d){
                     return d.source.id === node.id;
                 })
-                .attr("stroke","#000000")
+                .attr("stroke",COLOR_LINK)
                 .attr("points", function(d){
                     return nodeDataCo + " " + d.target.x.toString() + "," + d.target.y.toString();
                 });
-            // .attr('x1',xco)
-            // .attr('y1',yco)
-            // update the source coordinates in the link
         }
     }
 }
