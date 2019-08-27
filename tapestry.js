@@ -655,6 +655,7 @@ function buildNodeContents() {
             if (root != d.id) {
                 root = d.id;
                 resizeNodes(d.id);
+                dispatchEvent(new CustomEvent('change-root-node', {detail: root}));
                 tapestryDepthSlider.max = findMaxDepth(root);
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
@@ -892,16 +893,7 @@ function buildPathAndButton() {
         );
 
     $('.addNodeButton').click(function(){
-        // Set up the title of the form
-        $('#createNewNodeModalLabel').text("Add new sub-topic to " + tapestry.dataset.nodes[findNodeIndex(root)].title);
-        $("#submit-add-root-node").hide();
-        $("#submit-edit-node").hide();
-        $("#submit-add-new-node").show();
-        if (tapestry.dataset.nodes[findNodeIndex(root)].mediaType !== "video") {
-            $("#appearsat-section").hide();
-        }
-        // Show the modal
-        $("#createNewNodeModal").modal();
+        dispatchEvent(new CustomEvent("add-new-node"))
     });
 
     // Append editNodeButton
@@ -933,71 +925,7 @@ function buildPathAndButton() {
         .attr("class", "editNodeButton");
 
     $('.editNodeButton').click(function(){
-        // Add in the title for the modal
-        $('#createNewNodeModalLabel').text("Edit node: " + tapestry.dataset.nodes[findNodeIndex(root)].title);
-        $("#submit-add-root-node").hide();
-        $("#submit-add-new-node").hide();
-        $("#submit-edit-node").show();
-        $("#appearsat-section").hide();
-
-        // Load the values into input
-        $("#add-node-title-input").val(tapestry.dataset.nodes[findNodeIndex(root)].title);
-        $("#add-node-thumbnail-input").val(tapestry.dataset.nodes[findNodeIndex(root)].imageURL);
-
-        // Load description
-        if (tapestry.dataset.nodes[findNodeIndex(root)].description) {
-            $("#tapestry-node-description-area").val(tapestry.dataset.nodes[findNodeIndex(root)].description);
-        }
-
-        $("#mp4-content").hide();
-        $("#h5p-content").hide();
-        $("#tapestry-text-content").hide();
-
-        if (tapestry.dataset.nodes[findNodeIndex(root)].mediaType === "text") {
-            $("#mediaType").val("text");
-            $("#tapestry-text-content").show();
-            $("#tapestry-node-text-area").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.textContent);
-        } else if (tapestry.dataset.nodes[findNodeIndex(root)].mediaType === "video") {
-            if (tapestry.dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
-                $("#mediaType").val("video");
-                $("#mp4-mediaURL-input").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
-                $("#mp4-mediaDuration-input").val(tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration);
-                $("#mp4-content").show();
-            } else if (tapestry.dataset.nodes[findNodeIndex(root)].mediaFormat === "h5p") {
-                $("#mediaType").val("h5p");
-                $("#h5p-mediaURL-input").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
-                $("#h5p-mediaDuration-input").val(tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration);
-                $("#h5p-content").show();
-            }
-        }
-
-        // Disable media type (set it to hidden) because there's more things to consider
-        $("#mediaType").attr('disabled','disabled');
-        $("#hiddenMediaType").removeAttr('disabled');
-        $("#hiddenMediaType").val($("#mediaType").val());
-
-        // Permissions table
-        if (tapestry.dataset.nodes[findNodeIndex(root)].permissions) {
-            for (var key in tapestry.dataset.nodes[findNodeIndex(root)].permissions) {
-                if (key === "public") {
-                    for (var i = 0; i < tapestry.dataset.nodes[findNodeIndex(root)].permissions[key].length; i++) {
-                        $("#public-" + tapestry.dataset.nodes[findNodeIndex(root)].permissions[key][i].replace("_", "-") + "-checkbox").prop("checked", true);
-                    }
-                } else if (key.includes("user")) {
-                    // Append row, creates ones that public already has
-                    appendPermissionsRow(extractDigitsFromString(key), "user");
-                    // Add the ones that aren't in public now
-                    for (var j = 0; j < tapestry.dataset.nodes[findNodeIndex(root)].permissions[key].length; j++) {
-                        if (tapestry.dataset.nodes[findNodeIndex(root)].permissions.public && !tapestry.dataset.nodes[findNodeIndex(root)].permissions.public.includes(tapestry.dataset.nodes[findNodeIndex(root)].permissions[key][j])) {
-                            $("#" + key + "-" + tapestry.dataset.nodes[findNodeIndex(root)].permissions[key][j].replace("_", "-") + "-checkbox").prop("checked", true);
-                        }
-                    }
-                }
-            }
-        }
-
-        // Show the modal
-        $("#createNewNodeModal").modal();
+        dispatchEvent(new CustomEvent("edit-node"))
     });
 }
 
@@ -2330,38 +2258,6 @@ function tapestryValidateNewNode(formData, isRoot) {
    }	
    return errMsg;	
 }	
-
-// Resets the add/edit modal to default state
-function tapestryHideAddNodeModal() {
-    // Clear all text fields
-    $("#createNewNodeModalBody input[type='text']").val("");
-    $("#createNewNodeModalBody input[type='url']").val("");
-    // Remove Text Area for text node 
-    $("#tapestry-node-text-area").val("");
-    $(".permissions-dynamic-row").remove(); // remove the dynamically created permission rows
-    // Uncheck all public permissions except read
-    $('.public-checkbox').each(function() {
-        if ($(this).is(":checked") && this.name !== "read") {
-            $(this).prop('checked', false);
-        }
-    });
-    $("#tapestry-node-description-area").val("");
-    $("#createNewNodeModal").modal("hide");
-
-    // Reset all selections for dropdowns
-    $("#mediaType").val("default");
-    // Enable media type because edit disables it
-    $("#mediaType").removeAttr('disabled');
-
-    // Uncheck lock node label and hide appears at input
-    $("#tapestry-lock-node-checkbox").prop('checked', false);
-    $("#appears-at-label").hide();
-
-    $("#tapestry-text-content").hide();
-    $("#mp4-content").hide();
-    $("#h5p-content").hide();
-    $("#appearsat-section").show();
-}
 
 // Type is either "user" or "group"  
 function appendPermissionsRow(id, type) {
