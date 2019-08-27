@@ -1026,13 +1026,15 @@ function dragged(d) {
     updatePolyline(d,d.fx,d.fy);
 }
 
-function updatePolyline(node,xco,yco) {
+function updatePolyline(node,xCoord,yCoord) {
     linkData = tapestry.dataset.links;
 
-    nodeDataCo = xco.toString() + "," + yco.toString();
+    draggedNodeCoords = xCoord + "," + yCoord;
 
     // loop through the links and find links that are conencted to this node (d)
     for (var i in linkData) {
+
+        // If the node is a link's target, update the target's position to be the same as the node's
         if (linkData[i].target == node) {
             // update the target coordinates in the link
             svg.selectAll("polyline")
@@ -1042,12 +1044,12 @@ function updatePolyline(node,xco,yco) {
                 })
                 .attr("stroke",COLOR_LINK)
                 .attr("points", function(d){
-                    var midX = (d.source.x + xco)/2;
-                    var midY = (d.source.y + yco)/2;
-                    return d.source.x.toString() + "," + d.source.y.toString() + " " + midX + "," + midY + " " + nodeDataCo;
+                    var midX = (d.source.x + xCoord)/2;
+                    var midY = (d.source.y + yCoord)/2;
+                    return d.source.x + "," + d.source.y + " " + midX + "," + midY + " " + draggedNodeCoords;
                 });
-
         }
+        // If the node is a link's source, update the source's position to be the same as the node's
         else if (linkData[i].source == node) {
             svg.selectAll("polyline")
                 .filter(function(d){
@@ -1055,9 +1057,9 @@ function updatePolyline(node,xco,yco) {
                 })
                 .attr("stroke",COLOR_LINK)
                 .attr("points", function(d){
-                    var midX = (d.target.x + xco)/2;
-                    var midY = (d.target.y + yco)/2;
-                    return nodeDataCo + " " + midX + "," + midY + " " + d.target.x.toString() + "," + d.target.y.toString();
+                    var midX = (d.target.x + xCoord)/2;
+                    var midY = (d.target.y + yCoord)/2;
+                    return draggedNodeCoords + " " + midX + "," + midY + " " + d.target.x + "," + d.target.y;
                 });
         }
     }
@@ -1090,8 +1092,6 @@ function createSvgContainer(containerId) {
     var tapestryDimensions = getTapestryDimensions();
     tapestryDimensionsBeforeDrag = tapestryDimensions;
 
-
-
     var svgContainer = d3.select("#"+containerId)
                 .append("svg:svg")
                 .attr("id", containerId+"-svg")
@@ -1101,7 +1101,7 @@ function createSvgContainer(containerId) {
 
     svgContainer.append("defs")
                 .append("marker")
-                .attr("id","midmarker")
+                .attr("id","markermid")
                 .attr("markerWidth","6")
                 .attr("markerHeight","6")
                 .attr("refX","3")
@@ -1131,24 +1131,8 @@ function createLinks() {
             .remove();
     }
 
-    // console.log(actPoints());
-
-    // var lineGenerator = d3.line();
-
-    // var pathData = lineGenerator(actPoints());
-
-    // var lineFunction = d3.line()
-    //     .x(function(data) {
-    //         return data.x;
-    //     })
-    //     .y(function(data) {
-    //         return data.y;
-    //     });
-
-    // console.log(pathData);
-
     /* Now, can draw the links */
-    return svg.append("svg:g")
+    var links = svg.append("svg:g")
                 .attr("class", "links")
                 .selectAll("polyline")
                 .data(tapestry.dataset.links)
@@ -1175,22 +1159,9 @@ function createLinks() {
                         else return "";
                     })
                     .attr("stroke-width", LINK_THICKNESS)
-                    .attr("marker-mid",function(d){
-                        return "url(#midmarker)"
-                    });
-}
+                    .attr("marker-mid","url(#markermid)");
 
-function actPoints() {
-    ps = [];
-    for (var i in tapestry.dataset.nodes) {
-        ps.push(
-            [
-                tapestry.dataset.nodes[i].fx,
-                tapestry.dataset.nodes[i].fy
-            ]
-        );
-    }
-    return ps;
+    return links;
 }
 
 function createNodes() {
