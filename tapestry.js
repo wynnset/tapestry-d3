@@ -1023,6 +1023,47 @@ function dragstarted(d) {
 function dragged(d) {
     d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
     d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
+    updatePath(d,d.fx,d.fy);
+}
+
+function updatePath(node,xco,yco) {
+    linkData = tapestry.dataset.links;
+    // loop through the links and find links that are conencted to this node (d)
+    for (var i in linkData) {
+        console.log(linkData[i]);
+        if (linkData[i].target == node) {
+            console.log("link.target == d",node);
+            // update the target coordinates in the link
+            svg.append("svg:g")
+                .selectAll("polyline")
+                .filter(function(d){
+                    console.log(d,node);
+                    if (d.target == node) {
+                        console.log("UESSSS")
+                    }
+                    return d.target.id === node.id;
+                })
+                .attr('points', function (link) {
+                    return link.source.fx + "," + link.source.fy + " " + xco + "," + yco
+                });
+        }
+        else if (linkData[i].source == node) {
+            console.log("UHHHHH")
+            svg.append("svg:g")
+            .selectAll("polyline")
+            .filter(function(link){
+                console.log(link,node);
+                if (link.source.id == node.id) {
+                    console.log("NOOOOOO")
+                }
+                return link.source.id == node.id;
+            })
+            .attr('points', function (link) {
+                return xco + "," + yco + " " + node.target.fx + "," + node.target.fy
+            });
+            // update the source coordinates in the link
+        }
+    }
 }
 
 function dragended(d) {
@@ -1069,26 +1110,36 @@ function updateSvgDimensions(containerId) {
 function createLinks() {
     /* Need to remove old links when redrawing graph */
     if (links !== undefined) {
-        svg.selectAll('line')
+        svg.selectAll('polyline')
             .remove();
     }
 
-    console.log(actPoints());
+    // console.log(actPoints());
 
-    var lineGenerator = d3.line();
+    // var lineGenerator = d3.line();
 
-    var pathData = lineGenerator(actPoints());
+    // var pathData = lineGenerator(actPoints());
 
-    console.log(pathData);
+    // var lineFunction = d3.line()
+    //     .x(function(data) {
+    //         return data.x;
+    //     })
+    //     .y(function(data) {
+    //         return data.y;
+    //     });
+
+    // console.log(pathData);
 
     /* Now, can draw the links */
     return svg.append("svg:g")
                 .attr("class", "links")
-                .selectAll("line")
+                .selectAll("polyline")
                 .data(tapestry.dataset.links)
                     .enter()
-                    .append("path")
-                    .attr("d",pathData)
+                    .append("polyline")
+                    .attr('points', function (d) {
+                        return d.source.fx + "," + d.source.fy + " " + d.target.fx + "," + d.target.fy
+                    })
                     .attr("stroke", function (d) {
                         if (d.type === "grandchild") 
                             return COLOR_GRANDCHILD;
