@@ -1029,23 +1029,31 @@ function dragged(d) {
 function updatePath(node,xco,yco) {
     linkData = tapestry.dataset.links;
 
+    nodeDataCo = xco.toString() + "," + yco.toString();
+
+    console.log("NDC",nodeDataCo);
+
     lineData = [{
          "x1": 100,
-         "y1": 700,
+         "y1": 300,
          "x2": 300,
-         "y2": 800
+         "y2": 400
     }]
-    lineData2 =  "100,700 300,800";
+    lineData2 =  "100,300 300,400";
 
     // loop through the links and find links that are conencted to this node (d)
     for (var i in linkData) {
-        console.log(linkData[i].target,"<- TARGET SOURCE -> ",linkData[i].source);
+      //  console.log(linkData[i].target,"<- TARGET SOURCE -> ",linkData[i].source);
         if (linkData[i].target == node) {
-            console.log("link.target == node: ",node.id);
+        //    console.log("link.target == node: ",node.id);
             // update the target coordinates in the link
-            svg.append("svg:g")
-                .selectAll("polyline")
-                // .data(lineData)
+            svg.selectAll("polyline")
+                .filter(function(d){
+                    console.log(d.target);
+                    return d.target.id === node.id;
+                })
+                .attr("stroke","#000000")
+                .attr("points",lineData2)
                 // .enter()
                 // .attr('x2',xco)
                 // .attr('y2',yco)
@@ -1056,19 +1064,18 @@ function updatePath(node,xco,yco) {
                 //     }
                 //     return d.target.id === node.id;
                 // })
-                .attr('points', function (d) {
-                    return lineData2;
-                }).enter();
         }
         else if (linkData[i].source == node) {
-            console.log("source = node: ",node.id)
-            svg.append("svg:g")
-            .selectAll("polyline")
+     //       console.log("source = node: ",node.id)
+            svg.selectAll("polyline")
+                .filter(function(d){
+                    return d.source.id === node.id;
+                })
             // .attr('x1',xco)
             // .attr('y1',yco)
             .attr('points', function (d) {
                 return d.x1 + "," + d.y1 + " " + d.x2 + "," + d.y2;
-            }).enter();
+            });
             // update the source coordinates in the link
         }
     }
