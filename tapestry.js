@@ -2,9 +2,9 @@ function tapestryTool(config){
 
 this.dataset = {
     'settings': {},
-    'nodes': {},
-    'links': {},
-    'groups': {}
+    'nodes':    [],
+    'links':    [],
+    'groups':   []
 };
 var tapestry = this;
 
@@ -110,7 +110,10 @@ this.init = function() {
         rootNodeImageHeightDiff += tapestry.dataset.settings.thumbRootDiff;
     }
 
-    svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
+    if (!isReload) {
+        svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
+    }
+    
     links = createLinks();
     nodes = createNodes();
 
@@ -123,15 +126,15 @@ this.init = function() {
     // Ensure tapestry size fits well into the browser and start force
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
 
-
-    //---------------------------------------------------
-    // 5. SET UP EDITING STUFF
-    //---------------------------------------------------
-
-    // Attach the link line to the tapestry SVG (it won't appear for now)
-    $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
-
-    recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
+    if (!isReload) {
+        //---------------------------------------------------
+        // 5. SET UP EDITING STUFF
+        //---------------------------------------------------
+    
+        // Attach the link line to the tapestry SVG (it won't appear for now)
+        $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
+        recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
+    }
 }
 
 /****************************************************
