@@ -46,7 +46,7 @@ var // declared variables
     tapestrySlug, 
     saveProgress = true, progressLastSaved = new Date(), // Saving Progress
     enablePopupNodes = false, inViewMode = false,   // Pop-up nodes
-    tapestryDimensionsBeforeDrag, nodeBeforeDrag    
+    tapestryDimensionsBeforeDrag, nodeBeforeDrag,
     nodeImageHeight = 420,
     nodeImageWidth = 780,
     rootNodeImageHeightDiff = 70,
@@ -641,9 +641,9 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
         newNodeEntry[xORfx] = tapestry.dataset.nodes[findNodeIndex(root)].x;
         newNodeEntry[yORfy] = tapestry.dataset.nodes[findNodeIndex(root)].y;
     } else if (!isRoot) {
-        // Just put the node right under the current node
-        newNodeEntry[xORfx] = tapestry.dataset.nodes[findNodeIndex(root)].x; 
-        newNodeEntry[yORfy] = tapestry.dataset.nodes[findNodeIndex(root)].y + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 100;
+        // Just put the node to the right of the current node
+        newNodeEntry[xORfx] = tapestry.dataset.nodes[findNodeIndex(root)].x + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 100; 
+        newNodeEntry[yORfy] = tapestry.dataset.nodes[findNodeIndex(root)].y;
     }
 
     var appearsAt = 0;
@@ -772,7 +772,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
                         // Redraw root node
                         tapestry.dataset.rootId = newId;
                         root = tapestry.dataset.rootId; // need to set root to newly created node
-    
+
                         tapestry.init(true);
                         tapestryHideAddNodeModal();
                         $("#root-node-container").hide(); // hide the root node button after creating it.
@@ -1026,7 +1026,6 @@ function ticked() {
 
 // D3 DRAGGING FUNCTIONS
 function dragstarted(d) {
-    var tapestryDimensions = getTapestryDimensions();
     if (!d3.event.active) simulation.alphaTarget(0.2).restart();
 
     nodeBeforeDrag = d;
@@ -1035,8 +1034,8 @@ function dragstarted(d) {
         d[xORfx] = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width+(MAX_RADIUS*2));
         d[yORfy] = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height+(MAX_RADIUS*2));
     } else {
-        d[xORfx] = getBoundedCoord(d.x, tapestryDimensions.width);
-        d[yORfy] = getBoundedCoord(d.y, tapestryDimensions.height);
+        d[xORfx] = getBoundedCoord(d.x, tapestryDimensionsBeforeDrag.width);
+        d[yORfy] = getBoundedCoord(d.y, tapestryDimensionsBeforeDrag.height);
     }
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
@@ -1091,7 +1090,12 @@ function updateSvgDimensions() {
     var tapestryDimensions = getTapestryDimensions();
     tapestryDimensionsBeforeDrag = tapestryDimensions;
     d3.select("#"+TAPESTRY_CONTAINER_ID+"-svg")
-        .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height);
+        .attr("viewBox", 
+                tapestryDimensions.startX + " " + 
+                tapestryDimensions.startY + " " + 
+                (tapestryDimensions.width - tapestryDimensions.startX) + " " + 
+                (tapestryDimensions.height - tapestryDimensions.startY) 
+            );
     startSimulation();
 }
 
@@ -1339,6 +1343,7 @@ function buildNodeContents() {
                 resizeNodes(d.id);
                 // slider's maximum depth is set to the longest path from the new root
                 tapestryDepthSlider.max = findMaxDepth(root);
+                updateSvgDimensions();
             }
             recordAnalyticsEvent('user', 'click', 'node', d.id);
         });
@@ -2210,14 +2215,6 @@ function exitViewMode() {
  * HELPER FUNCTIONS
  ****************************************************/
 
-function getNodeNumber() {
-    var nodes = dataset.nodes;
-    var nodesToShow = nodes.filter(function (d) {
-        return getViewable(d) && d.nodeType != "grandchild";
-    });
-    return nodesToShow.length;
-}
-
 // Set multiple attributes for an HTML element at once
 function setAttributes(elem, obj) {
     for (var prop in obj) {
@@ -2255,29 +2252,33 @@ function getNodesDimensions(dataset) {
 
     if (autoLayout) {
         var maxDepth = findMaxDepth(root);
+        minPointX = 0;
+        minPointY = 0;
         maxPointX = Math.pow(dataset.nodes.length, 1/maxDepth) * MAX_RADIUS * maxDepth * getAspectRatio();
         maxPointY = Math.pow(dataset.nodes.length, 1/maxDepth) * MAX_RADIUS * maxDepth;
     }
     else {
         for (var index in dataset.nodes) {
-            
-            // save max point so we can calculate our tapestry width and height
-            if (getViewable(dataset.nodes[index]) && dataset.nodes[index].fx > maxPointX) {
-                maxPointX = dataset.nodes[index].fx;
-            }
-            if (getViewable(dataset.nodes[index]) && dataset.nodes[index].fy > maxPointY) {
-                maxPointY = dataset.nodes[index].fy;
-            }
-
-            if (getViewable(dataset.nodes[index]) && dataset.nodes[index].fx < minPointX) {
-                minPointX = dataset.nodes[index].fx;
-            }
-            if (getViewable(dataset.nodes[index]) && dataset.nodes[index].fy < minPointY) {
-                minPointY = dataset.nodes[index].fy;
+            if (getViewable(dataset.nodes[index])) {
+                // save max point so we can calculate our tapestry width and height
+                if (dataset.nodes[index].fx > maxPointX) {
+                    maxPointX = dataset.nodes[index].fx;
+                }
+                if (dataset.nodes[index].fy > maxPointY) {
+                    maxPointY = dataset.nodes[index].fy;
+                }
+                if (dataset.nodes[index].fx < minPointX) {
+                    minPointX = dataset.nodes[index].fx;
+                }
+                if (dataset.nodes[index].fy < minPointY) {
+                    minPointY = dataset.nodes[index].fy;
+                }
             }
         }
     }
     return {
+        'x0': minPointX,
+        'y0': minPointY,
         'x': maxPointX,
         'y': maxPointY
     };
@@ -2288,12 +2289,16 @@ function getTapestryDimensions() {
 
     var tapestryWidth = $('#'+TAPESTRY_CONTAINER_ID).outerWidth();
     var tapestryHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
+    var tapestryStartX = 0;
+    var tapestryStartY = 0;
 
     var nodeDimensions = getNodesDimensions(originalDataset);
 
     if (nodeDimensions.x > tapestryWidth || nodeDimensions.y > tapestryHeight) {
-        var tapestryWidth = nodeDimensions.x;
-        var tapestryHeight = nodeDimensions.y;
+        tapestryStartX = nodeDimensions.x0 - MAX_RADIUS*1.25;
+        tapestryStartY = nodeDimensions.y0 - MAX_RADIUS*1.25;
+        tapestryWidth = nodeDimensions.x;
+        tapestryHeight = nodeDimensions.y;
     }
 
     // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
@@ -2306,8 +2311,10 @@ function getTapestryDimensions() {
     }
 
     return {
-        'width': tapestryWidth + MAX_RADIUS,
-        'height': tapestryHeight + MAX_RADIUS
+        'width': tapestryWidth + MAX_RADIUS*1.25,
+        'height': tapestryHeight + MAX_RADIUS*1.25,
+        'startX': tapestryStartX,
+        'startY': tapestryStartY,
     };
 }
 
