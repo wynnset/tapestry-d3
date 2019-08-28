@@ -2284,6 +2284,15 @@ function getTapestryDimensions() {
         var tapestryHeight = nodeDimensions.y;
     }
 
+    // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
+    // For example, vertically long tapestries should be transposed so they are horizontally long on desktop,
+    // but kept the same way on mobile phones where the browser is vertically longer
+    var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
+    var windowAspectRatio = getAspectRatio();
+    if (tapestryAspectRatio > 1 && windowAspectRatio < 1 || tapestryAspectRatio < 1 && windowAspectRatio > 1) {
+        transposeNodes();
+    }
+
     return {
         'width': tapestryWidth,
         'height': tapestryHeight
@@ -2295,17 +2304,6 @@ function getTapestryDimensions() {
     according to where the nodes are placed in the dataset */
 function updateTapestrySize() {
     if (!inViewMode) {
-        var nodeDimensions = getNodesDimensions(tapestry.dataset);
-
-        // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
-        // For example, vertically long tapestries should be transposed so they are horizontally long on desktop,
-        // but kept the same way on mobile phones where the browser is vertically longer
-        var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
-        var windowAspectRatio = getAspectRatio();
-        if (tapestryAspectRatio > 1 && windowAspectRatio < 1 || tapestryAspectRatio < 1 && windowAspectRatio > 1) {
-            transposeNodes();
-        }
-
         // Update svg dimensions to the new dimensions of the browser
         updateSvgDimensions(TAPESTRY_CONTAINER_ID);
     }
