@@ -1,3 +1,5 @@
+/* jshint esversion: 6 */
+
 function tapestryTool(config){
 
 this.dataset = {
@@ -40,11 +42,10 @@ var // declared variables
     originalDataset,                                // For saving the value of the original dataset pre-changes
     path, pieGenerator, arcGenerator,               // Donut
     simulation,                                     // Force
-    nodeCoordinates = [],                           // For saving the coordinates of the Tapestry pre transition to play mode
     adjustedRadiusRatio = 1,                        // Radius adjusted for view mode
     tapestrySlug, 
     saveProgress = true, progressLastSaved = new Date(), // Saving Progress
-    enablePopupNodes = true, inViewMode = false,   // Pop-up nodes
+    enablePopupNodes = false, inViewMode = false,   // Pop-up nodes
     tapestryDimensionsBeforeDrag,
     nodeImageHeight = 420,
     nodeImageWidth = 780,
@@ -56,7 +57,9 @@ var // declared variables
 var // calculated
     MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
     innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
-    outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2);
+    outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
+    xORfx = autoLayout ? 'x' : 'fx',
+    yORfy = autoLayout ? 'y' : 'fy';
 
 /****************************************************
  * EDIT-RELATED VARIABLES
@@ -175,24 +178,10 @@ this.init = function(isReload = false) {
     // 2. SIZE AND SCALE THE TAPESTRY AND SVG TO FIT WELL
     //---------------------------------------------------
 
-    // establish initial positioning before the startforce()
-    // this so 'getNodeDimensions' is operational at this stage
-    for (var index in tapestry.dataset.nodes) {
-        if (tapestry.dataset.nodes[index].x == null) {
-            tapestry.dataset.nodes[index].x = getBrowserWidth()*0.9;
-        }
-        if (tapestry.dataset.nodes[index].y == null) {
-            tapestry.dataset.nodes[index].y = getBrowserHeight()*0.9;
-        }
-    }
-
-    // do it now
     updateTapestrySize();
 
     $(window).resize(function() {
-        if (autoLayout) {
-            updateTapestrySize();
-        }
+        updateTapestrySize();
     });
         
     //---------------------------------------------------
@@ -224,8 +213,6 @@ this.init = function(isReload = false) {
     //---------------------------------------------------
     // 4. UPDATE SVG DIMENSIONS AND START THE GRAPH
     //---------------------------------------------------
-
-    startForce();
     
     // Ensure tapestry size fits well into the browser and start force
     updateSvgDimensions(TAPESTRY_CONTAINER_ID);
@@ -414,7 +401,6 @@ $("#tapestry-add-modal-div").load(config.addNodeModalUrl, function(responseTxt, 
         $("#cancel-add-new-node").on("click", function() {
             tapestryHideAddNodeModal();
         });
-        hideShowDepthSlider();
         
         $("#submit-edit-node").on("click", function(e) {
             e.preventDefault(); // cancel the actual submit
@@ -567,6 +553,7 @@ $("#tapestry-add-modal-div").load(config.addNodeModalUrl, function(responseTxt, 
         //         alert("Enter valid group id");
         //     }
         // });
+
     }
 });
 
@@ -645,21 +632,17 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
         "unlocked": true
     }
 
-    // use fx & fy if autoLayout is true, otherwise x & y
-    let xParam = autoLayout ? 'x' : 'fx';
-    let yParam = autoLayout ? 'y' : 'fy';
-
     // Add the node data first
-    newNodeEntry[xParam] = getBrowserWidth();
-    newNodeEntry[yParam] = getBrowserHeight();
+    newNodeEntry[xORfx] = getBrowserWidth();
+    newNodeEntry[yORfy] = getBrowserHeight();
 
     if (isEdit) {
-        newNodeEntry[xParam] = tapestry.dataset.nodes[findNodeIndex(root)].x;
-        newNodeEntry[yParam] = tapestry.dataset.nodes[findNodeIndex(root)].y;
+        newNodeEntry[xORfx] = tapestry.dataset.nodes[findNodeIndex(root)].x;
+        newNodeEntry[yORfy] = tapestry.dataset.nodes[findNodeIndex(root)].y;
     } else if (!isRoot) {
         // Just put the node right under the current node
-        newNodeEntry[xParam] = tapestry.dataset.nodes[findNodeIndex(root)].x; 
-        newNodeEntry[yParam] = tapestry.dataset.nodes[findNodeIndex(root)].y + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 100;
+        newNodeEntry[xORfx] = tapestry.dataset.nodes[findNodeIndex(root)].x; 
+        newNodeEntry[yORfy] = tapestry.dataset.nodes[findNodeIndex(root)].y + (NORMAL_RADIUS + ROOT_RADIUS_DIFF) * 2 + 100;
     }
 
     var appearsAt = 0;
@@ -960,15 +943,19 @@ function addLink(source, target, value, appearsAt) {
  * D3 RELATED FUNCTIONS
  ****************************************************/
 
-
 /* Delete or add fx and fy parameters depending on whether or not autoLayout true */
-function adjustCoordinates() {
+function fixOrUnfixNodes() {
+
+    if (inViewMode) {
+        return;
+    }
+
     if (autoLayout) {
         d3.selectAll('g.node').each(function(d){
             delete d.fx;
             delete d.fy;
         });
-    } else if (!autoLayout) {
+    } else {
         for (var i=0; i < tapestry.dataset.nodes.length; i++) {
             if (tapestry.dataset.nodes[i].coordinates) {
                 tapestry.dataset.nodes[i].fx = tapestry.dataset.nodes[i].coordinates.x;
@@ -979,46 +966,44 @@ function adjustCoordinates() {
 }
 
 /* Define forces that will determine the layout of the graph */
-function startForce() {
+function startSimulation() {
 
-    if (!inViewMode) {
-        adjustCoordinates();
-    }
+    fixOrUnfixNodes();
 
     var tapestryDimensions = getTapestryDimensions();
     var nodes = tapestry.dataset.nodes;
 
-        simulation = d3.forceSimulation(nodes)
+    simulation = d3.forceSimulation(nodes)
 
-            // "charge" and forceManyBody determine the the repulsion/attraction strength
-            .force("charge", d3.forceManyBody().strength(-4000))
+        // "charge" and forceManyBody determine the the repulsion/attraction strength
+        .force("charge", d3.forceManyBody().strength(-4000))
 
-            // establish links, the function sets IDs as endpoints, rather than indexes
-            .force("link", d3.forceLink(tapestry.dataset.links).id(function(d) {
-                return d.id;
-            }))
+        // establish links, the function sets IDs as endpoints, rather than indexes
+        .force("link", d3.forceLink(tapestry.dataset.links).id(function(d) {
+            return d.id;
+        }))
 
-            // slow down the nodes from spinning
-            .velocityDecay(0.99)
+        // slow down the nodes from spinning
+        .velocityDecay(0.99)
 
-            // "center" determines where the center of gravity is
-            .force("center", d3.forceCenter()
-                .x(tapestryDimensions.width / 2)
-                .y(tapestryDimensions.height / 2))
+        // "center" determines where the center of gravity is
+        .force("center", d3.forceCenter()
+            .x(tapestryDimensions.width / 2)
+            .y(tapestryDimensions.height / 2))
 
-            // determines the minimum distance that nodes are allowed to be positioned at
-            .force("collision", d3.forceCollide().radius(function (d) {
-                if (root === d.id) {
-                    return MAX_RADIUS;
-                }
-                else {
-                    return (MAX_RADIUS - 25);
-                }
-            }));
+        // determines the minimum distance that nodes are allowed to be positioned at
+        .force("collision", d3.forceCollide().radius(function (d) {
+            if (root === d.id) {
+                return MAX_RADIUS;
+            }
+            else {
+                return (MAX_RADIUS - 25);
+            }
+        }));
 
-        simulation
-            .nodes(tapestry.dataset.nodes)
-            .on("tick", ticked);
+    simulation
+        .nodes(tapestry.dataset.nodes)
+        .on("tick", ticked);
 }
 
 //Resize all nodes, where id is now the root
@@ -1057,51 +1042,34 @@ function ticked() {
         });
 }
 
-
-
 // D3 DRAGGING FUNCTIONS
 function dragstarted(d) {
     if (!d3.event.active) simulation.alphaTarget(0.2).restart();
 
-    if (autoLayout) {
-        d.x = getBoundedCoord(d.x, tapestryDimensionsBeforeDrag.width);
-        d.y = getBoundedCoord(d.y, tapestryDimensionsBeforeDrag.height);
-    } else if (!autoLayout) {
-        d.fx = getBoundedCoord(d.x, tapestryDimensionsBeforeDrag.width);
-        d.fy = getBoundedCoord(d.y, tapestryDimensionsBeforeDrag.height);
-    }
+    d[xORfx] = getBoundedCoord(d.x, tapestryDimensionsBeforeDrag.width);
+    d[yORfy] = getBoundedCoord(d.y, tapestryDimensionsBeforeDrag.height);
 
     recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
 }
 
 function dragged(d) {
-    if (autoLayout) {
-        d.x = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
-        d.y = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
-    } else if (!autoLayout) {
-        d.fx = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
-        d.fy = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
-    }
+
+    d[xORfx] = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
+    d[yORfy] = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
 
 }
 
 function dragended(d) {
     if (!d3.event.active) simulation.alphaTarget(0);
 
-    if (config.wpIsAdmin) {
+    if (config.wpIsAdmin && !autoLayout) {
         $.ajax({
             url: config.apiUrl + "/tapestries/" + config.wpPostId + "/nodes/" + d.id + "/coordinates",
             method: API_PUT_METHOD,
             data: JSON.stringify({x: d.x, y: d.y}),
-            success: function(result) {
-                if (autoLayout) {
-                    d.x = d.x;
-                    d.y = d.y;
-                } else {
-                    d.fx = d.x;
-                    d.fy = d.y;
-                }
-
+            success: function() {
+                d[xORfx] = d.x;
+                d[yORfy] = d.y;
             },
             error: function(e) {
                 console.error("Error saving coordinates of nodes");
@@ -1109,7 +1077,6 @@ function dragended(d) {
             }
         });
     }
- //   updateSvgDimensions();
 
     recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
 }
@@ -1131,7 +1098,7 @@ function updateSvgDimensions(containerId) {
     tapestryDimensionsBeforeDrag = tapestryDimensions;
     d3.select("#"+containerId+"-svg")
         .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height);
-    startForce();
+    startSimulation();
 }
 
 function createLinks() {
@@ -1542,7 +1509,7 @@ function buildPathAndButton() {
             return d.id;
         })
         .attr("width", "60px")
-        .attr("height", "62px") 
+        .attr("height", "62px")
         .attr("x", -27)
         .attr("y", function (d) {
             return -NORMAL_RADIUS * adjustedRadiusRatio - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);
@@ -1875,8 +1842,8 @@ function getLightboxDimensions(videoHeight, videoWidth) {
     }
 
     var nodeSpace = (NORMAL_RADIUS * 2) * 1.3;     // Calculate the amount of space we need to reserve for nodes
-    var adjustedVideoHeight = getBrowserHeight() - nodeSpace;             // Max height for the video
-    var adjustedVideoWidth = getBrowserWidth() - nodeSpace;               // Max width for the video
+    var adjustedVideoHeight = getBrowserHeight() - nodeSpace;               // Max height for the video
+    var adjustedVideoWidth = getBrowserWidth() - nodeSpace;                 // Max width for the video
 
     if (adjustedVideoHeight > videoHeight) {
         adjustedVideoHeight = videoHeight;
@@ -2133,7 +2100,7 @@ function changeToViewMode(lightboxDimensions) {
 
     filterTapestry();
 
-    startForce();
+    startSimulation();
 }
 
 function getViewModeCoordinates(lightboxDimensions, children) {
@@ -2242,7 +2209,7 @@ function exitViewMode() {
     if (adjustedRadiusRatio < 1) {
         setViewModeRadiusRatio(null, null);  //Values set to null because we don't really care; Function should just return 1
     }
-    startForce();
+    startSimulation();
 }
 
 /****************************************************
@@ -2286,7 +2253,7 @@ function getNodesDimensions(dataset) {
         maxPointX = Math.pow(dataset.nodes.length, 1/maxDepth) * MAX_RADIUS * maxDepth * getAspectRatio();
         maxPointY = Math.pow(dataset.nodes.length, 1/maxDepth) * MAX_RADIUS * maxDepth;
     }
-    else if (!autoLayout) {
+    else {
         for (var index in tapestry.dataset.nodes) {
             // save max point so we can calculate our tapestry width and height
             if (dataset.nodes[index].fx > maxPointX) {
@@ -2342,7 +2309,7 @@ function updateTapestrySize() {
         // Update svg dimensions to the new dimensions of the browser
         updateSvgDimensions(TAPESTRY_CONTAINER_ID);
     }
-    startForce();
+    startSimulation();
 }
 
 /* Changes the node depending on horizontal/vertical view */
@@ -2766,25 +2733,6 @@ function checkPermission(node, permissionType) {
     // // TODO Check user's group id
 
     return false;
-}
-
-// For saving the coordinates of all the nodes prior to transitioning to play-mode
-function saveCoordinates() {
-    for (var i in tapestry.dataset.nodes) {
-        var node = tapestry.dataset.nodes[i];
-        var id = node.id;
-        if (autoLayout) {
-            nodeCoordinates[id] = {
-                "x": node.x,
-                "y": node.y
-            };
-        } else {
-            nodeCoordinates[id] = {
-                "fx": node.fx,
-                "fy": node.fy
-            };
-        }
-    }
 }
 
 // Get data from child needed for knowing whether it is unlocked or not
