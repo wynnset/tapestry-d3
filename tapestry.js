@@ -2169,7 +2169,7 @@ function getIconClass(mediaType, action) {
             break;
             
         case "text":
-            classStr = classStrStart + 'bars';
+            classStr = classStrStart + 'font';
             break;
 
         default:
