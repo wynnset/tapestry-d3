@@ -943,25 +943,8 @@ function addLink(source, target, value, appearsAt) {
  * D3 RELATED FUNCTIONS
  ****************************************************/
 
-/* Delete or add fx and fy parameters depending on whether or not autoLayout true */
-function fixOrUnfixNodes() {
-
-    if (inViewMode) {
-        return;
-    }
-
-    if (autoLayout) {
-        d3.selectAll('g.node').each(function(d){
-            delete d.fx;
-            delete d.fy;
-        });
-    }
-}
-
 /* Define forces that will determine the layout of the graph */
 function startSimulation() {
-
-    fixOrUnfixNodes();
 
     if (autoLayout && !inViewMode) {
         d3.selectAll('g.node').each(function(d){
