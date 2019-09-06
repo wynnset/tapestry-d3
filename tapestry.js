@@ -1,17 +1,19 @@
+/* jshint esversion: 6 */
+
 function tapestryTool(config){
 
     this.dataset = {
         'settings': {},
-        'nodes': {},
-        'links': {},
-        'groups': {}
+        'nodes':    [],
+        'links':    [],
+        'groups':   []
     };
     var tapestry = this;
-    
+
     /****************************************************
      * CONSTANTS AND GLOBAL VARIABLES
      ****************************************************/
-    
+
     var // declared constants
         TAPESTRY_CONTAINER_ID = config.containerId,
         PROGRESS_THICKNESS = 20,
@@ -33,47 +35,49 @@ function tapestryTool(config){
         USER_NODE_PROGRESS_URL = config.apiUrl + "/users/progress",
         USER_NODE_UNLOCKED_URL = config.apiUrl + "/users/unlocked",
         TAPESTRY_H5P_SETTINGS_URL = config.apiUrl + "/users/h5psettings";
-      
-    
+
     var // declared variables
         root, svg, links, nodes,                        // Basics
         path, pieGenerator, arcGenerator,               // Donut
-        linkForce, collideForce, force,                 // Force
-        nodeCoordinates = [],                           // For saving the coordinates of the Tapestry pre transition to play mode
+        simulation,                                     // Force
         adjustedRadiusRatio = 1,                        // Radius adjusted for view mode
         tapestrySlug, 
         saveProgress = true, progressLastSaved = new Date(), // Saving Progress
         enablePopupNodes = false, inViewMode = false,   // Pop-up nodes
+        tapestryDimensionsBeforeDrag,
         nodeImageHeight = 420,
         nodeImageWidth = 780,
         rootNodeImageHeightDiff = 70,
         h5pVideoSettings = {},
-        tapestryDepth = 2;                              // Default depth of Tapestry
-    
+        tapestryDepth = 2,                              // Default depth of Tapestry
+        autoLayout = false;
+
     var // calculated
         MAX_RADIUS = NORMAL_RADIUS + ROOT_RADIUS_DIFF + 30,     // 30 is to count for the icon
         innerRadius = NORMAL_RADIUS * adjustedRadiusRatio - ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
-        outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2);
-    
+        outerRadius = NORMAL_RADIUS * adjustedRadiusRatio + ((PROGRESS_THICKNESS * adjustedRadiusRatio) / 2),
+        xORfx = autoLayout ? 'x' : 'fx',
+        yORfy = autoLayout ? 'y' : 'fy';
+
     /****************************************************
      * EDIT-RELATED VARIABLES
      ****************************************************/
-    
+
     var 
         linkToDragStarted = false, 
         nodeLinkLine,
         linkToNode, linkFromNode;
-    
+
         // Create the linking line
         nodeLinkLine = document.createElementNS('http://www.w3.org/2000/svg','line');
         nodeLinkLine.setAttribute('id','tapestry-node-link-line');
         nodeLinkLine.setAttribute("stroke", COLOR_ACTIVE);
         nodeLinkLine.setAttribute("stroke-width", LINK_THICKNESS);
-    
+
     /****************************************************
      * INITIALIZATION
      ****************************************************/
-    
+
     /* Import data from json file, then start D3 */
     jQuery.ajaxSetup({
         beforeSend: function (xhr) {
@@ -82,19 +86,22 @@ function tapestryTool(config){
             }
         }
     });
-    
-    this.init = function() {
+
+    this.init = function(isReload = false) {
         //---------------------------------------------------
         // 2. SIZE AND SCALE THE TAPESTRY AND SVG TO FIT WELL
         //---------------------------------------------------
     
-        // Do it now
         updateTapestrySize();
+    
+        $(window).resize(function() {
+            updateTapestrySize();
+        });
             
         //---------------------------------------------------
         // 3. SET NODES/LINKS AND CREATE THE SVG OBJECTS
         //---------------------------------------------------
-    
+
         root = tapestry.dataset.rootId;
     
         setNodeTypes(root);
@@ -109,8 +116,18 @@ function tapestryTool(config){
         if (tapestry.dataset.settings !== undefined && tapestry.dataset.settings.thumbRootDiff !== undefined) {
             rootNodeImageHeightDiff += tapestry.dataset.settings.thumbRootDiff;
         }
-    
-        svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
+        
+        if (!isReload) {
+
+            // Create the SVG container where the tapestry will live
+            svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
+
+            // Attach the link adding line to the tapestry SVG (it won't appear for now)
+            $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
+
+            recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
+        }
+
         links = createLinks();
         nodes = createNodes();
     
@@ -122,16 +139,6 @@ function tapestryTool(config){
         
         // Ensure tapestry size fits well into the browser and start force
         updateSvgDimensions(TAPESTRY_CONTAINER_ID);
-    
-    
-        //---------------------------------------------------
-        // 5. SET UP EDITING STUFF
-        //---------------------------------------------------
-    
-        // Attach the link line to the tapestry SVG (it won't appear for now)
-        $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
-    
-        recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
     }
     
     /****************************************************
@@ -227,37 +234,7 @@ function tapestryTool(config){
      * ADD EDITOR ELEMENTS
      ****************************************************/
     
-    //--------------------------------------------------
-    // Insert the modal template
-    //--------------------------------------------------
-    
-    this.redrawTapestryWithNewNode = function(isRoot) {
-    
-        if (typeof isRoot == 'undefined') {
-            isRoot = false;
-        }
-    
-        root = tapestry.dataset.rootId;
-    
-        saveCoordinates();
-        updateTapestrySize();
-    
-        setNodeTypes(root);
-        setLinkTypes(root);
-        setUnlocked();
-        setAccessibleStatus();
-    
-        // Rebuild the nodes and links
-        links = createLinks();
-        nodes = createNodes();
-    
-        buildNodeContents();
-        filterTapestry();
-        
-        updateSvgDimensions(TAPESTRY_CONTAINER_ID);
-    }
-    
-    // To establish two way connections
+    // To create a link
     function addLink(source, target, value, appearsAt) {
         if (target === source) {
             console.log("addLink aborting: cannot connect node to itself");
@@ -274,7 +251,7 @@ function tapestryTool(config){
     
         jQuery.post(config.apiUrl + "/tapestries/" + config.wpPostId + "/links", JSON.stringify({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt }), function(result) {
             tapestry.dataset.links.push({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt });
-            tapestry.redrawTapestryWithNewNode();
+            tapestry.init(true);
     
         }).fail(function(e) {
             alert("Sorry, there was a problem adding the new link");
@@ -285,52 +262,79 @@ function tapestryTool(config){
     /****************************************************
      * D3 RELATED FUNCTIONS
      ****************************************************/
-    
+
+    /* Delete or add fx and fy parameters depending on whether or not autoLayout true */
+    function fixOrUnfixNodes() {
+
+        if (inViewMode) {
+            return;
+        }
+
+        if (autoLayout) {
+            d3.selectAll('g.node').each(function(d){
+                delete d.fx;
+                delete d.fy;
+            });
+        } else {
+            for (var i=0; i < tapestry.dataset.nodes.length; i++) {
+                if (tapestry.dataset.nodes[i].coordinates) {
+                    tapestry.dataset.nodes[i].fx = tapestry.dataset.nodes[i].coordinates.x;
+                    tapestry.dataset.nodes[i].fy = tapestry.dataset.nodes[i].coordinates.y;
+                }
+            }
+        }
+    }
+
     /* Define forces that will determine the layout of the graph */
-    function startForce() {
-    
+    function startSimulation() {
+
+        fixOrUnfixNodes();
+
         var tapestryDimensions = getTapestryDimensions();
-    
-        linkForce = d3.forceLink()
-            .id(function (d) {
+        var nodes = tapestry.dataset.nodes;
+
+        simulation = d3.forceSimulation(nodes)
+
+            // "charge" and forceManyBody determine the the repulsion/attraction strength
+            .force("charge", d3.forceManyBody().strength(-4000))
+
+            // establish links, the function sets IDs as endpoints, rather than indexes
+            .force("link", d3.forceLink(tapestry.dataset.links).id(function(d) {
                 return d.id;
-            });
-    
-        collideForce = d3.forceCollide(
-            function (d) {
-                return getRadius(d) * 1.2;
-            });
-    
-        force = d3.forceSimulation()
-            .force("link", linkForce)
-            .force("collide", collideForce)
-            .force("charge", d3.forceManyBody().strength(-5000))
-            .force("center", d3.forceCenter(tapestryDimensions.width/ 2, tapestryDimensions.height / 2));
-    
-        force
+            }))
+
+            // slow down the nodes from spinning
+            .velocityDecay(0.99)
+
+            // "center" determines where the center of gravity is
+            .force("center", d3.forceCenter()
+                .x(tapestryDimensions.width / 2)
+                .y(tapestryDimensions.height / 2))
+
+            // determines the minimum distance that nodes are allowed to be positioned at
+            .force("collision", d3.forceCollide().radius(function (d) {
+                if (root === d.id) {
+                    return MAX_RADIUS;
+                }
+                else {
+                    return (MAX_RADIUS - 25);
+                }
+            }));
+
+        simulation
             .nodes(tapestry.dataset.nodes)
             .on("tick", ticked);
-    
-        force
-            .force("link")
-            .links(tapestry.dataset.links);
-    
-        d3.select({}).transition().duration(TRANSITION_DURATION);
-    
     }
-    
+
     //Resize all nodes, where id is now the root
     function resizeNodes(id) {
         getChildren(id);
         setNodeTypes(id);
         setLinkTypes(id);
-    
+
         filterTapestry();
-    
-        /* Restart force */
-        startForce();
     }
-    
+
     function ticked() {
         var tapestryDimensions = getTapestryDimensions();
         links
@@ -357,33 +361,35 @@ function tapestryTool(config){
                 return "translate(" + getBoundedCoord(d.x, tapestryDimensions.width) + "," + getBoundedCoord(d.y, tapestryDimensions.height) + ")";
             });
     }
-    
+
+    // D3 DRAGGING FUNCTIONS
     function dragstarted(d) {
-        var tapestryDimensions = getTapestryDimensions();
-        if (!d3.event.active) force.alphaTarget(0.2).restart();
-        d.fx = getBoundedCoord(d.x, tapestryDimensions.width);
-        d.fy = getBoundedCoord(d.y, tapestryDimensions.height);
-    
+        if (!d3.event.active) simulation.alphaTarget(0.2).restart();
+
+        d[xORfx] = getBoundedCoord(d.x, tapestryDimensionsBeforeDrag.width);
+        d[yORfy] = getBoundedCoord(d.y, tapestryDimensionsBeforeDrag.height);
+
         recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
     }
-    
+
     function dragged(d) {
-        var tapestryDimensions = getTapestryDimensions();
-        d.fx = getBoundedCoord(d3.event.x, tapestryDimensions.width);
-        d.fy = getBoundedCoord(d3.event.y, tapestryDimensions.height);
+
+        d[xORfx] = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
+        d[yORfy] = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
+
     }
-    
+
     function dragended(d) {
-        if (!d3.event.active) force.alphaTarget(0);
-    
-        if (config.wpIsAdmin) {
+        if (!d3.event.active) simulation.alphaTarget(0);
+
+        if (config.wpIsAdmin && !autoLayout) {
             $.ajax({
                 url: config.apiUrl + "/tapestries/" + config.wpPostId + "/nodes/" + d.id + "/coordinates",
                 method: API_PUT_METHOD,
                 data: JSON.stringify({x: d.x, y: d.y}),
-                success: function(result) {
-                    d.fx = d.x;
-                    d.fy = d.y;
+                success: function() {
+                    d[xORfx] = d.x;
+                    d[yORfy] = d.y;
                 },
                 error: function(e) {
                     console.error("Error saving coordinates of nodes");
@@ -391,12 +397,14 @@ function tapestryTool(config){
                 }
             });
         }
-    
+
         recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
     }
-    
+
+    // creates SVG that tapestry is displayed on 
     function createSvgContainer(containerId) {
         var tapestryDimensions = getTapestryDimensions();
+        tapestryDimensionsBeforeDrag = tapestryDimensions;
         return d3.select("#"+containerId)
                     .append("svg:svg")
                     .attr("id", containerId+"-svg")
@@ -404,14 +412,15 @@ function tapestryTool(config){
                     .attr("preserveAspectRatio", "xMidYMid meet")
                     .append("svg:g");
     }
-    
+
     function updateSvgDimensions(containerId) {
         var tapestryDimensions = getTapestryDimensions();
+        tapestryDimensionsBeforeDrag = tapestryDimensions;
         d3.select("#"+containerId+"-svg")
             .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height);
-        startForce();
+        startSimulation();
     }
-    
+
     function createLinks() {
         /* Need to remove old links when redrawing graph */
         if (links !== undefined) {
@@ -443,7 +452,7 @@ function tapestryTool(config){
                         })
                         .attr("stroke-width", LINK_THICKNESS);
     }
-    
+
     function createNodes() {
         /* Need to remove old nodes when redrawing graph */
         if (nodes !== undefined) {
@@ -534,8 +543,10 @@ function tapestryTool(config){
     
     /* Draws the components that make up node */
     function buildNodeContents() {
+
         tapestryDepthSlider.max = findMaxDepth(root);
         hideShowDepthSlider();
+
         /* Draws the circle that defines how large the node is */
         nodes.append("rect")
             .attr("class", function (d) {
@@ -631,7 +642,7 @@ function tapestryTool(config){
             .attr("xlink:href", function (d) {
                 return d.imageURL;
             });
-    
+
         /* Add path and button */
         buildPathAndButton();
     
@@ -646,10 +657,12 @@ function tapestryTool(config){
         });
     
         /* Add dragging and node selection functionality to the node */
-        nodes.call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended))
+        nodes
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended)
+            )
             .on("click", function (d) {
                 // prevent multiple clicks
                 if (root != d.id) {
@@ -661,7 +674,7 @@ function tapestryTool(config){
                 recordAnalyticsEvent('user', 'click', 'node', d.id);
             });
     }
-    
+
     function rebuildNodeContents() {
         /* Remove text before transition animation */
         $(".title").remove();
@@ -928,7 +941,7 @@ function tapestryTool(config){
             dispatchEvent(new CustomEvent("edit-node"))
         });
     }
-    
+
     function updateViewedProgress() {
         path = nodes
             .selectAll("path")
@@ -1274,7 +1287,7 @@ function tapestryTool(config){
                         recordAnalyticsEvent('app', 'auto-play', 'h5p-video', id);
                     }, 1000);
                 }
-    
+
             }, false);
         }
     
@@ -1314,7 +1327,7 @@ function tapestryTool(config){
         if (!enablePopupNodes) {
             return;
         }
-    
+
         inViewMode = true;
         tapestry.originalDataset = tapestry.dataset;
         var children = getChildren(root);
@@ -1323,6 +1336,7 @@ function tapestryTool(config){
     
         // Add the coordinates to the nodes
         d3.selectAll('g.node').each(function(d) {
+            d.fixed = true;
             if (d.nodeType === "root") {
                 d.fx = getTapestryDimensions().width / 2;
                 if (lightboxDimensions.adjustedOn === "width") {
@@ -1338,7 +1352,7 @@ function tapestryTool(config){
     
         filterTapestry();
     
-        startForce();
+        startSimulation();
     }
     
     function getViewModeCoordinates(lightboxDimensions, children) {
@@ -1411,13 +1425,15 @@ function tapestryTool(config){
     // Returns 1 if not in view mode
     function setViewModeRadiusRatio(adjustedOn, numChildren) {
         if (inViewMode) {
+
             if (adjustedOn === "width") {
                 adjustedRadiusRatio = (getBrowserHeight() / (Math.ceil(numChildren / 2) * NORMAL_RADIUS * 2 * 1.2)).toPrecision(4);
             } else {
                 adjustedRadiusRatio = (getBrowserWidth() / (Math.ceil(numChildren / 2) * NORMAL_RADIUS)).toPrecision(4);
             }
-    
+
             if (adjustedRadiusRatio > 1) adjustedRadiusRatio = 1;
+
         } else {
             adjustedRadiusRatio = 1;
         }
@@ -1430,18 +1446,20 @@ function tapestryTool(config){
         }
     
         // For reapplying the coordinates of all the nodes prior to transitioning to play-mode
-        for (var i in tapestry.dataset.nodes) {
-            var id = tapestry.dataset.nodes[i].id;
-            tapestry.dataset.nodes[i].fx = nodeCoordinates[id].fx;
-            tapestry.dataset.nodes[i].fy = nodeCoordinates[id].fy;
+        if (!autoLayout) {  
+
+            for (var i in tapestry.dataset.nodes) {
+                tapestry.dataset.nodes[i].fx = tapestry.originalDataset.nodes[i].fx;
+                tapestry.dataset.nodes[i].fy = tapestry.originalDataset.nodes[i].fy;
+            }
+                
+            d3.selectAll('g.node')
+                .transition()
+                .duration(TRANSITION_DURATION)
+                .attr("cx", function(d) { return d.fx; })
+                .attr("cy", function(d) { return d.fy; });
         }
-    
-        d3.selectAll('g.node')
-            .transition()
-            .duration(TRANSITION_DURATION)
-            .attr("cx", function(d) { return d.fx; })
-            .attr("cy", function(d) { return d.fy; });
-    
+            
         inViewMode = false;
     
         filterTapestry();
@@ -1449,7 +1467,7 @@ function tapestryTool(config){
         if (adjustedRadiusRatio < 1) {
             setViewModeRadiusRatio(null, null);  //Values set to null because we don't really care; Function should just return 1
         }
-        startForce();
+        startSimulation();
     }
     
     /****************************************************
@@ -1464,7 +1482,7 @@ function tapestryTool(config){
             }
         }
     }
-    
+
     // Get width, height, and aspect ratio of viewable region
     function getBrowserWidth() {
         return Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
@@ -1482,67 +1500,74 @@ function tapestryTool(config){
             return browserWidth / browserHeight;
         }
     }
-    
+
+    // return the highest x and y that a node is placed at
     function getNodesDimensions(dataset) {
         var maxPointX = 0;
         var maxPointY = 0;
-        for (var index in dataset.nodes) {
-            
-            // save max point so we can calculate our tapestry width and height
-            if (dataset.nodes[index].fx > maxPointX) {
-                maxPointX = dataset.nodes[index].fx;
-            }
-            if (dataset.nodes[index].fy > maxPointY) {
-                maxPointY = dataset.nodes[index].fy;
+        
+        if (autoLayout) {
+            var maxDepth = findMaxDepth(root);
+            maxPointX = Math.pow(dataset.nodes.length, 1/maxDepth) * MAX_RADIUS * maxDepth * getAspectRatio();
+            maxPointY = Math.pow(dataset.nodes.length, 1/maxDepth) * MAX_RADIUS * maxDepth;
+        }
+        else {
+            for (var index in tapestry.dataset.nodes) {
+                // save max point so we can calculate our tapestry width and height
+                if (dataset.nodes[index].fx > maxPointX) {
+                    maxPointX = tapestry.dataset.nodes[index].fx;
+                }
+                if (dataset.nodes[index].fy > maxPointY) {
+                    maxPointY = tapestry.dataset.nodes[index].fy;
+                }
             }
         }
-    
+
         return {
             'x': maxPointX + MAX_RADIUS,
             'y': maxPointY + MAX_RADIUS
         };
     }
-    
+
     /* Gets the boundary of the tapestry */
     function getTapestryDimensions() {
-    
+
         var tapestryWidth = $('#'+TAPESTRY_CONTAINER_ID).outerWidth();
         var tapestryHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
-    
+
         var nodeDimensions = getNodesDimensions(tapestry.originalDataset);
-    
+
         if (nodeDimensions.x > tapestryWidth || nodeDimensions.y > tapestryHeight) {
             var tapestryWidth = nodeDimensions.x;
             var tapestryHeight = nodeDimensions.y;
         }
-    
+
+        // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
+        // For example, vertically long tapestries should be transposed so they are horizontally long on desktop,
+        // but kept the same way on mobile phones where the browser is vertically longer
+        var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
+        var windowAspectRatio = getAspectRatio();
+        if (tapestryAspectRatio > 1 && windowAspectRatio < 1 || tapestryAspectRatio < 1 && windowAspectRatio > 1) {
+            transposeNodes();
+        }
+
         return {
             'width': tapestryWidth,
             'height': tapestryHeight
         };
     }
-    
+
     /* Updates the size of the overall tapestry
     (ie: the area that encompasses the boundaries of the nodes)
         according to where the nodes are placed in the dataset */
     function updateTapestrySize() {
         if (!inViewMode) {
-            var nodeDimensions = getNodesDimensions(tapestry.dataset);
-    
-            // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
-            // For example, vertically long tapestries should be transposed so they are horizontally long on desktop,
-            // but kept the same way on mobile phones where the browser is vertically longer
-            var tapestryAspectRatio = nodeDimensions.x / nodeDimensions.y;
-            var windowAspectRatio = getAspectRatio();
-            if (tapestryAspectRatio > 1 && windowAspectRatio < 1 || tapestryAspectRatio < 1 && windowAspectRatio > 1) {
-                transposeNodes();
-            }
-    
             // Update svg dimensions to the new dimensions of the browser
             updateSvgDimensions(TAPESTRY_CONTAINER_ID);
         }
+        startSimulation();
     }
-    
+
     /* Changes the node depending on horizontal/vertical view */
     function transposeNodes() {
         for (var index in tapestry.dataset.nodes) {
@@ -1551,32 +1576,32 @@ function tapestryTool(config){
             tapestry.dataset.nodes[index].fx = temp_fx;
         }
     }
-    
+
     /* Finds the node index with node ID */
     function findNodeIndex(id) {
         function helper(obj) {
             return obj.id == id;
         }
-    
+
         return tapestry.dataset.nodes.findIndex(helper);
     }
-    
+
     /* Gets a node in the dataset by ID */
     function getNodeById(id) {
         return tapestry.dataset.nodes.find(node => node.id === id);
     }
-    
+
     function getBoundedCoord(coord, maxCoord) {
         return Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
     }
-    
+
     /* Add 'depth' parameter to each node recursively. 
         The depth is determined by the number of levels from the root each node is. */
     function addDepthToNodes(id, depth, visited) {
         visited.push(id);
-    
+
         var depthAt = 0;
-    
+
         if (tapestry.dataset.nodes[findNodeIndex(id)] && tapestry.dataset.nodes[findNodeIndex(id)].depth) {
             tapestry.dataset.nodes[findNodeIndex(id)].depth = depth;
         }
@@ -1965,18 +1990,6 @@ function tapestryTool(config){
         return false;
     }
     
-    // For saving the coordinates of all the nodes prior to transitioning to play-mode
-    function saveCoordinates() {
-        for (var i in tapestry.dataset.nodes) {
-            var node = tapestry.dataset.nodes[i];
-            var id = node.id;
-            nodeCoordinates[id] = {
-                "fx": node.fx,
-                "fy": node.fy
-            };
-        }
-    }
-    
     // Get data from child needed for knowing whether it is unlocked or not
     function getChildrenData(parentId) {
         var childrenData = [];
@@ -1994,320 +2007,316 @@ function tapestryTool(config){
         return childrenData;
     }
     
-    } // END OF TAPESTRY TOOL CLASS
+} // END OF TAPESTRY TOOL CLASS
+
+/*******************************************************
+ * 
+ * PROTOTYPE FUNCTIONS (accessible from outside class)
+ * 
+ *******************************************************/
+
+tapestryTool.prototype.initialize = function (isReload = false) {
+    return this.init(isReload);
+};
+
+tapestryTool.prototype.getDataset = function() {
+    return this.dataset;
+};
+
+tapestryTool.prototype.setDataset = function(newDataset) {
+    this.dataset = newDataset;
+};
+
+tapestryTool.prototype.setOriginalDataset = function (dataset) {
+    this.originalDataset = dataset;
+};
+
+/*******************************************************
+ * 
+ * NON-CLASS FUNCTIONS (could be moved to a separate file)
+ * 
+ *******************************************************/
+
+// Functionality for the X button that closes the media and the light-box
+function closeLightbox(id, mediaType) {
+        
+    // Pause the H5P video before closing it. This will also trigger saving of the settings
+    // TODO: Do this for HTML5 video as well
+    // var h5pObj = document.getElementById('h5p').contentWindow.H5P;
+    // if (h5pObj !== undefined && mediaType == "video") {
+        // var h5pVideo = h5pObj.instances[0].video;
+        // h5pVideo.pause();
+    // }
+
+    if (document.getElementById('h5p') !== null) {
+        var h5pObj = document.getElementById('h5p').contentWindow.H5P;
+        if (h5pObj !== undefined && mediaType == "video") {
+            var h5pVideo = h5pObj.instances[0].video;
+            if (typeof h5pVideo != "undefined" && typeof h5pVideo.pause !== "undefined") {
+                h5pVideo.pause();
+            }
+        }
+    }
     
-    /*******************************************************
-     * 
-     * PROTOTYPE FUNCTIONS (accessible from outside class)
-     * 
-     *******************************************************/
-    
-    tapestryTool.prototype.initialize = function () {
-        return this.init();
-    };
-    
-    tapestryTool.prototype.getDataset = function() {
-        return this.dataset;
-    };
-    
-    tapestryTool.prototype.setDataset = function(newDataset) {
-        this.dataset = newDataset;
-    };
-    
-    tapestryTool.prototype.setOriginalDataset = function (dataset) {
-        this.originalDataset = dataset;
-    };
-    
-    tapestryTool.prototype.redraw = function(isRoot) {
-        return this.redrawTapestryWithNewNode(isRoot);
-    };
-    
-    /*******************************************************
-     * 
-     * NON-CLASS FUNCTIONS (could be moved to a separate file)
-     * 
-     *******************************************************/
-    
-    // Functionality for the X button that closes the media and the light-box
-    function closeLightbox(id, mediaType) {
+    updateMediaIcon(id, mediaType, 'play');
+
+    $('#spotlight-overlay').remove();
+    $('#spotlight-content').css('opacity', 0);
+
+    // wait for css animation before removing it
+    setTimeout(function () {
+        $('#spotlight-content').remove();
+    }, 1000);
+
+    recordAnalyticsEvent('user', 'close', 'lightbox', id);
+}
+
+// Updates the icon for the given media button
+function updateMediaIcon(id, mediaType, action) {
+
+    var buttonElementId = "#mediaButtonIcon" + id;
+    var classStr = getIconClass(mediaType, action);
+
+    $(buttonElementId).removeAttr('style');
+    $(buttonElementId).attr('class', classStr);
+}
+
+// Helper function for getting the name for the Font Awesome icons
+function getIconClass(mediaType, action) {
+
+    var classStrStart = 'fas fa-';
+    var classStrEnd = '-circle';
+    var classStr = '';
+
+    if (action == 'loading') {
+        return 'mediaButtonLoading';
+    }
+
+    switch (mediaType) {
+
+        case "video":
+            if (action == 'pause')
+                classStr = classStrStart + 'pause' + classStrEnd;
+            else
+                classStr = classStrStart + 'play' + classStrEnd;
+            break;
+
+        case "add":
+            classStr = classStrStart + 'plus' + classStrEnd;
+            break;
             
-        // Pause the H5P video before closing it. This will also trigger saving of the settings
-        // TODO: Do this for HTML5 video as well
-        // var h5pObj = document.getElementById('h5p').contentWindow.H5P;
-        // if (h5pObj !== undefined && mediaType == "video") {
-            // var h5pVideo = h5pObj.instances[0].video;
-            // h5pVideo.pause();
-        // }
-    
-        if (document.getElementById('h5p') !== null) {
-            var h5pObj = document.getElementById('h5p').contentWindow.H5P;
-            if (h5pObj !== undefined && mediaType == "video") {
-                var h5pVideo = h5pObj.instances[0].video;
-                if (typeof h5pVideo != "undefined" && typeof h5pVideo.pause !== "undefined") {
-                    h5pVideo.pause();
-                }
-            }
-        }
-        
-        updateMediaIcon(id, mediaType, 'play');
-    
-        $('#spotlight-overlay').remove();
-        $('#spotlight-content').css('opacity', 0);
-    
-        // wait for css animation before removing it
-        setTimeout(function () {
-            $('#spotlight-content').remove();
-        }, 1000);
-    
-        recordAnalyticsEvent('user', 'close', 'lightbox', id);
+        case "text":
+            classStr = classStrStart + 'bars';
+            break;
+
+        default:
+            classStr = classStrStart + 'exclamation' + classStrEnd;
+            break;
     }
-    
-    // Updates the icon for the given media button
-    function updateMediaIcon(id, mediaType, action) {
-    
-        var buttonElementId = "#mediaButtonIcon" + id;
-        var classStr = getIconClass(mediaType, action);
-    
-        $(buttonElementId).removeAttr('style');
-        $(buttonElementId).attr('class', classStr);
+
+    return classStr;
+}
+
+// Helper for converting the screen coordinates to SVG coordinates
+function screenToSVG(screenX, screenY) {
+    var svg = document.getElementById("tapestry-svg");
+    var p = svg.createSVGPoint();
+    p.x = screenX;
+    p.y = screenY;
+    return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+/****************************************************
+ * ANALYTICS FUNCTIONS
+ ****************************************************/
+
+var analyticsAJAXUrl = '',  // e.g. '/wp-admin/admin-ajax.php' (set to empty string to disable analytics)
+    analyticsAJAXAction = 'tapestry_tool_log_event';// Analytics
+
+function recordAnalyticsEvent(actor, action, object, objectID, details){
+
+    if (!analyticsAJAXUrl.length || !analyticsAJAXAction.length)
+        return false;
+
+    // TODO: Also need to save the tapestry slug or ID in the events
+
+    var userUUID = Cookies.get("user-uuid");
+    if (userUUID === undefined) {
+        userUUID = createUUID();
+        Cookies.set("user-uuid", userUUID);
     }
-    
-    // Helper function for getting the name for the Font Awesome icons
-    function getIconClass(mediaType, action) {
-    
-        var classStrStart = 'fas fa-';
-        var classStrEnd = '-circle';
-        var classStr = '';
-    
-        if (action == 'loading') {
-            return 'mediaButtonLoading';
-        }
-    
-        switch (mediaType) {
-    
-            case "video":
-                if (action == 'pause')
-                    classStr = classStrStart + 'pause' + classStrEnd;
-                else
-                    classStr = classStrStart + 'play' + classStrEnd;
-                break;
-    
-            case "add":
-                classStr = classStrStart + 'plus' + classStrEnd;
-                break;
-                
-            case "text":
-                classStr = classStrStart + 'bars';
-                break;
-    
-            default:
-                classStr = classStrStart + 'exclamation' + classStrEnd;
-                break;
-        }
-    
-        return classStr;
+
+    if (details === undefined) {
+        details = {};
     }
-    
-    // Helper for converting the screen coordinates to SVG coordinates
-    function screenToSVG(screenX, screenY) {
-        var svg = document.getElementById("tapestry-svg");
-        var p = svg.createSVGPoint();
-        p.x = screenX;
-        p.y = screenY;
-        return p.matrixTransform(svg.getScreenCTM().inverse());
-    }
-    
-    /****************************************************
-     * ANALYTICS FUNCTIONS
-     ****************************************************/
-    
-    var analyticsAJAXUrl = '',  // e.g. '/wp-admin/admin-ajax.php' (set to empty string to disable analytics)
-        analyticsAJAXAction = 'tapestry_tool_log_event';// Analytics
-    
-    function recordAnalyticsEvent(actor, action, object, objectID, details){
-    
-        if (!analyticsAJAXUrl.length || !analyticsAJAXAction.length)
-            return false;
-    
-        // TODO: Also need to save the tapestry slug or ID in the events
-    
-        var userUUID = Cookies.get("user-uuid");
-        if (userUUID === undefined) {
-            userUUID = createUUID();
-            Cookies.set("user-uuid", userUUID);
-        }
-    
-        if (details === undefined) {
-            details = {};
-        }
-    
-        details['user-ip'] = $('#user-ip').text();
-    
-        var data = {
-            'action': analyticsAJAXAction,
-            'actor': actor,
-            'action2': action,
-            'object': object,
-            'user_guid': userUUID,
-            'object_id': objectID,
-            'details': JSON.stringify(details)
-        };
-    
-        // Send the event to an AJAX URL to be saved
-        jQuery.post(analyticsAJAXUrl, data, function(response) {
-            // Event posted
-        });
-    }
-    
-    function createUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    }
-    
-    function isEmptyObject(obj) {
-        for(var key in obj) {
-            if(obj.hasOwnProperty(key))
-                return false;
-        }
-        return true;
-    }
-    
-    function capitalizeFirstLetter(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    }
-    
-    function onlyContainsDigits(string) {
-        var regex = new RegExp(/^\d+$/); 
-        return regex.test(string);
-    }
-    
-    function extractDigitsFromString(string) {
-        return string.replace(/[^0-9]/g,'');
-    }
-    
-    function tapestryValidateNewNode(formData, isRoot) {
-        var MAX_DESCRIPTION_LENGTH = 250;
-        
-        if (typeof isRoot == 'undefined') {	
-           isRoot = false;	
-        }	
-    
-        var errMsg = "";	
-    
-        for (var i = 0; i < formData.length; i++) {	
-           var fieldName = formData[i].name;	
-           var fieldValue = formData[i].value;	
-    
-            switch (fieldName) {	
-               case "title":	
-                   if (fieldValue === "") {	
-                       errMsg += "Please enter a title \n";	
-                   }	
-                   break;	
-               case "imageURL":	
-                   if (fieldValue === "") {	
-                       errMsg += "Please enter a thumbnail URL \n";	
-                   }	
-                   break;	
-               case "appearsAt":	
-                   if (fieldValue.length > 0 && !onlyContainsDigits(fieldValue) && !isRoot) {	
-                       errMsg += "Please enter numeric value for Appears At (or leave empty to not lock) \n";	
-                   }	
-                   break;	
-               default:	
-                   break;	
-           }	
-    
-            if ($("#mediaType").val() === "video") {	
-               switch (fieldName) {	
-                   case "mp4-mediaURL":	
-                       if (fieldValue === "") {	
-                           errMsg += "Please enter a MP4 video URL \n";	
-                       }	
-                       break;	
-                   case "mp4-mediaDuration":	
-                       if (!onlyContainsDigits(fieldValue)) {	
-                           errMsg += "Please enter numeric value for media duration \n";	
-                       }	
-                       break;	
-                   default:	
-                       break;	
-               }	
-           } else if ($("#mediaType").val() === "h5p") {	
-               switch (fieldName) {	
-                   case "h5p-mediaURL":	
-                       if (fieldValue === "") {	
-                           errMsg += "Please enter a H5P URL \n";	
-                       }	
-                       break;	
-                   case "h5p-mediaDuration":	
-                       if (!onlyContainsDigits(fieldValue)) {	
-                           errMsg += "Please enter numeric value for media duration \n";	
-                       }	
-                       break;	
-                   default:	
-                       break;	
-               }	
-           }	
-       }	
-    
-        if ($("#tapestry-node-description-area").val() && $("#tapestry-node-description-area").val().length > MAX_DESCRIPTION_LENGTH) {	
-           errMsg += "Please enter a description under " + MAX_DESCRIPTION_LENGTH + " characters \n";	
-       }	
-       return errMsg;	
-    }	
-    
-    // Type is either "user" or "group"  
-    function appendPermissionsRow(id, type) {
-        $('#permissions-table tbody').append(
-            '<tr class="permissions-dynamic-row">' +
-            '<td>' + capitalizeFirstLetter(type) + " " + id + '</td>' +
-            '<td id="' + type + "-" + id + "-editcell" + '"' + '></td>' +
-            '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-checkbox" name="add" type="checkbox"></td>' +
-            '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-edit-checkbox" name="edit" type="checkbox"></td>' +
-            '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-submit-checkbox" name="add_submit" type="checkbox"></td>' +
-            '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox"+ '"' + 'id="user-' + id +'-edit-submit-checkbox" name="edit_submit" type="checkbox"></td>' +
-            '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-approve-checkbox" name="approve" type="checkbox"></td>' +
-            '</tr>'
-        );
-        $('<input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-read-checkbox" name="read" type="checkbox" checked>').on("change", function() {
-            if ($(this).is(":checked")) {
-                $("." + type + "-" + id + "-checkbox").each(function() {
-                    if($(this).prop('disabled')) {
-                        $(this).prop('disabled', false);
-                    }
-                });
-            } else {
-                $("." + type + "-" + id + "-checkbox").each(function() {
-                    if (this.id !== "user-" + id + "-read-checkbox") {
-                        $(this).prop('checked', false);
-                        $(this).prop('disabled', true);
-                    }
-                });
-            }
-        }).appendTo("#" + type + "-" + id + "-editcell");
-    
-        $('.public-checkbox').each(function() {
-            if ($(this).is(":checked")) {
-                $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('checked', true);
-                $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('disabled', true);
-            }
-        });
-    }
-    
-    // Capture click events anywhere inside or outside tapestry
-    $(document).ready(function(){
-        document.body.addEventListener('click', function(event) {
-            var x = event.clientX + $(window).scrollLeft();
-            var y = event.clientY + $(window).scrollTop();
-            recordAnalyticsEvent('user', 'click', 'screen', null, {'x': x, 'y': y});
-        }, true);
-    
-        document.getElementById('tapestry').addEventListener('click', function(event) {
-            var x = event.clientX + $(window).scrollLeft();
-            var y = event.clientY + $(window).scrollTop();
-            recordAnalyticsEvent('user', 'click', 'tapestry', null, {'x': x, 'y': y});
-        }, true);
+
+    details['user-ip'] = $('#user-ip').text();
+
+    var data = {
+        'action': analyticsAJAXAction,
+        'actor': actor,
+        'action2': action,
+        'object': object,
+        'user_guid': userUUID,
+        'object_id': objectID,
+        'details': JSON.stringify(details)
+    };
+
+    // Send the event to an AJAX URL to be saved
+    jQuery.post(analyticsAJAXUrl, data, function(response) {
+        // Event posted
     });
+}
+
+function createUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+function isEmptyObject(obj) {
+    for(var key in obj) {
+        if(obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+}
+
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+function onlyContainsDigits(string) {
+    var regex = new RegExp(/^\d+$/); 
+    return regex.test(string);
+}
+
+function extractDigitsFromString(string) {
+    return string.replace(/[^0-9]/g,'');
+}
+
+function tapestryValidateNewNode(formData, isRoot) {
+    var MAX_DESCRIPTION_LENGTH = 250;
+    
+    if (typeof isRoot == 'undefined') {	
+        isRoot = false;	
+    }	
+
+    var errMsg = "";	
+
+    for (var i = 0; i < formData.length; i++) {	
+        var fieldName = formData[i].name;	
+        var fieldValue = formData[i].value;	
+
+        switch (fieldName) {	
+            case "title":	
+                if (fieldValue === "") {	
+                    errMsg += "Please enter a title \n";	
+                }	
+                break;	
+            case "imageURL":	
+                if (fieldValue === "") {	
+                    errMsg += "Please enter a thumbnail URL \n";	
+                }	
+                break;	
+            case "appearsAt":	
+                if (fieldValue.length > 0 && !onlyContainsDigits(fieldValue) && !isRoot) {	
+                    errMsg += "Please enter numeric value for Appears At (or leave empty to not lock) \n";	
+                }	
+                break;	
+            default:	
+                break;	
+        }	
+
+        if ($("#mediaType").val() === "video") {	
+            switch (fieldName) {	
+                case "mp4-mediaURL":	
+                    if (fieldValue === "") {	
+                        errMsg += "Please enter a MP4 video URL \n";	
+                    }	
+                    break;	
+                case "mp4-mediaDuration":	
+                    if (!onlyContainsDigits(fieldValue)) {	
+                        errMsg += "Please enter numeric value for media duration \n";	
+                    }	
+                    break;	
+                default:	
+                    break;	
+            }	
+        } else if ($("#mediaType").val() === "h5p") {	
+            switch (fieldName) {	
+                case "h5p-mediaURL":	
+                    if (fieldValue === "") {	
+                        errMsg += "Please enter a H5P URL \n";	
+                    }	
+                    break;	
+                case "h5p-mediaDuration":	
+                    if (!onlyContainsDigits(fieldValue)) {	
+                        errMsg += "Please enter numeric value for media duration \n";	
+                    }	
+                    break;	
+                default:	
+                    break;	
+            }	
+        }	
+    }	
+
+    if ($("#tapestry-node-description-area").val() && $("#tapestry-node-description-area").val().length > MAX_DESCRIPTION_LENGTH) {	
+        errMsg += "Please enter a description under " + MAX_DESCRIPTION_LENGTH + " characters \n";	
+    }	
+    return errMsg;	
+}	
+
+// Type is either "user" or "group"  
+function appendPermissionsRow(id, type) {
+    $('#permissions-table tbody').append(
+        '<tr class="permissions-dynamic-row">' +
+        '<td>' + capitalizeFirstLetter(type) + " " + id + '</td>' +
+        '<td id="' + type + "-" + id + "-editcell" + '"' + '></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-checkbox" name="add" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-edit-checkbox" name="edit" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-add-submit-checkbox" name="add_submit" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox"+ '"' + 'id="user-' + id +'-edit-submit-checkbox" name="edit_submit" type="checkbox"></td>' +
+        '<td><input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-approve-checkbox" name="approve" type="checkbox"></td>' +
+        '</tr>'
+    );
+    $('<input class="' + type + "-" + id + "-checkbox " + type + "-checkbox" + '"' + 'id="user-' + id +'-read-checkbox" name="read" type="checkbox" checked>').on("change", function() {
+        if ($(this).is(":checked")) {
+            $("." + type + "-" + id + "-checkbox").each(function() {
+                if($(this).prop('disabled')) {
+                    $(this).prop('disabled', false);
+                }
+            });
+        } else {
+            $("." + type + "-" + id + "-checkbox").each(function() {
+                if (this.id !== "user-" + id + "-read-checkbox") {
+                    $(this).prop('checked', false);
+                    $(this).prop('disabled', true);
+                }
+            });
+        }
+    }).appendTo("#" + type + "-" + id + "-editcell");
+
+    $('.public-checkbox').each(function() {
+        if ($(this).is(":checked")) {
+            $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('checked', true);
+            $("#user-" + id + "-" + this.name.replace("_", "-") + "-checkbox").prop('disabled', true);
+        }
+    });
+}
+
+// Capture click events anywhere inside or outside tapestry
+$(document).ready(function(){
+    document.body.addEventListener('click', function(event) {
+        var x = event.clientX + $(window).scrollLeft();
+        var y = event.clientY + $(window).scrollTop();
+        recordAnalyticsEvent('user', 'click', 'screen', null, {'x': x, 'y': y});
+    }, true);
+
+    document.getElementById('tapestry').addEventListener('click', function(event) {
+        var x = event.clientX + $(window).scrollLeft();
+        var y = event.clientY + $(window).scrollTop();
+        recordAnalyticsEvent('user', 'click', 'tapestry', null, {'x': x, 'y': y});
+    }, true);
+});
