@@ -52,10 +52,6 @@ body {
   }
 }
 
-#tapestry {
-    margin-top: 20px;
-}
-
 #tapestry-svg > g {
     transform: translate(-8.5px, 0);
 }
@@ -136,10 +132,6 @@ body {
     font-size: 0.7em;
     color: #666;
     text-align:center;
-}
-
-div.modal {
-    top: 80px;
 }
 
 #spotlight-content {
