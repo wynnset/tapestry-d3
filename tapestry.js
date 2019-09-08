@@ -1,4 +1,13 @@
 /* jshint esversion: 6 */
+function tapestryTool(config){
+
+this.dataset = {
+    'settings': {},
+    'nodes':    [],
+    'links':    [],
+    'groups':   []
+};
+var tapestry = this;
 
 function tapestryTool(config) {
 
@@ -135,18 +144,63 @@ function tapestryTool(config) {
         root = tapestry.dataset.rootId;
         setNodeTypes(root);
         setLinkTypes(root);
-        setUnlocked();
-        setAccessibleStatus();
-
-        if (tapestry.dataset.settings !== undefined && tapestry.dataset.settings.thumbDiff !== undefined) {
-            nodeImageHeight += tapestry.dataset.settings.thumbDiff;
-            rootNodeImageHeightDiff += tapestry.dataset.settings.thumbDiff;
-            //---------------------------------------------------
-            // 4. UPDATE SVG DIMENSIONS AND START THE GRAPH
-            //---------------------------------------------------
-
-            // Ensure tapestry size fits well into the browser and start force
-            updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+    
+        filterTapestry();
+    };
+    
+    tapestryControlsDiv.appendChild(depthSliderWrapper);
+    
+    //--------------------------------------------------
+    // Checkbox to view locked nodes (logged in users only)
+    //--------------------------------------------------
+    
+    // Create wrapper div
+    var viewLockedCheckboxWrapper = document.createElement("div");
+    viewLockedCheckboxWrapper.id = "tapestry-view-locked-checkbox-wrapper";
+    
+    // Create input element
+    var viewLockedCheckbox = document.createElement("input");
+    setAttributes(viewLockedCheckbox,{
+        type:"checkbox",
+        value:"1",
+        id: "tapestry-view-locked-checkbox"
+    });
+    viewLockedCheckbox.onchange = function() {
+        filterTapestry();
+    };
+    
+    // Create label element
+    var viewLockedLabel = document.createElement("label");
+    viewLockedLabel.innerHTML = " View locked nodes";
+    setAttributes(viewLockedLabel,{
+        forHtml:"tapestry-view-locked-checkbox"
+    });
+    
+    viewLockedCheckboxWrapper.appendChild(viewLockedCheckbox);
+    viewLockedCheckboxWrapper.appendChild(viewLockedLabel);
+    
+    if (config.wpUserId) {
+        // Append the new element in its wrapper to the tapestry container
+        tapestryControlsDiv.appendChild(viewLockedCheckboxWrapper);
+    }
+    
+    /****************************************************
+     * ADD EDITOR ELEMENTS
+     ****************************************************/
+    
+    // To create a link
+    function addLink(source, target, value, appearsAt) {
+        if (target === source) {
+            console.log("addLink aborting: cannot connect node to itself");
+            return;
+        }
+    
+        for (var i = 0; i < tapestry.dataset.links.length; i++) {
+            // Check if link in dataset exists
+            if ((tapestry.dataset.links[i].source.id === source && tapestry.dataset.links[i].target.id === target) || (tapestry.dataset.links[i].source.id === target && tapestry.dataset.links[i].target.id === source)) {
+                alert("Link already exists");
+                return;
+            }
         }
 
         /****************************************************
