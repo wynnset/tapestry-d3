@@ -1,4 +1,13 @@
 /* jshint esversion: 6 */
+function tapestryTool(config){
+
+this.dataset = {
+    'settings': {},
+    'nodes':    [],
+    'links':    [],
+    'groups':   []
+};
+var tapestry = this;
 
 function tapestryTool(config){
 
