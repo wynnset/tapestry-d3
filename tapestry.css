@@ -516,11 +516,6 @@ body {font-family: Arial, Helvetica, sans-serif;}
     color: white;
 }
 
-#cancel-add-new-node, #tapestry-delete-node {
-    color: white;
-    background-color: #dc3545;
-}
-
 #add-node-error-msg {
     color: #dc3545;
     font-size: 15px;

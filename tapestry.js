@@ -1099,9 +1099,6 @@ function tapestryTool(config) {
         $('.editNodeButton').click(function () {
             dispatchEvent(new CustomEvent("edit-node"))
         });
-
-        // Unhide delete button
-        $(".tapestry-delete-node-section").show();
     }
 
     $('#createNewNodeModal').on('hidden.bs.modal', function () {
@@ -2481,9 +2478,6 @@ function tapestryHideAddNodeModal() {
     $("#mp4-content").hide();
     $("#h5p-content").hide();
     $("#appearsat-section").show();
-
-    // Hide delete button
-    $(".tapestry-delete-node-section").hide();
 }
 
 // Type is either "user" or "group"  
