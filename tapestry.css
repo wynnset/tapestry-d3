@@ -64,7 +64,7 @@ body {
 
 #tapestry-controls-wrapper {
     margin: 40px 10% 20px;
-    padding: 10px 20px;
+    padding: 10px;
     float: right;
     width: auto;
 	background: #fbfbfb;
@@ -79,7 +79,6 @@ body {
 }
 #tapestry-controls-wrapper > * {
     float: left;
-    padding-right: 20px;
 }
 
 /* depth slider */
@@ -89,34 +88,41 @@ body {
     outline: none;
     background: #d3d3d3;
     height: 10px;
-    opacity: 0.7;
+    opacity: 0.8;
     transition: opacity .2s;
     position: relative;
-    margin: 0 37px 0 37px;
+    margin: 0 32px;
 }
 
-#tapestry-depth-slider::before {
-    position: absolute;
-    content: "";
-    width: 40px;
-    height: 40px;
-    background-image: url("img/zoom-in.png");
-    left: -42px;
-    bottom: -17.5px;
-}
-
+#tapestry-depth-slider::before,
 #tapestry-depth-slider::after {
     position: absolute;
     content: "";
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
+    background-image: url("img/zoom-in.png");
+    background-size: 20px;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 1px solid #dfdfdf;
+    border-radius: 50%;
+    left: -30px;
+    bottom: -12px;
+}
+
+#tapestry-depth-slider::after {
     background-image: url("img/zoom-out.png");
-    right: -42px;
-    bottom: -17px;
+    left: initial;
+    right: -30px;
 }
 
 #tapestry-depth-slider {
     -webkit-appearance: none;
+}
+
+#tapestry-depth-slider-wrapper {
+    padding-right: 10px;
+    border-right: 1px solid #a1a1a1;
 }
 
 /* webkit support */
@@ -151,6 +157,13 @@ body {
 
 #tapestry-depth-slider:hover {
     opacity: 1
+}
+#tapestry-depth-slider-wrapper label {
+    display: none;
+}
+
+#tapestry-view-locked-checkbox-wrapper {
+    padding: 0 15px;
 }
 
 #footer {
