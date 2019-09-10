@@ -1351,8 +1351,7 @@ function buildNodeContents() {
 
 function rebuildNodeContents() {
     /* Remove text before transition animation */
-    $(".timecode").remove();
-    $(".title").remove();
+    $(".meta").remove();
 
     /* Commence transition animation */
     nodes.selectAll(".imageOverlay")
@@ -1464,7 +1463,7 @@ function buildPathAndButton() {
             return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
         });
 
-    /* Create the node titles */
+    /* Create the node meta */
     nodes
         .filter(function (d){
             return getViewable(d);
@@ -1478,40 +1477,12 @@ function buildPathAndButton() {
         .attr("x", -NORMAL_RADIUS * NODE_TEXT_RATIO)
         .attr("y", -NORMAL_RADIUS * NODE_TEXT_RATIO)
         .append("xhtml:div")
-            .attr("class","title")
+            .attr("class","meta")
             .html(function(d){
-                return "<p>" + d.title + "</p>";
-            });
-
-    /* Create timecodes */
-    nodes
-        .filter(function (d){
-            return getViewable(d);
-        })
-        .append('foreignObject')
-        .attr("width", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
-        .attr("height", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
-        .attr("style", function (d) {
-            return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
-        })
-        .attr("x", -NORMAL_RADIUS * NODE_TEXT_RATIO)
-        .attr("y", -NORMAL_RADIUS * NODE_TEXT_RATIO - 60)
-        .append("xhtml:div")
-            .attr("class","timecode")
-            .style('bottom',function(d){
-                if (d.nodeType === "root") {
-                    return "85px";
-                } else {
-                    return "20px";
-                }
-            })
-            .style('position','relative')
-            .html(function(d){
-                if (d.mediaType === "video") {
-                    var minutes = Math.floor(d.mediaDuration / 60);
-                    var seconds = d.mediaDuration % 60;
-                    return "<p>" + minutes + ":" + seconds + "</p>";
-                }
+                var base = "<p class='title'>" + d.title + "</p>"
+                if (d.mediaType === 'video')
+                    base += "\n<p class='timecode'>" + getVideoDuration(d.mediaDuration) + "</p>";
+                return base;
             });
         
     updateViewedProgress();
@@ -1719,6 +1690,23 @@ function buildPathAndButton() {
         // Show the modal
         $("#createNewNodeModal").modal();
     });
+}
+
+function getVideoDuration(seconds) {
+    var hours = Math.floor(seconds / 3600);
+    var minutes = Math.floor((seconds - (hours * 3600)) / 60);
+    var sec = seconds - (hours * 3600) - (minutes * 60);
+
+    if (sec < 10)
+        sec = "0" + sec
+
+    if (hours > 0 && minutes < 10)
+        minutes = "0" + minutes;
+    
+    if (hours === 0)
+        return minutes + ":" + sec;
+
+    return hours + ":" + minutes + ":" + sec;
 }
 
 function updateViewedProgress() {
