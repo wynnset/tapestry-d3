@@ -240,7 +240,8 @@ div.modal {
 }
 .node .title {
     padding-left: 0;
-    margin: 12px 0;
+    margin-top: 12px;
+    margin-bottom: 0;
 }
 
 .node .timecode {

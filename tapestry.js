@@ -1479,7 +1479,7 @@ function buildPathAndButton() {
         .append("xhtml:div")
             .attr("class","meta")
             .html(function(d){
-                var base = "<p class='title'>" + d.title + "</p>"
+                var base = "<p class='title'>" + d.title + "</p>";
                 if (d.mediaType === 'video')
                     base += "\n<p class='timecode'>" + getVideoDuration(d.mediaDuration) + "</p>";
                 return base;
@@ -1698,7 +1698,7 @@ function getVideoDuration(seconds) {
     var sec = seconds - (hours * 3600) - (minutes * 60);
 
     if (sec < 10)
-        sec = "0" + sec
+        sec = "0" + sec;
 
     if (hours > 0 && minutes < 10)
         minutes = "0" + minutes;
