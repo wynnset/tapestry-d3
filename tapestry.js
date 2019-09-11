@@ -46,10 +46,7 @@ function tapestryTool(config){
         tapestrySlug, 
         saveProgress = true, progressLastSaved = new Date(), // Saving Progress
         enablePopupNodes = false, inViewMode = false,   // Pop-up nodes
-        tapestryDimensionsBeforeDrag,
-        nodeImageHeight = 420,
-        nodeImageWidth = 780,
-        rootNodeImageHeightDiff = 70,
+        tapestryDimensionsBeforeDrag, nodeBeforeDrag,
         h5pVideoSettings = {},
         tapestryDepth = 2,                              // Default depth of Tapestry
         autoLayout = false;
@@ -89,7 +86,93 @@ function tapestryTool(config){
         }
     });
 
+    jQuery.get(config.apiUrl + "/tapestries/" + config.wpPostId, function(result){
+        tapestry.dataset = result;
+        if (tapestry.dataset && tapestry.dataset.nodes && tapestry.dataset.nodes.length > 0) {
+            for (var i=0; i<tapestry.dataset.nodes.length; i++) {
+                // change http(s):// to // in media URLs and image URLs
+                if (typeof tapestry.dataset.nodes[i].typeData != "undefined" && typeof tapestry.dataset.nodes[i].typeData.mediaURL != "undefined" && tapestry.dataset.nodes[i].typeData.mediaURL.length > 0) {
+                    tapestry.dataset.nodes[i].typeData.mediaURL = tapestry.dataset.nodes[i].typeData.mediaURL.replace(/(http(s?)):\/\//gi, '//');
+                }
+                if (typeof tapestry.dataset.nodes[i].imageURL != "undefined" && tapestry.dataset.nodes[i].imageURL.length > 0) {
+                    tapestry.dataset.nodes[i].imageURL = tapestry.dataset.nodes[i].imageURL.replace(/(http(s?)):\/\//gi, '//');
+                }
+                // always unlock root node
+                if (tapestry.dataset.nodes[i].id == tapestry.dataset.rootId) {
+                    tapestry.dataset.nodes[i].unlocked = true;
+                }
+            }
+        }
+        for (var i=0; i < tapestry.dataset.nodes.length; i++) {
+            tapestry.dataset.nodes[i].fx = tapestry.dataset.nodes[i].coordinates.x;
+            tapestry.dataset.nodes[i].fy = tapestry.dataset.nodes[i].coordinates.y;
+        }
+        tapestry.originalDataset = tapestry.dataset;
+
+        tapestrySlug = tapestry.dataset.settings.tapestrySlug;
+        root = tapestry.dataset.rootId;
+        
+        if (saveProgress) {
+
+            //---------------------------------------------------
+            // GET PROGRESS FROM DATABASE OR COOKIE (IF ENABLED)
+            //---------------------------------------------------
+            
+            if (config.wpUserId) { // Get from database if user is logged in
+
+                jQuery.get(USER_NODE_PROGRESS_URL, { "post_id": config.wpPostId }, function(retrievedUserProgress) {
+
+                    if (retrievedUserProgress && !isEmptyObject(retrievedUserProgress)) {
+                        setDatasetProgress(JSON.parse(retrievedUserProgress));
+                    }
+
+                    jQuery.get(TAPESTRY_H5P_SETTINGS_URL, { "post_id": config.wpPostId }, function(retrievedH5PSettings) {
+                        if (retrievedH5PSettings && !isEmptyObject(retrievedH5PSettings)) {
+                            h5pVideoSettings = JSON.parse(retrievedH5PSettings);
+                        }
+                    }).fail(function(e) {
+                        console.error("Error with retrieving h5p video settings");
+                        console.error(e);
+                    }).complete(function(){
+                        tapestry.init();
+                    });
+
+                }).fail(function(e) {
+                    console.error("Error with retrieving node progress");
+                    console.error(e);
+                });
+            }
+            else {  // Get from cookie if user is NOT logged in
+                
+                var cookieProgress = Cookies.get("progress-data-"+tapestrySlug);
+
+                if (cookieProgress) {
+                    cookieProgress = JSON.parse( cookieProgress );
+                    setDatasetProgress(cookieProgress);	
+                }
+
+                // Update H5P Video Settings from cookie (if any)
+                var cookieH5PVideoSettings = Cookies.get("h5p-video-settings");
+                if (cookieH5PVideoSettings) {
+                    cookieH5PVideoSettings = JSON.parse( cookieH5PVideoSettings );
+                    h5pVideoSettings = cookieH5PVideoSettings;
+                }
+
+                tapestry.init();
+            }
+        }
+        else {
+            tapestry.init();
+        }
+    }).fail(function(e) {
+        console.error("Error with loading tapestries");
+        console.error(e);
+    });
+
     this.init = function(isReload = false) {
+
+        dispatchEvent(new CustomEvent('tapestry-updated'));
+
         //---------------------------------------------------
         // 2. SIZE AND SCALE THE TAPESTRY AND SVG TO FIT WELL
         //---------------------------------------------------
@@ -104,25 +187,15 @@ function tapestryTool(config){
         // 3. SET NODES/LINKS AND CREATE THE SVG OBJECTS
         //---------------------------------------------------
 
-        root = tapestry.dataset.rootId;
-    
         setNodeTypes(root);
         setLinkTypes(root);
         setUnlocked();
         setAccessibleStatus();
-    
-        if (tapestry.dataset.settings !== undefined && tapestry.dataset.settings.thumbDiff !== undefined) {
-            nodeImageHeight += tapestry.dataset.settings.thumbDiff;
-            rootNodeImageHeightDiff += tapestry.dataset.settings.thumbDiff;
-        }
-        if (tapestry.dataset.settings !== undefined && tapestry.dataset.settings.thumbRootDiff !== undefined) {
-            rootNodeImageHeightDiff += tapestry.dataset.settings.thumbRootDiff;
-        }
         
         if (!isReload) {
 
             // Create the SVG container where the tapestry will live
-            svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
+            svg = createSvgContainer();
 
             // Attach the link adding line to the tapestry SVG (it won't appear for now)
             $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
@@ -140,9 +213,19 @@ function tapestryTool(config){
         //---------------------------------------------------
         
         // Ensure tapestry size fits well into the browser and start force
-        updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+        updateSvgDimensions();
+
+        if (!isReload) {
+            //---------------------------------------------------
+            // 5. SET UP EDITING STUFF
+            //---------------------------------------------------
+        
+            // Attach the link line to the tapestry SVG (it won't appear for now)
+            $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
+            recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
+        }
     }
-    
+        
     /****************************************************
      * ADD TAPESTRY CONTROLS
      ****************************************************/
@@ -194,6 +277,7 @@ function tapestryTool(config){
         setLinkTypes(root);
     
         filterTapestry();
+        updateSvgDimensions();
     };
     
     tapestryControlsDiv.appendChild(depthSliderWrapper);
@@ -215,6 +299,7 @@ function tapestryTool(config){
     });
     viewLockedCheckbox.onchange = function() {
         filterTapestry();
+        updateSvgDimensions();
     };
     
     // Create label element
@@ -251,10 +336,9 @@ function tapestryTool(config){
             }
         }
     
-        jQuery.post(config.apiUrl + "/tapestries/" + config.wpPostId + "/links", JSON.stringify({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt }), function(result) {
+        jQuery.post(config.apiUrl + "/tapestries/" + config.wpPostId + "/links", JSON.stringify({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt }), function() {
             tapestry.dataset.links.push({"source": source, "target": target, "value": value, "type": "", "appearsAt": appearsAt });
             tapestry.init(true);
-    
         }).fail(function(e) {
             alert("Sorry, there was a problem adding the new link");
             console.error("Error with adding new link", e);
@@ -265,32 +349,15 @@ function tapestryTool(config){
      * D3 RELATED FUNCTIONS
      ****************************************************/
 
-    /* Delete or add fx and fy parameters depending on whether or not autoLayout true */
-    function fixOrUnfixNodes() {
+    /* Define forces that will determine the layout of the graph */
+    function startSimulation() {
 
-        if (inViewMode) {
-            return;
-        }
-
-        if (autoLayout) {
+        if (autoLayout && !inViewMode) {
             d3.selectAll('g.node').each(function(d){
                 delete d.fx;
                 delete d.fy;
             });
-        } else {
-            for (var i=0; i < tapestry.dataset.nodes.length; i++) {
-                if (tapestry.dataset.nodes[i].coordinates) {
-                    tapestry.dataset.nodes[i].fx = tapestry.dataset.nodes[i].coordinates.x;
-                    tapestry.dataset.nodes[i].fy = tapestry.dataset.nodes[i].coordinates.y;
-                }
-            }
         }
-    }
-
-    /* Define forces that will determine the layout of the graph */
-    function startSimulation() {
-
-        fixOrUnfixNodes();
 
         var tapestryDimensions = getTapestryDimensions();
         var nodes = tapestry.dataset.nodes;
@@ -333,7 +400,6 @@ function tapestryTool(config){
         getChildren(id);
         setNodeTypes(id);
         setLinkTypes(id);
-
         filterTapestry();
     }
 
@@ -368,34 +434,46 @@ function tapestryTool(config){
     function dragstarted(d) {
         if (!d3.event.active) simulation.alphaTarget(0.2).restart();
 
-        d[xORfx] = getBoundedCoord(d.x, tapestryDimensionsBeforeDrag.width);
-        d[yORfy] = getBoundedCoord(d.y, tapestryDimensionsBeforeDrag.height);
+        nodeBeforeDrag = d;
+
+        if (config.wpIsAdmin) {
+            d[xORfx] = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width+(MAX_RADIUS*2));
+            d[yORfy] = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height+(MAX_RADIUS*2));
+        } else {
+            d[xORfx] = getBoundedCoord(d.x, tapestryDimensionsBeforeDrag.width);
+            d[yORfy] = getBoundedCoord(d.y, tapestryDimensionsBeforeDrag.height);
+        }
 
         recordAnalyticsEvent('user', 'drag-start', 'node', d.id, {'x': d.x, 'y': d.y});
     }
 
     function dragged(d) {
-
-        d[xORfx] = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
-        d[yORfy] = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
-
+        if (config.wpIsAdmin) {
+            d[xORfx] = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width+(MAX_RADIUS*2));
+            d[yORfy] = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height+(MAX_RADIUS*2));
+        } else {
+            d[xORfx] = getBoundedCoord(d3.event.x, tapestryDimensionsBeforeDrag.width);
+            d[yORfy] = getBoundedCoord(d3.event.y, tapestryDimensionsBeforeDrag.height);
+        }
     }
 
     function dragended(d) {
         if (!d3.event.active) simulation.alphaTarget(0);
+
+        d[xORfx] = d.x;
+        d[yORfy] = d.y;
+        updateSvgDimensions();
 
         if (config.wpIsAdmin && !autoLayout) {
             $.ajax({
                 url: config.apiUrl + "/tapestries/" + config.wpPostId + "/nodes/" + d.id + "/coordinates",
                 method: API_PUT_METHOD,
                 data: JSON.stringify({x: d.x, y: d.y}),
-                success: function() {
-                    d[xORfx] = d.x;
-                    d[yORfy] = d.y;
-                },
                 error: function(e) {
-                    console.error("Error saving coordinates of nodes");
+                    alert("Sorry, there was an error saving the coordinates of this node!");
                     console.error(e);
+                    d[xORfx] = nodeBeforeDrag.x;
+                    d[yORfy] = nodeBeforeDrag.y;
                 }
             });
         }
@@ -403,23 +481,29 @@ function tapestryTool(config){
         recordAnalyticsEvent('user', 'drag-end', 'node', d.id, {'x': d.x, 'y': d.y});
     }
 
-    // creates SVG that tapestry is displayed on 
-    function createSvgContainer(containerId) {
+    function createSvgContainer() {
         var tapestryDimensions = getTapestryDimensions();
         tapestryDimensionsBeforeDrag = tapestryDimensions;
-        return d3.select("#"+containerId)
-                    .append("svg:svg")
-                    .attr("id", containerId+"-svg")
-                    .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height)
-                    .attr("preserveAspectRatio", "xMidYMid meet")
-                    .append("svg:g");
+        return d3.select("#"+TAPESTRY_CONTAINER_ID)
+                .append("svg:svg")
+                .attr("id", TAPESTRY_CONTAINER_ID+"-svg")
+                .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height)
+                .attr("preserveAspectRatio", "xMidYMid meet")
+                .append("svg:g");
     }
 
-    function updateSvgDimensions(containerId) {
+    function updateSvgDimensions() {
         var tapestryDimensions = getTapestryDimensions();
         tapestryDimensionsBeforeDrag = tapestryDimensions;
-        d3.select("#"+containerId+"-svg")
-            .attr("viewBox", "0 0 " + tapestryDimensions.width + " " + tapestryDimensions.height);
+
+        d3.select("#"+TAPESTRY_CONTAINER_ID+"-svg")
+            .attr("viewBox", 
+                    tapestryDimensions.startX + " " + 
+                    tapestryDimensions.startY + " " + 
+                    (tapestryDimensions.width - tapestryDimensions.startX) + " " + 
+                    (tapestryDimensions.height - tapestryDimensions.startY) 
+                );
+                
         startSimulation();
     }
 
@@ -427,7 +511,6 @@ function tapestryTool(config){
         /* Need to remove old links when redrawing graph */
         if (links !== undefined) {
             svg.selectAll('line')
-                .data(tapestry.dataset.links)
                 .remove();
         }
     
@@ -459,7 +542,6 @@ function tapestryTool(config){
         /* Need to remove old nodes when redrawing graph */
         if (nodes !== undefined) {
             svg.selectAll("g.node")
-                .data(tapestry.dataset.nodes)
                 .remove();
         }
     
@@ -668,8 +750,12 @@ function tapestryTool(config){
                 if (root != d.id) {
                     root = d.id;
                     resizeNodes(d.id);
+
                     dispatchEvent(new CustomEvent('change-root-node', {detail: root}));
+
+                    // slider's maximum depth is set to the longest path from the new root
                     tapestryDepthSlider.max = findMaxDepth(root);
+                    updateSvgDimensions();
                 }
                 recordAnalyticsEvent('user', 'click', 'node', d.id);
             });
@@ -677,7 +763,7 @@ function tapestryTool(config){
 
     function rebuildNodeContents() {
         /* Remove text before transition animation */
-        $(".title").remove();
+        $(".meta").remove();
     
         /* Commence transition animation */
         nodes.selectAll(".imageOverlay")
@@ -788,7 +874,7 @@ function tapestryTool(config){
                 return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
             });
     
-        /* Create the node titles */
+    /* Create the node meta */
         nodes
             .filter(function (d){
                 return getViewable(d);
@@ -802,9 +888,12 @@ function tapestryTool(config){
             .attr("x", -NORMAL_RADIUS * NODE_TEXT_RATIO)
             .attr("y", -NORMAL_RADIUS * NODE_TEXT_RATIO)
             .append("xhtml:div")
-                .attr("class","title")
+            .attr("class","meta")
                 .html(function(d){
-                    return "<p>" + d.title + "</p>";
+                var base = "<p class='title'>" + d.title + "</p>";
+                if (d.mediaType === 'video')
+                    base += "\n<p class='timecode'>" + getVideoDuration(d.mediaDuration) + "</p>";
+                return base;
                 });
             
         updateViewedProgress();
@@ -940,6 +1029,23 @@ function tapestryTool(config){
             dispatchEvent(new CustomEvent("edit-node"))
         });
     }
+
+function getVideoDuration(seconds) {
+    var hours = Math.floor(seconds / 3600);
+    var minutes = Math.floor((seconds - (hours * 3600)) / 60);
+    var sec = seconds - (hours * 3600) - (minutes * 60);
+
+    if (sec < 10)
+        sec = "0" + sec;
+
+    if (hours > 0 && minutes < 10)
+        minutes = "0" + minutes;
+    
+    if (hours === 0)
+        return minutes + ":" + sec;
+
+    return hours + ":" + minutes + ":" + sec;
+}
 
     function updateViewedProgress() {
         path = nodes
@@ -1360,7 +1466,6 @@ function tapestryTool(config){
         var nodeSpace = (nodeRadius * 2);
     
         var coordinates = [];
-    
         for (var i = 0; i < children.length; i++) {
             if (children.length <= 2) {
                 if (lightboxDimensions.adjustedOn === "width") {
@@ -1416,7 +1521,6 @@ function tapestryTool(config){
                 }
             }
         }
-    
         return coordinates;
     }
     
@@ -1458,6 +1562,10 @@ function tapestryTool(config){
                 .attr("cx", function(d) { return d.fx; })
                 .attr("cy", function(d) { return d.fy; });
         }
+
+    d3.selectAll('g.node')
+        .transition()
+        .duration(TRANSITION_DURATION);
             
         inViewMode = false;
     
@@ -1502,29 +1610,46 @@ function tapestryTool(config){
 
     // return the highest x and y that a node is placed at
     function getNodesDimensions(dataset) {
+
         var maxPointX = 0;
         var maxPointY = 0;
-        
+        var minPointX = 3000;
+        var minPointY = 3000;
+
         if (autoLayout) {
             var maxDepth = findMaxDepth(root);
+            minPointX = 0;
+            minPointY = 0;
             maxPointX = Math.pow(dataset.nodes.length, 1/maxDepth) * MAX_RADIUS * maxDepth * getAspectRatio();
             maxPointY = Math.pow(dataset.nodes.length, 1/maxDepth) * MAX_RADIUS * maxDepth;
         }
         else {
-            for (var index in tapestry.dataset.nodes) {
-                // save max point so we can calculate our tapestry width and height
-                if (dataset.nodes[index].fx > maxPointX) {
-                    maxPointX = tapestry.dataset.nodes[index].fx;
-                }
-                if (dataset.nodes[index].fy > maxPointY) {
-                    maxPointY = tapestry.dataset.nodes[index].fy;
+            for (var index in dataset.nodes) {
+                if (getViewable(dataset.nodes[index])) {
+                    
+                    // save max point so we can calculate our tapestry width and height
+                    if (dataset.nodes[index].fx > maxPointX) {
+                        maxPointX = tapestry.dataset.nodes[index].fx;
+                    }
+                    if (dataset.nodes[index].fy > maxPointY) {
+                        maxPointY = tapestry.dataset.nodes[index].fy;
+                    }
+
+                    if (dataset.nodes[index].fx < minPointX) {
+                        minPointX = dataset.nodes[index].fx;
+                    }
+                    if (dataset.nodes[index].fy < minPointY) {
+                        minPointY = dataset.nodes[index].fy;
+                    }
                 }
             }
         }
 
         return {
-            'x': maxPointX + MAX_RADIUS,
-            'y': maxPointY + MAX_RADIUS
+            'x0': minPointX,
+            'y0': minPointY,
+            'x': maxPointX,
+            'y': maxPointY
         };
     }
 
@@ -1533,12 +1658,16 @@ function tapestryTool(config){
 
         var tapestryWidth = $('#'+TAPESTRY_CONTAINER_ID).outerWidth();
         var tapestryHeight = getBrowserHeight() - $('#'+TAPESTRY_CONTAINER_ID).offset().top;
+        var tapestryStartX = 0;
+        var tapestryStartY = 0;
 
         var nodeDimensions = getNodesDimensions(tapestry.originalDataset);
 
         if (nodeDimensions.x > tapestryWidth || nodeDimensions.y > tapestryHeight) {
-            var tapestryWidth = nodeDimensions.x;
-            var tapestryHeight = nodeDimensions.y;
+            tapestryStartX = nodeDimensions.x0 - MAX_RADIUS*1.25;
+            tapestryStartY = nodeDimensions.y0 - MAX_RADIUS*1.25;
+            tapestryWidth = nodeDimensions.x;
+            tapestryHeight = nodeDimensions.y;
         }
 
         // Transpose the tapestry so it's longest side is aligned with the longest side of the browser
@@ -1551,8 +1680,10 @@ function tapestryTool(config){
         }
 
         return {
-            'width': tapestryWidth,
-            'height': tapestryHeight
+            'width': tapestryWidth + MAX_RADIUS*1.25,
+            'height': tapestryHeight + MAX_RADIUS*1.25,
+            'startX': tapestryStartX,
+            'startY': tapestryStartY,
         };
     }
 
@@ -1562,7 +1693,7 @@ function tapestryTool(config){
     function updateTapestrySize() {
         if (!inViewMode) {
             // Update svg dimensions to the new dimensions of the browser
-            updateSvgDimensions(TAPESTRY_CONTAINER_ID);
+        updateSvgDimensions();
         }
         startSimulation();
     }
@@ -1613,6 +1744,7 @@ function tapestryTool(config){
     }
 
     function getBoundedCoord(coord, maxCoord) {
+    
         return Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
     }
 
@@ -1658,7 +1790,6 @@ function tapestryTool(config){
                 }
             }
         }
-        
     }
     
     /* Return the distance between a node and its farthest descendant node */
