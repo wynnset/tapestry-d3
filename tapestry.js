@@ -1776,8 +1776,8 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
         });
     }
 
-    $("<div id='media-wrapper' data-media-format='" + mediaFormat + "' data-media-type='" + mediaType + "'></div>").appendTo('#spotlight-content');
-    media.appendTo('#media-wrapper');
+    $("<div class='media-wrapper'></div>").appendTo('#spotlight-content');
+    media.appendTo('#spotlight-content .media-wrapper');
 
     $("<button id='lightbox-close-wrapper'><div class='lightbox-close'><i class='fa fa-times'</i></div></button>")
     .on("click", function() {

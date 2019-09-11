@@ -171,7 +171,7 @@ div.modal {
     padding: 1em;
 }
 
-#media-wrapper[data-media-type=text] {
+#spotlight-content[data-media-type=text] .media-wrapper {
     overflow: scroll;
 }
 
@@ -185,12 +185,12 @@ div.modal {
     height: auto;
 }
 
-#media-wrapper {
+.media-wrapper {
     border-radius: 15px;
     overflow: hidden;
 }
 
-#media-wrapper[data-media-format=mp4] > * {
+#spotlight-content[data-media-format=mp4] .media-wrapper > * {
     width: 100%;
     height: auto;
 }
