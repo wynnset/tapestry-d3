@@ -191,9 +191,7 @@ div.modal {
     transition: all 1s;
     transition-timing-function: ease-in;
     box-shadow: 0 0 100px -40px #000;
-    border: solid 1px #ddd;
     border-radius: 15px;
-    overflow: hidden;
 }
 
 #spotlight-content[data-view-mode=true] {
@@ -203,10 +201,13 @@ div.modal {
 
 #spotlight-content[data-media-type=text] {
     outline: none;
-    overflow: scroll;
     background: #eee;
     color: #333;
     padding: 1em;
+}
+
+#spotlight-content[data-media-type=text] .media-wrapper {
+    overflow: scroll;
 }
 
 #spotlight-content > * {
@@ -215,6 +216,16 @@ div.modal {
 }
 
 #spotlight-content[data-media-format=mp4] > * {
+    width: 100%;
+    height: auto;
+}
+
+.media-wrapper {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+#spotlight-content[data-media-format=mp4] .media-wrapper > * {
     width: 100%;
     height: auto;
 }
@@ -455,19 +466,40 @@ i {
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
 }
 
-.lightbox-close {
-    text-transform: uppercase;
+#lightbox-close-wrapper {
+    width: auto;
+    display: flex;
+    justify-content: flex-end;
     background: none;
-    position: absolute;
-    font-weight: 300;
-    font-size: 12px;
-    display: block;
     border: none;
+    outline: none;
+    position: absolute;
+    top: -17px;
+    right: -22px;
+}
+
+.lightbox-close {
+    background: #666;
     color: white;
-    top: -22px;
-    right: 0.5%;
-    text-align: right;
-    box-shadow: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.16);
+    transition: all 0.25s ease;
+    border: solid 2px #fff;
+}
+
+.lightbox-close:hover {
+    transform: scale(1.15);
+    background: #11a6d8;
+}
+
+.lightbox-close i {
+    background: none;
 }
 
 #instructions-wrapper {

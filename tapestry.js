@@ -1773,7 +1773,7 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     height = lightboxDimensions.height;
     var media = setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height);
 
-    $('<div id="spotlight-overlay"><\/div>').on("click", function(){
+    $('<div id="spotlight-overlay"></div>').on("click", function(){
         closeLightbox(id, mediaType);
         exitViewMode();
     }).appendTo('body');
@@ -1795,19 +1795,15 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
         });
     }
 
-    media.appendTo('#spotlight-content');
+    $("<div class='media-wrapper'></div>").appendTo('#spotlight-content');
+    media.appendTo('#spotlight-content .media-wrapper');
 
-    $('<a class="lightbox-close">X</a>')
-        .css({
-            background: "none",
-            "box-shadow": "none",
-            cursor: "pointer"
-        })
-        .on("click", function() {
-            closeLightbox(id, mediaType);
-            exitViewMode();
-        })
-        .appendTo('#spotlight-content');
+    $("<button id='lightbox-close-wrapper'><div class='lightbox-close'><i class='fa fa-times'</i></div></button>")
+    .on("click", function() {
+        closeLightbox(id, mediaType);
+        exitViewMode();
+    })
+    .appendTo('#spotlight-content');
 
     setTimeout(function(){
         $('#spotlight-content').css({
