@@ -238,6 +238,9 @@ body {
 .imageOverlay {
     opacity: 0.5;
 }
+.imageOverlay--no-image {
+    opacity: 1;
+}
 
 .node .expandGrandchildren {
     fill: #999;
