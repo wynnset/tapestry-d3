@@ -629,14 +629,16 @@ function tapestryTool(config){
             .attr("width", 1)
             .append("image")
             .attr("height", function (d) {
-                if (d.nodeType === "root") {
-                    return nodeImageHeight + rootNodeImageHeightDiff;
-                } else return nodeImageHeight;
+                if (!getViewable(d)) return 0;
+                return getRadius(d) * 2;
             })
-            .attr("width", nodeImageWidth)
+            .attr("width", function (d) {
+                if (!getViewable(d)) return 0;
+                return getRadius(d) * 2;
+            })
             .attr("x", 0)
             .attr("y", 0)
-            .attr("preserveAspectRatio", "xMinYMin")
+            .attr("preserveAspectRatio", "xMidYMid slice")
             .attr("xlink:href", function (d) {
                 return d.imageURL;
             });
@@ -744,9 +746,12 @@ function tapestryTool(config){
                 .transition()
                 .duration(TRANSITION_DURATION)
                 .attr("height", function (d) {
-                    if (d.nodeType === "root") {
-                        return nodeImageHeight + rootNodeImageHeightDiff;
-                    } else return nodeImageHeight;
+                    if (!getViewable(d)) return 0;
+                    return getRadius(d) * 2;
+                }) 
+                .attr("width", function (d) {
+                    if (!getViewable(d)) return 0;
+                    return getRadius(d) * 2;
                 });
     
         // Remove elements and add them back in
