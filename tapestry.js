@@ -1030,22 +1030,22 @@ function tapestryTool(config){
         });
     }
 
-function getVideoDuration(seconds) {
-    var hours = Math.floor(seconds / 3600);
-    var minutes = Math.floor((seconds - (hours * 3600)) / 60);
-    var sec = seconds - (hours * 3600) - (minutes * 60);
+    function getVideoDuration(seconds) {
+        var hours = Math.floor(seconds / 3600);
+        var minutes = Math.floor((seconds - (hours * 3600)) / 60);
+        var sec = seconds - (hours * 3600) - (minutes * 60);
 
-    if (sec < 10)
-        sec = "0" + sec;
+        if (sec < 10)
+            sec = "0" + sec;
 
-    if (hours > 0 && minutes < 10)
-        minutes = "0" + minutes;
-    
-    if (hours === 0)
-        return minutes + ":" + sec;
+        if (hours > 0 && minutes < 10)
+            minutes = "0" + minutes;
+        
+        if (hours === 0)
+            return minutes + ":" + sec;
 
-    return hours + ":" + minutes + ":" + sec;
-}
+        return hours + ":" + minutes + ":" + sec;
+    }
 
     function updateViewedProgress() {
         path = nodes
@@ -1111,7 +1111,7 @@ function getVideoDuration(seconds) {
         height = lightboxDimensions.height;
         var media = setupMedia(id, mediaFormat, mediaType, mediaUrl, width, height);
     
-        $('<div id="spotlight-overlay"><\/div>').on("click", function(){
+    $('<div id="spotlight-overlay"></div>').on("click", function(){
             closeLightbox(id, mediaType);
             exitViewMode();
         }).appendTo('body');
@@ -1133,14 +1133,10 @@ function getVideoDuration(seconds) {
             });
         }
     
-        media.appendTo('#spotlight-content');
+    $("<div class='media-wrapper'></div>").appendTo('#spotlight-content');
+    media.appendTo('#spotlight-content .media-wrapper');
     
-        $('<a class="lightbox-close">X</a>')
-            .css({
-                background: "none",
-                "box-shadow": "none",
-                cursor: "pointer"
-            })
+    $("<button id='lightbox-close-wrapper'><div class='lightbox-close'><i class='fa fa-times'</i></div></button>")
             .on("click", function() {
                 closeLightbox(id, mediaType);
                 exitViewMode();
@@ -1615,7 +1611,7 @@ function getVideoDuration(seconds) {
         var maxPointY = 0;
         var minPointX = 3000;
         var minPointY = 3000;
-
+                    
         if (autoLayout) {
             var maxDepth = findMaxDepth(root);
             minPointX = 0;
@@ -1626,7 +1622,7 @@ function getVideoDuration(seconds) {
         else {
             for (var index in dataset.nodes) {
                 if (getViewable(dataset.nodes[index])) {
-                    
+
                     // save max point so we can calculate our tapestry width and height
                     if (dataset.nodes[index].fx > maxPointX) {
                         maxPointX = tapestry.dataset.nodes[index].fx;
