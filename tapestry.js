@@ -25,6 +25,8 @@ function tapestryTool(config){
         NODE_TEXT_RATIO = 5/6,
         COLOR_ACTIVE = "#11a6d8",
         COLOR_STROKE = "#072d42",
+        COLOR_BLANK = "#8396a1",
+        COLOR_BLANK_HOVER = "#cdd5d9",
         COLOR_GRANDCHILD = "#CCC",
         COLOR_LINK = "#999",
         COLOR_SECONDARY_LINK = "transparent",
@@ -587,14 +589,14 @@ function tapestryTool(config){
                 return - getRadius(d);
             })
             .attr("fill", function (d) {
-                return "url('#node-thumb-" + d.id + "')";
+                if (d.imageURL.length)
+                    return "url('#node-thumb-" + d.id + "')";
+                else return COLOR_BLANK_HOVER;
             });
     
         nodes.append("circle")
             .attr("class", function (d) {
-                if (d.nodeType === "grandchild")
-                    return "imageOverlay expandGrandchildren";
-                return "imageOverlay";
+                return getNodeClasses(d);
             })
             .attr("data-id", function (d) {
                 return d.id;
@@ -610,11 +612,7 @@ function tapestryTool(config){
                     return 0;
             })
             .attr("fill", function (d) {
-                if (!getViewable(d))
-                    return "transparent";
-                else if (d.nodeType === "grandchild")
-                    return COLOR_GRANDCHILD;
-                else return COLOR_STROKE;
+                return getNodeColor(d);
             });
     
         /* Attach images to be used within each node */
@@ -691,16 +689,10 @@ function tapestryTool(config){
                         return 0;
                 })
                 .attr("class", function (d) {
-                    if (d.nodeType === "grandchild")
-                        return "imageOverlay expandGrandchildren";
-                    return "imageOverlay";
+                    return getNodeClasses(d);
                 })
                 .attr("fill", function (d) {
-                    if (!getViewable(d)) {
-                        return "transparent";
-                    } else if (d.nodeType === "grandchild")
-                        return COLOR_GRANDCHILD;
-                    else return COLOR_STROKE;
+                    return getNodeColor(d);
                 });
                 
         nodes.selectAll(".imageContainer")
@@ -737,7 +729,9 @@ function tapestryTool(config){
                     return - getRadius(d);
                 })
                 .attr("fill", function (d) {
-                    return "url('#node-thumb-" + d.id + "')";
+                    if (d.imageURL.length)
+                        return "url('#node-thumb-" + d.id + "')";
+                    else return COLOR_BLANK_HOVER;
                 })
                 .attr("stroke-width", function (d) {
                     return PROGRESS_THICKNESS * adjustedRadiusRatio;
@@ -1591,6 +1585,28 @@ function tapestryTool(config){
         return tapestry.dataset.nodes.find(node => node.id === id);
     }
 
+    /* Gets the appropriate class names for the node */
+    function getNodeClasses(node) {
+        var base = "imageOverlay";
+        if (node.nodeType === "grandchild") {
+            base += " expandGrandchildren";
+        }
+        if (node.imageURL.length === 0) {
+            base += " imageOverlay--no-image";
+        }
+        return base;
+    }
+
+    function getNodeColor(node) {
+        if (!getViewable(node))
+            return "transparent";
+        if (node.nodeType === "grandchild")
+            return COLOR_GRANDCHILD;
+        if (node.imageURL.length === 0)
+            return COLOR_BLANK;
+        return COLOR_STROKE;
+    }
+
     function getBoundedCoord(coord, maxCoord) {
         return Math.max(MAX_RADIUS, Math.min(maxCoord - MAX_RADIUS, coord));
     }
@@ -2213,11 +2229,6 @@ function tapestryValidateNewNode(formData, isRoot) {
             case "title":	
                 if (fieldValue === "") {	
                     errMsg += "Please enter a title \n";	
-                }	
-                break;	
-            case "imageURL":	
-                if (fieldValue === "") {	
-                    errMsg += "Please enter a thumbnail URL \n";	
                 }	
                 break;	
             case "appearsAt":	
