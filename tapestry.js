@@ -265,7 +265,7 @@ function tapestryTool(config){
     
     // Hide depth slider if depth is less than 3 
     function hideShowDepthSlider() {
-        depthSliderWrapper.style.display = (findMaxDepth(root) >= 2) ? "block" : "none";
+        depthSliderWrapper.style.display = (findMaxDepth(root) >= 2) ? "flex" : "none";
     }
     hideShowDepthSlider(); // run it now (we will also run it later when tapestry is modified)
     
