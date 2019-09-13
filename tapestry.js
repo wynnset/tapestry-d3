@@ -647,7 +647,9 @@ function tapestryTool(config){
                 return d.id;
             })
             .attr("stroke-width", function (d) {
-                return PROGRESS_THICKNESS * adjustedRadiusRatio;
+                if (!d.hideProgress) {
+                    return PROGRESS_THICKNESS * adjustedRadiusRatio;
+                }
             })
             .attr("stroke", function (d) {
                 if (!getViewable(d))
@@ -688,10 +690,14 @@ function tapestryTool(config){
             })
             .attr("r", function (d) {
                 var rad = getRadius(d);
-                if (rad > PROGRESS_THICKNESS/2)
+                if (d.hideProgress) {
+                    return rad;
+                } else if (rad > PROGRESS_THICKNESS/2) {
                     return rad - PROGRESS_THICKNESS/2;
-                else
+                }
+                else {
                     return 0;
+                }
             })
             .attr("fill", function (d) {
                 return getNodeColor(d);
@@ -771,10 +777,14 @@ function tapestryTool(config){
                 .duration(TRANSITION_DURATION/2)
                 .attr("r", function (d) {
                     var rad = getRadius(d);
-                    if (rad > (PROGRESS_THICKNESS * adjustedRadiusRatio)/2)
+                    if (d.hideProgress) {
+                        return rad;
+                    } else if (rad > (PROGRESS_THICKNESS * adjustedRadiusRatio)/2) {
                         return rad - (PROGRESS_THICKNESS * adjustedRadiusRatio)/2;
-                    else
+                    }
+                    else {
                         return 0;
+                    }
                 })
                 .attr("class", function (d) {
                     return getNodeClasses(d);
@@ -822,7 +832,9 @@ function tapestryTool(config){
                     else return COLOR_BLANK_HOVER;
                 })
                 .attr("stroke-width", function (d) {
-                    return PROGRESS_THICKNESS * adjustedRadiusRatio;
+                    if (!d.hideProgress) {
+                        return PROGRESS_THICKNESS * adjustedRadiusRatio;
+                    }
                 });
         
         /* Attach images to be used within each node */
@@ -877,7 +889,7 @@ function tapestryTool(config){
     /* Create the node meta */
         nodes
             .filter(function (d){
-                return getViewable(d);
+                return getViewable(d) && !d.hideTitle;
             })
             .append('foreignObject')
             .attr("width", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
@@ -901,7 +913,7 @@ function tapestryTool(config){
         // Append mediaButton
         nodes
             .filter(function (d) {
-                return getViewable(d);
+                return getViewable(d) && !d.hideMedia;
             })
             .append("svg:foreignObject")
             .html(function (d) {
