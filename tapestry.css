@@ -320,22 +320,27 @@ body {
 .mediaButton {
     transition: all 0.25s ease;
     cursor: pointer;
-    color: #666666;
+    color: #fff;
     overflow: hidden;
-    border-radius: 100%;
+    background: #666;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    width: 55px;
+    height: 55px;
+    font-size: 32px;
+}
+
+.mediaButtonIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .mediaButton:hover,
 .mediaButton:active {
     transform: scale(1.15) translate(0, 21px);
-    color: #11a6d8;
-}
-
-.mediaButton > i:not(.mediaButtonLoading) {
-    font-size: 55px;
-    background: #fff;
-    border: solid 1px #fff;
-    padding: 2px;
+    background: #11a6d8;
 }
 
 .mediaButton > i[data-media-type="text"]:not(.mediaButtonLoading) {
@@ -361,19 +366,15 @@ body {
 }
 
 /* EDIT NODE BUTTON */
-.editNodeButton {
-    transition: all 0.25s ease;
-    cursor: pointer;
-    color: #666666;
-    overflow: hidden;
-    border-radius: 100%;
-    border: solid 4px #fff;
-}
-
 .editNodeButton:hover,
 .editNodeButton:active {
     transform: scale(1.15) translate(0, -21px);
-    color: #11a6d8;
+}
+
+/* ADD NODE BUTTON */
+.addNodeButton:hover,
+.addNodeButton:active {
+    transform: scale(1.15) translate(0, -21px);
 }
 
 #cancel-edit-node {
@@ -383,41 +384,6 @@ body {
 
 #submit-edit-node {
     color: white;
-}
-
-.editNodeButton > i {
-    font-size: 63px;
-    background: #fff;
-    border: solid 1px #fff;
-    padding: 2px;
-    margin: -8px 0 0 -5px;
-}
-
-/* ADD NODE BUTTON */
-.addNodeButton {
-    transition: all 0.25s ease;
-    cursor: pointer;
-    color: #666666;
-    overflow: hidden;
-    border-radius: 100%;
-}
-
-
-.addNodeButton:hover,
-.addNodeButton:active {
-    transform: scale(1.15) translate(0, -21px);
-    color: #11a6d8;
-}
-.addNodeButton > i:not(.mediaButtonLoading) {
-    font-size: 55px;
-    background: #fff;
-    border: solid 1px #fff;
-    padding: 2px;
-}
-
-i {
-    background-color: white;
-    border-radius: 100%;
 }
 
 .lightbox {

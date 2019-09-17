@@ -946,7 +946,7 @@ function tapestryTool(config){
             .append("svg:foreignObject")
             .html(function (d) {
                 return '<i  title="Click to add node or drag to another node to link" id="addNodeIcon' + d.id + '"' +
-                    ' class="' + getIconClass("add") + ' addNodeIcon"' +
+                    ' class="' + getIconClass("add") + ' mediaButtonIcon"' +
                     ' data-id="' + d.id + '"><\/i>';
             })
             .attr("id", function (d) {
@@ -964,7 +964,7 @@ function tapestryTool(config){
             .attr("style", function (d) {
                 return d.nodeType === "grandchild" || d.nodeType === "child" ? "visibility: hidden" : "visibility: visible";
             })
-            .attr("class", "addNodeButton")
+            .attr("class", "mediaButton addNodeButton")
             .call(d3.drag()
                 .on('start',function(thisNode){
                     linkFromNode = thisNode;
@@ -1005,7 +1005,7 @@ function tapestryTool(config){
             .append("svg:foreignObject")
             .html(function (d) {
                 return '<i id="editNodeIcon' + d.id + '"' +
-                    ' class=" fas fa-pen-square' + ' editNodeIcon"' +
+                    ' class=" fas fa-pen' + ' mediaButtonIcon"' +
                     ' data-id="' + d.id + '"><\/i>';
             })
             .attr("id", function (d) {
@@ -1023,7 +1023,7 @@ function tapestryTool(config){
             .attr("style", function (d) {
                 return d.nodeType === "grandchild" || d.nodeType === "child" ? "visibility: hidden" : "visibility: visible";
             })
-            .attr("class", "editNodeButton");
+            .attr("class", "mediaButton editNodeButton");
     
         $('.editNodeButton').click(function(){
             dispatchEvent(new CustomEvent("edit-node"))
@@ -1134,7 +1134,7 @@ function tapestryTool(config){
         }
     
     $("<div class='media-wrapper'></div>").appendTo('#spotlight-content');
-    media.appendTo('#spotlight-content .media-wrapper');
+    media.appendTo('.media-wrapper');
     
     $("<button id='lightbox-close-wrapper'><div class='lightbox-close'><i class='fa fa-times'</i></div></button>")
             .on("click", function() {
@@ -1390,6 +1390,8 @@ function tapestryTool(config){
                 }
 
             }, false);
+        } else if (mediaFormat === "embed") {
+            mediaEl = $('<iframe id="embed" src="' + mediaUrl + '" width="' + width + '" height="' + height + '" frameborder="0" allowfullscreen="allowfullscreen"><\/iframe>');
         }
     
         return mediaEl;
@@ -2233,7 +2235,6 @@ function updateMediaIcon(id, mediaType, action) {
 function getIconClass(mediaType, action) {
 
     var classStrStart = 'fas fa-';
-    var classStrEnd = '-circle';
     var classStr = '';
 
     if (action == 'loading') {
@@ -2244,21 +2245,25 @@ function getIconClass(mediaType, action) {
 
         case "video":
             if (action == 'pause')
-                classStr = classStrStart + 'pause' + classStrEnd;
+                classStr = classStrStart + 'pause';
             else
-                classStr = classStrStart + 'play' + classStrEnd;
+                classStr = classStrStart + 'play';
             break;
 
         case "add":
-            classStr = classStrStart + 'plus' + classStrEnd;
+            classStr = classStrStart + 'plus';
             break;
             
         case "text":
             classStr = classStrStart + 'font';
             break;
 
+        case "url-embed":
+            classStr = classStrStart + 'link';
+            break;
+
         default:
-            classStr = classStrStart + 'exclamation' + classStrEnd;
+            classStr = classStrStart + 'exclamation';
             break;
     }
 
@@ -2402,6 +2407,10 @@ function tapestryValidateNewNode(formData, isRoot) {
                 default:	
                     break;	
             }	
+        } else if ($("#mediaType").val() === 'url-embed') {
+            if (fieldValue === "") {
+                errMsg += "Please enter an embed url \n";
+            }
         }	
     }	
 
