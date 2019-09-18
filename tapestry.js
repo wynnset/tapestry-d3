@@ -761,9 +761,9 @@ function tapestryTool(config){
                 .on("drag", dragged)
                 .on("end", dragended)
             )
-            .on("click", function (d) {
-                // prevent multiple clicks
-                if (root != d.id) {
+            .on("click keydown", function (d) {
+                recordAnalyticsEvent('user', 'click', 'node', d.id);
+                if (root != d.id) { // prevent multiple clicks
                     root = d.id;
                     resizeNodes(d.id);
 
@@ -773,7 +773,11 @@ function tapestryTool(config){
                     tapestryDepthSlider.max = findMaxDepth(root);
                     updateSvgDimensions();
                 }
-                recordAnalyticsEvent('user', 'click', 'node', d.id);
+                else if (d.hideMedia) {
+                    var thisBtn = $('#node-' + d.id + ' .mediaButton > i')[0];
+                    setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
+                    recordAnalyticsEvent('user', 'open', 'lightbox', thisBtn.dataset.id);
+                }
             });
     }
 
@@ -929,7 +933,7 @@ function tapestryTool(config){
         // Append mediaButton
         nodes
             .filter(function (d) {
-                return getViewable(d) && !d.hideMedia;
+                return getViewable(d);
             })
             .append("svg:foreignObject")
             .html(function (d) {
@@ -956,7 +960,7 @@ function tapestryTool(config){
                 return -NORMAL_RADIUS * adjustedRadiusRatio - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);
             })
             .attr("style", function (d) {
-                return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
+                return (d.nodeType === "grandchild" || d.hideMedia) ? "visibility: hidden" : "visibility: visible";
             })
             .attr("class", "mediaButton");
     
