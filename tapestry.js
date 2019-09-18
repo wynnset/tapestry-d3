@@ -638,19 +638,27 @@ function tapestryTool(config){
                 return "imageContainer";
             })
             .attr("rx", function (d) {
+                if (d.hideProgress && d.imageURL.length) {
+                    return 0;
+                }
                 return getRadius(d);
             })
             .attr("ry", function (d) {
+                if (d.hideProgress && d.imageURL.length) {
+                    return 0;
+                }
                 return getRadius(d);
             })
             .attr("data-id", function (d) {
                 return d.id;
             })
             .attr("stroke-width", function (d) {
-                return PROGRESS_THICKNESS * adjustedRadiusRatio;
+                if (!d.hideProgress) {
+                    return PROGRESS_THICKNESS * adjustedRadiusRatio;
+                }
             })
             .attr("stroke", function (d) {
-                if (!getViewable(d))
+                if (!getViewable(d) || d.hideProgress)
                     return "transparent";
                 else if (d.nodeType === "grandchild")
                     return COLOR_GRANDCHILD;
@@ -677,6 +685,10 @@ function tapestryTool(config){
             });
     
         nodes.append("circle")
+            .filter(function (d) {
+                // no overlay if hiding progress and there is an image
+                return !(d.hideProgress && d.imageURL.length);
+            })
             .attr("class", function (d) {
                 return getNodeClasses(d);
             })
@@ -688,10 +700,14 @@ function tapestryTool(config){
             })
             .attr("r", function (d) {
                 var rad = getRadius(d);
-                if (rad > PROGRESS_THICKNESS/2)
+                if (d.hideProgress) {
+                    return rad;
+                } else if (rad > PROGRESS_THICKNESS/2) {
                     return rad - PROGRESS_THICKNESS/2;
-                else
+                }
+                else {
                     return 0;
+                }
             })
             .attr("fill", function (d) {
                 return getNodeColor(d);
@@ -745,9 +761,9 @@ function tapestryTool(config){
                 .on("drag", dragged)
                 .on("end", dragended)
             )
-            .on("click", function (d) {
-                // prevent multiple clicks
-                if (root != d.id) {
+            .on("click keydown", function (d) {
+                recordAnalyticsEvent('user', 'click', 'node', d.id);
+                if (root != d.id) { // prevent multiple clicks
                     root = d.id;
                     resizeNodes(d.id);
 
@@ -757,7 +773,11 @@ function tapestryTool(config){
                     tapestryDepthSlider.max = findMaxDepth(root);
                     updateSvgDimensions();
                 }
-                recordAnalyticsEvent('user', 'click', 'node', d.id);
+                else if (d.hideMedia) {
+                    var thisBtn = $('#node-' + d.id + ' .mediaButton > i')[0];
+                    setupLightbox(thisBtn.dataset.id, thisBtn.dataset.format, thisBtn.dataset.mediaType, thisBtn.dataset.url, thisBtn.dataset.mediaWidth, thisBtn.dataset.mediaHeight);
+                    recordAnalyticsEvent('user', 'open', 'lightbox', thisBtn.dataset.id);
+                }
             });
     }
 
@@ -771,10 +791,14 @@ function tapestryTool(config){
                 .duration(TRANSITION_DURATION/2)
                 .attr("r", function (d) {
                     var rad = getRadius(d);
-                    if (rad > (PROGRESS_THICKNESS * adjustedRadiusRatio)/2)
+                    if (d.hideProgress) {
+                        return rad;
+                    } else if (rad > (PROGRESS_THICKNESS * adjustedRadiusRatio)/2) {
                         return rad - (PROGRESS_THICKNESS * adjustedRadiusRatio)/2;
-                    else
+                    }
+                    else {
                         return 0;
+                    }
                 })
                 .attr("class", function (d) {
                     return getNodeClasses(d);
@@ -792,13 +816,19 @@ function tapestryTool(config){
                 .transition()
                 .duration(TRANSITION_DURATION)
                 .attr("rx", function (d) {
+                    if (d.hideProgress && d.imageURL.length) {
+                        return 0;
+                    }
                     return getRadius(d);
                 })
                 .attr("ry", function (d) {
+                    if (d.hideProgress && d.imageURL.length) {
+                        return 0;
+                    }
                     return getRadius(d);
                 })
                 .attr("stroke", function (d) {
-                    if (!getViewable(d))
+                    if (!getViewable(d) || d.hideProgress)
                         return "transparent";
                     else if (d.nodeType === "grandchild") 
                         return COLOR_GRANDCHILD;
@@ -822,7 +852,9 @@ function tapestryTool(config){
                     else return COLOR_BLANK_HOVER;
                 })
                 .attr("stroke-width", function (d) {
-                    return PROGRESS_THICKNESS * adjustedRadiusRatio;
+                    if (!d.hideProgress) {
+                        return PROGRESS_THICKNESS * adjustedRadiusRatio;
+                    }
                 });
         
         /* Attach images to be used within each node */
@@ -877,7 +909,7 @@ function tapestryTool(config){
     /* Create the node meta */
         nodes
             .filter(function (d){
-                return getViewable(d);
+                return getViewable(d) && !d.hideTitle;
             })
             .append('foreignObject')
             .attr("width", NORMAL_RADIUS * 2 * NODE_TEXT_RATIO)
@@ -928,7 +960,7 @@ function tapestryTool(config){
                 return -NORMAL_RADIUS * adjustedRadiusRatio - 30 - (d.nodeType === "root" ? ROOT_RADIUS_DIFF : 0);
             })
             .attr("style", function (d) {
-                return d.nodeType === "grandchild" ? "visibility: hidden" : "visibility: visible";
+                return (d.nodeType === "grandchild" || d.hideMedia) ? "visibility: hidden" : "visibility: visible";
             })
             .attr("class", "mediaButton");
     
