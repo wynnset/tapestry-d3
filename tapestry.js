@@ -196,17 +196,6 @@ function tapestryTool(config){
         setLinkTypes(root);
         setUnlocked();
         setAccessibleStatus();
-        
-        if (!isReload) {
-
-            // Create the SVG container where the tapestry will live
-            svg = createSvgContainer();
-
-            // Attach the link adding line to the tapestry SVG (it won't appear for now)
-            $("#" + TAPESTRY_CONTAINER_ID + " > svg").prepend(nodeLinkLine);
-
-            recordAnalyticsEvent('app', 'load', 'tapestry', tapestrySlug);
-        }
 
         if (!isReload) {
             svg = createSvgContainer(TAPESTRY_CONTAINER_ID);
