@@ -64,7 +64,9 @@ body {
     float: right;
     width: auto;
 	background: #fbfbfb;
-	box-shadow: 0 0 7px 0 #DDD;
+    box-shadow: 0 0 7px 0 #DDD;
+    display: flex;
+    align-items: center;
 }
 @media (min-width:1000px) {
 	#tapestry-controls-wrapper {
@@ -103,7 +105,7 @@ body {
     border: 1px solid #dfdfdf;
     border-radius: 50%;
     left: -30px;
-    bottom: -12px;
+    bottom: -9px;
 }
 
 #tapestry-depth-slider::after {
@@ -154,12 +156,24 @@ body {
 #tapestry-depth-slider:hover {
     opacity: 1
 }
+
+#tapestry-depth-slider {
+    align-items: center;
+}
+
 #tapestry-depth-slider-wrapper label {
     display: none;
 }
 
 #tapestry-view-locked-checkbox-wrapper {
     padding: 0 15px;
+    display: flex;
+    align-items: center;
+}
+
+#tapestry-view-locked-checkbox-wrapper label {
+    margin-bottom: 0;
+    margin-left: 8px;
 }
 
 #footer {
@@ -313,6 +327,10 @@ body {
 
 .links line {
     stroke-opacity: 5;
+}
+
+.link-lines{
+    cursor: pointer;
 }
 
 /* MEDIA BUTTON */
@@ -555,7 +573,7 @@ body {font-family: Arial, Helvetica, sans-serif;}
     color: white;
 }
 
-#cancel-add-new-node {
+#cancel-add-new-node, #tapestry-delete-node {
     color: white;
     background-color: #dc3545;
 }
