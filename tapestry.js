@@ -745,8 +745,7 @@ function tapestryTool(config){
             .style("opacity", "0");
         
         setTimeout(function(){
-            linksToHide
-                .style("display", "block");
+            linksToHide.style("display", "none");
         }, TRANSITION_DURATION/2);
     
         // Show Nodes
@@ -773,7 +772,7 @@ function tapestryTool(config){
             .style("opacity", "0");
     
         setTimeout(function(){
-            nodesToHide.style("display", "block");
+            nodesToHide.style("display", "none");
         }, TRANSITION_DURATION);
         
         if (freshBuild) {
