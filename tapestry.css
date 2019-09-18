@@ -52,10 +52,6 @@ body {
   }
 }
 
-#tapestry {
-    margin-top: 20px;
-}
-
 #tapestry-svg > g {
     transform: translate(-8.5px, 0);
 }
@@ -68,7 +64,9 @@ body {
     float: right;
     width: auto;
 	background: #fbfbfb;
-	box-shadow: 0 0 7px 0 #DDD;
+    box-shadow: 0 0 7px 0 #DDD;
+    display: flex;
+    align-items: center;
 }
 @media (min-width:1000px) {
 	#tapestry-controls-wrapper {
@@ -107,7 +105,7 @@ body {
     border: 1px solid #dfdfdf;
     border-radius: 50%;
     left: -30px;
-    bottom: -12px;
+    bottom: -9px;
 }
 
 #tapestry-depth-slider::after {
@@ -158,12 +156,24 @@ body {
 #tapestry-depth-slider:hover {
     opacity: 1
 }
+
+#tapestry-depth-slider {
+    align-items: center;
+}
+
 #tapestry-depth-slider-wrapper label {
     display: none;
 }
 
 #tapestry-view-locked-checkbox-wrapper {
     padding: 0 15px;
+    display: flex;
+    align-items: center;
+}
+
+#tapestry-view-locked-checkbox-wrapper label {
+    margin-bottom: 0;
+    margin-left: 8px;
 }
 
 #footer {
@@ -171,10 +181,6 @@ body {
     font-size: 0.7em;
     color: #666;
     text-align:center;
-}
-
-div.modal {
-    top: 80px;
 }
 
 #spotlight-content {
@@ -299,6 +305,9 @@ div.modal {
 .imageOverlay {
     opacity: 0.5;
 }
+.imageOverlay--no-image {
+    opacity: 1;
+}
 
 .node .expandGrandchildren {
     fill: #999;
@@ -320,27 +329,41 @@ div.modal {
     stroke-opacity: 5;
 }
 
+.link-lines{
+    cursor: pointer;
+}
+
 /* MEDIA BUTTON */
 
 .mediaButton {
     transition: all 0.25s ease;
     cursor: pointer;
-    color: #666666;
+    color: #fff;
     overflow: hidden;
-    border-radius: 100%;
+    background: #666;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    width: 55px;
+    height: 55px;
+    font-size: 32px;
+}
+
+.mediaButtonIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .mediaButton:hover,
 .mediaButton:active {
     transform: scale(1.15) translate(0, 21px);
-    color: #11a6d8;
+    background: #11a6d8;
 }
 
-.mediaButton > i:not(.mediaButtonLoading) {
-    font-size: 55px;
-    background: #fff;
-    border: solid 1px #fff;
-    padding: 2px;
+.mediaButtonIcon.fa-play:before {
+    font-size: 0.9em;
+    padding-left: 0.2em;
 }
 
 .mediaButton > i[data-media-type="text"]:not(.mediaButtonLoading) {
@@ -365,64 +388,12 @@ div.modal {
     box-shadow: 0 0 0 2px #666 inset;
 }
 
-/* EDIT NODE BUTTON */
-.editNodeButton {
-    transition: all 0.25s ease;
-    cursor: pointer;
-    color: #666666;
-    overflow: hidden;
-    border-radius: 100%;
-    border: solid 4px #fff;
-}
-
+/* ADD + EDIT NODE BUTTONS */
 .editNodeButton:hover,
-.editNodeButton:active {
-    transform: scale(1.15) translate(0, -21px);
-    color: #11a6d8;
-}
-
-#cancel-edit-node {
-    color: white;
-    background-color: #dc3545;
-}
-
-#submit-edit-node {
-    color: white;
-}
-
-.editNodeButton > i {
-    font-size: 63px;
-    background: #fff;
-    border: solid 1px #fff;
-    padding: 2px;
-    margin: -8px 0 0 -5px;
-}
-
-/* ADD NODE BUTTON */
-.addNodeButton {
-    transition: all 0.25s ease;
-    cursor: pointer;
-    color: #666666;
-    overflow: hidden;
-    border-radius: 100%;
-}
-
-
+.editNodeButton:active,
 .addNodeButton:hover,
 .addNodeButton:active {
     transform: scale(1.15) translate(0, -21px);
-    color: #11a6d8;
-}
-.addNodeButton > i:not(.mediaButtonLoading) {
-    font-size: 55px;
-    background: #fff;
-    border: solid 1px #fff;
-    padding: 2px;
-}
-
-i {
-    background-color: white;
-    border-radius: 100%;
 }
 
 .lightbox {
@@ -474,8 +445,8 @@ i {
     border: none;
     outline: none;
     position: absolute;
-    top: -17px;
-    right: -22px;
+    top: -37px;
+    right: -42px;
 }
 
 .lightbox-close {
@@ -594,7 +565,7 @@ body {font-family: Arial, Helvetica, sans-serif;}
     color: white;
 }
 
-#cancel-add-new-node {
+#cancel-add-new-node, #tapestry-delete-node {
     color: white;
     background-color: #dc3545;
 }
