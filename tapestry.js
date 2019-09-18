@@ -638,9 +638,15 @@ function tapestryTool(config){
                 return "imageContainer";
             })
             .attr("rx", function (d) {
+                if (d.hideProgress && d.imageURL.length) {
+                    return 0;
+                }
                 return getRadius(d);
             })
             .attr("ry", function (d) {
+                if (d.hideProgress && d.imageURL.length) {
+                    return 0;
+                }
                 return getRadius(d);
             })
             .attr("data-id", function (d) {
@@ -652,7 +658,7 @@ function tapestryTool(config){
                 }
             })
             .attr("stroke", function (d) {
-                if (!getViewable(d))
+                if (!getViewable(d) || d.hideProgress)
                     return "transparent";
                 else if (d.nodeType === "grandchild")
                     return COLOR_GRANDCHILD;
@@ -679,6 +685,10 @@ function tapestryTool(config){
             });
     
         nodes.append("circle")
+            .filter(function (d) {
+                // no overlay if hiding progress and there is an image
+                return !(d.hideProgress && d.imageURL.length);
+            })
             .attr("class", function (d) {
                 return getNodeClasses(d);
             })
@@ -802,13 +812,19 @@ function tapestryTool(config){
                 .transition()
                 .duration(TRANSITION_DURATION)
                 .attr("rx", function (d) {
+                    if (d.hideProgress && d.imageURL.length) {
+                        return 0;
+                    }
                     return getRadius(d);
                 })
                 .attr("ry", function (d) {
+                    if (d.hideProgress && d.imageURL.length) {
+                        return 0;
+                    }
                     return getRadius(d);
                 })
                 .attr("stroke", function (d) {
-                    if (!getViewable(d))
+                    if (!getViewable(d) || d.hideProgress)
                         return "transparent";
                     else if (d.nodeType === "grandchild") 
                         return COLOR_GRANDCHILD;
