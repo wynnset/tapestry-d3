@@ -2457,7 +2457,7 @@ function getIconClass(mediaType, action) {
             break;
 
         case "url-embed":
-            classStr = classStrStart + 'link';
+            classStr = classStrStart + 'window-maximize';
             break;
 
         default:

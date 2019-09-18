@@ -361,6 +361,11 @@ body {
     background: #11a6d8;
 }
 
+.mediaButtonIcon.fa-play:before {
+    font-size: 0.9em;
+    padding-left: 0.2em;
+}
+
 .mediaButton > i[data-media-type="text"]:not(.mediaButtonLoading) {
     background: #666;
     color: #fff;
@@ -383,25 +388,12 @@ body {
     box-shadow: 0 0 0 2px #666 inset;
 }
 
-/* EDIT NODE BUTTON */
+/* ADD + EDIT NODE BUTTONS */
 .editNodeButton:hover,
-.editNodeButton:active {
-    transform: scale(1.15) translate(0, -21px);
-}
-
-/* ADD NODE BUTTON */
+.editNodeButton:active,
 .addNodeButton:hover,
 .addNodeButton:active {
     transform: scale(1.15) translate(0, -21px);
-}
-
-#cancel-edit-node {
-    color: white;
-    background-color: #dc3545;
-}
-
-#submit-edit-node {
-    color: white;
 }
 
 .lightbox {
