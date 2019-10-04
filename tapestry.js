@@ -337,15 +337,16 @@ function createRootNodeButton(dataset) {
             document.getElementById(TAPESTRY_CONTAINER_ID).append(rootNodeDiv);
         }
 
-        $("#root-node-btn").on("click", function(e) {
+        document.querySelector("#root-node-btn").addEventListener("click", function(e) {
             // Populate title
-            $('#createNewNodeModalLabel').text("Add root node");
-            $("#submit-add-new-node").hide();
-            $("#submit-edit-node").hide();
-            $("#submit-add-root-node").show();
-            $("#appearsat-section").hide();
+            document.querySelector('#createNewNodeModalLabel').innerHTML = "Add root node";
+            //Adding simple inline styling to hide and show (reveal) things!
+            document.querySelector("#submit-add-new-node").style.display = "none";
+            document.querySelector("#submit-edit-node").style.display = "none";
+            document.querySelector("#submit-add-root-node").style.display = "block";
+            document.querySelector("#appearsat-section").style.display = "none";
             // Show the modal
-            $("#createNewNodeModal").modal();
+            document.querySelector("#createNewNodeModal").modal();
         });
     }
 }
@@ -361,34 +362,34 @@ $("#tapestry-add-modal-div").load(config.addNodeModalUrl, function(responseTxt, 
     if (statusTxt == "success") {
 
         // Adding Root Node
-        $("#submit-add-root-node").on("click", function(e) {
+        document.querySelector("#submit-add-root-node").addEventListener("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
             tapestryAddEditNode(formData, false, true);
         });
 
         // Adding New Nodes
-        $("#submit-add-new-node").on("click", function(e) {
+        document.querySelector("#submit-add-new-node").addEventListener("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
             tapestryAddEditNode(formData, false);
         });
 
-        $("#mediaType").on("change", function() {
-            $("#tapestry-text-content").hide();
-            $("#mp4-content").hide();
-            $("#h5p-content").hide();
+        document.querySelector("#mediaType").addEventListener("change", function() {
+            document.querySelector("#tapestry-text-content").style.display = "none";
+            document.querySelector("#mp4-content").style.display = "none";
+            document.querySelector("#h5p-content").style.display = "none";
             var selectedType = $(this).val();
             switch(selectedType)
             {
                 case "video":
-                    $("#mp4-content").show();
+                    document.querySelector("#mp4-content").style.display = "block";
                     break;
                 case "h5p":
-                    $("#h5p-content").show();
+                    document.querySelector("#h5p-content").style.display = "block";
                     break;
                 case "text":
-                    $("#tapestry-text-content").show();
+                    document.querySelector("#tapestry-text-content").style.display = "block";
                     break;
                 default:
                     break;
@@ -400,22 +401,22 @@ $("#tapestry-add-modal-div").load(config.addNodeModalUrl, function(responseTxt, 
             tapestryHideAddNodeModal();
         });
 
-        $("#cancel-add-new-node").on("click", function() {
+        document.querySelector("#cancel-add-new-node").addEventListener("click", function() {
             tapestryHideAddNodeModal();
         });
         
-        $("#submit-edit-node").on("click", function(e) {
+        document.querySelector("#submit-edit-node").addEventListener("click", function(e) {
             e.preventDefault(); // cancel the actual submit
             var formData = $("form").serializeArray();
             tapestryAddEditNode(formData, true);
         });
 
-        $("#tapestry-lock-node-checkbox").on("change", function(e) {
+        document.querySelector("#tapestry-lock-node-checkbox").addEventListener("change", function(e) {
             e.preventDefault();
             if($(this).is(":checked")) {
-                $("#appears-at-label").show();
+                document.querySelector("#appears-at-label").style.display = "block";
             } else {
-                $("#appears-at-label").hide();
+                document.querySelector("#appears-at-label").style.display = "none";
             }
         });
 
@@ -775,7 +776,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
 
                         tapestry.init(true);
                         tapestryHideAddNodeModal();
-                        $("#root-node-container").hide(); // hide the root node button after creating it.
+                        document.querySelector("#root-node-container").style.display = "none"; // hide the root node button after creating it.
                     },
                     error: function(e) {
                         console.error("Error with adding permission to root node", e);
@@ -816,33 +817,34 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
 // Resets the add/edit modal to default state
 function tapestryHideAddNodeModal() {
     // Clear all text fields
-    $("#createNewNodeModalBody input[type='text']").val("");
-    $("#createNewNodeModalBody input[type='url']").val("");
+    document.querySelector("#createNewNodeModalBody input[type='text']").innerHTML  = "";
+    document.querySelector("#createNewNodeModalBody input[type='url']").innerHTML  = "";
     // Remove Text Area for text node 
-    $("#tapestry-node-text-area").val("");
-    $(".permissions-dynamic-row").remove(); // remove the dynamically created permission rows
+    document.querySelector("#tapestry-node-text-area").innerHTML = "";
+    var elem = document.querySelector(".permissions-dynamic-row")
+    elem.parentNode.removeChild(elem) // remove the dynamically created permission rows
     // Uncheck all public permissions except read
     $('.public-checkbox').each(function() {
         if ($(this).is(":checked") && this.name !== "read") {
             $(this).prop('checked', false);
         }
     });
-    $("#tapestry-node-description-area").val("");
+    document.querySelector("#tapestry-node-description-area").innerHTML = "";
     $("#createNewNodeModal").modal("hide");
 
     // Reset all selections for dropdowns
-    $("#mediaType").val("default");
+    document.querySelector("#mediaType").innerHTML = "default";
     // Enable media type because edit disables it
-    $("#mediaType").removeAttr('disabled');
+    document.querySelector("#mediaType").removeAttribute('disabled');
 
     // Uncheck lock node label and hide appears at input
-    $("#tapestry-lock-node-checkbox").prop('checked', false);
-    $("#appears-at-label").hide();
+    document.querySelector("#tapestry-lock-node-checkbox").checked =  false;
+    document.querySelector("#appears-at-label").style.display = "none";
 
-    $("#tapestry-text-content").hide();
-    $("#mp4-content").hide();
-    $("#h5p-content").hide();
-    $("#appearsat-section").show();
+    document.querySelector("#tapestry-text-content").style.display = "none";
+    document.querySelector("#mp4-content").style.display = "none";
+    document.querySelector("#h5p-content").style.display = "none";
+    document.querySelector("#appearsat-section").style.display = "block";
 }
 
 function tapestryValidateNewNode(formData, isRoot) {
@@ -1351,7 +1353,8 @@ function buildNodeContents() {
 
 function rebuildNodeContents() {
     /* Remove text before transition animation */
-    $(".meta").remove();
+    elem = document.querySelector(".meta")
+    elem.parentNode.removeChild(elem);
 
     /* Commence transition animation */
     nodes.selectAll(".imageOverlay")
@@ -1584,12 +1587,12 @@ function buildPathAndButton() {
 
     $('.addNodeButton').click(function(){
         // Set up the title of the form
-        $('#createNewNodeModalLabel').text("Add new sub-topic to " + tapestry.dataset.nodes[findNodeIndex(root)].title);
-        $("#submit-add-root-node").hide();
-        $("#submit-edit-node").hide();
-        $("#submit-add-new-node").show();
+        document.querySelector('#createNewNodeModalLabel').innerHTML = "Add new sub-topic to " + tapestry.dataset.nodes[findNodeIndex(root)].title;
+        document.querySelector("#submit-add-root-node").style.display = 'none';
+        document.querySelector("#submit-edit-node").style.display = "none";
+        document.querySelector("#submit-add-new-node").style.display = "block";
         if (tapestry.dataset.nodes[findNodeIndex(root)].mediaType !== "video") {
-            $("#appearsat-section").hide();
+            document.querySelector("#appearsat-section").style.display = "none";
         }
         // Show the modal
         $("#createNewNodeModal").modal();
@@ -1625,54 +1628,54 @@ function buildPathAndButton() {
 
     $('.editNodeButton').click(function(){
         // Add in the title for the modal
-        $('#createNewNodeModalLabel').text("Edit node: " + tapestry.dataset.nodes[findNodeIndex(root)].title);
-        $("#submit-add-root-node").hide();
-        $("#submit-add-new-node").hide();
-        $("#submit-edit-node").show();
-        $("#appearsat-section").hide();
+        document.querySelector('#createNewNodeModalLabel').innerHTML = "Edit node: " + tapestry.dataset.nodes[findNodeIndex(root)].title;
+        document.querySelector("#submit-add-root-node").style.display = "none";
+        document.querySelector("#submit-add-new-node").style.display = "none";;
+        document.querySelector("#submit-edit-node").style.display = "block";
+        document.querySelector("#appearsat-section").style.display = "none";;
 
         // Load the values into input
-        $("#add-node-title-input").val(tapestry.dataset.nodes[findNodeIndex(root)].title);
-        $("#add-node-thumbnail-input").val(tapestry.dataset.nodes[findNodeIndex(root)].imageURL);
+        document.querySelector("#add-node-title-input").innerHTML = tapestry.dataset.nodes[findNodeIndex(root)].title;
+        document.querySelector("#add-node-thumbnail-input").innerHTML = tapestry.dataset.nodes[findNodeIndex(root)].imageURL;
 
         // Load description
         if (tapestry.dataset.nodes[findNodeIndex(root)].description) {
-            $("#tapestry-node-description-area").val(tapestry.dataset.nodes[findNodeIndex(root)].description);
+            document.querySelector("#tapestry-node-description-area").innerHTML = tapestry.dataset.nodes[findNodeIndex(root)].description;
         }
 
-        $("#mp4-content").hide();
-        $("#h5p-content").hide();
-        $("#tapestry-text-content").hide();
+        document.querySelector("#mp4-content").style.display = "none";
+        document.querySelector("#h5p-content").style.display = "none";
+        document.querySelector("#tapestry-text-content").style.display = "none";
 
         if (tapestry.dataset.nodes[findNodeIndex(root)].mediaType === "text") {
-            $("#mediaType").val("text");
-            $("#tapestry-text-content").show();
-            $("#tapestry-node-text-area").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.textContent);
+            document.querySelector("#mediaType").innerHTML = "text";
+            document.querySelector("#tapestry-text-content").style.display = "block"
+            document.querySelector("#tapestry-node-text-area").innerHTML = tapestry.dataset.nodes[findNodeIndex(root)].typeData.textContent;
         } else if (tapestry.dataset.nodes[findNodeIndex(root)].mediaType === "video") {
             if (tapestry.dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
-                $("#mediaType").val("video");
-                $("#mp4-mediaURL-input").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
-                $("#mp4-mediaDuration-input").val(tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration);
-                $("#mp4-content").show();
+                document.querySelector("#mediaType").innerHTML = "video";
+                document.querySelector("#mp4-mediaURL-input").innerHTML = tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL;
+                document.querySelector("#mp4-mediaDuration-input").innerHTML = tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration;
+                document.querySelector("#mp4-content").style.display = "block";
             } else if (tapestry.dataset.nodes[findNodeIndex(root)].mediaFormat === "h5p") {
-                $("#mediaType").val("h5p");
-                $("#h5p-mediaURL-input").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
-                $("#h5p-mediaDuration-input").val(tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration);
-                $("#h5p-content").show();
+                document.querySelector("#mediaType").innerHTML = "h5p";
+                document.querySelector("#h5p-mediaURL-input").innerHTML = tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL;
+                document.querySelector("#h5p-mediaDuration-input").innerHTML = tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration;
+                document.querySelector("#h5p-content").style.display = "block";
             }
         }
 
         // Disable media type (set it to hidden) because there's more things to consider
-        $("#mediaType").attr('disabled','disabled');
-        $("#hiddenMediaType").removeAttr('disabled');
-        $("#hiddenMediaType").val($("#mediaType").val());
+        document.querySelector("#mediaType").disabled = 'disabled';
+        document.querySelector("#hiddenMediaType").removeAttribute('disabled');
+        document.querySelector("#hiddenMediaType").innerHTML = document.querySelector("#mediaType").innerHTML;
 
         // Permissions table
         if (tapestry.dataset.nodes[findNodeIndex(root)].permissions) {
             for (var key in tapestry.dataset.nodes[findNodeIndex(root)].permissions) {
                 if (key === "public") {
                     for (var i = 0; i < tapestry.dataset.nodes[findNodeIndex(root)].permissions[key].length; i++) {
-                        $("#public-" + tapestry.dataset.nodes[findNodeIndex(root)].permissions[key][i].replace("_", "-") + "-checkbox").prop("checked", true);
+                        document.querySelector("#public-" + tapestry.dataset.nodes[findNodeIndex(root)].permissions[key][i].replace("_", "-") + "-checkbox").checked = true;
                     }
                 } else if (key.includes("user")) {
                     // Append row, creates ones that public already has
@@ -1680,7 +1683,7 @@ function buildPathAndButton() {
                     // Add the ones that aren't in public now
                     for (var j = 0; j < tapestry.dataset.nodes[findNodeIndex(root)].permissions[key].length; j++) {
                         if (tapestry.dataset.nodes[findNodeIndex(root)].permissions.public && !tapestry.dataset.nodes[findNodeIndex(root)].permissions.public.includes(tapestry.dataset.nodes[findNodeIndex(root)].permissions[key][j])) {
-                            $("#" + key + "-" + tapestry.dataset.nodes[findNodeIndex(root)].permissions[key][j].replace("_", "-") + "-checkbox").prop("checked", true);
+                            document.querySelector("#" + key + "-" + tapestry.dataset.nodes[findNodeIndex(root)].permissions[key][j].replace("_", "-") + "-checkbox").checked = true;
                         }
                     }
                 }
@@ -1798,8 +1801,8 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     $("<div class='media-wrapper'></div>").appendTo('#spotlight-content');
     media.appendTo('#spotlight-content .media-wrapper');
 
-    $("<button id='lightbox-close-wrapper'><div class='lightbox-close'><i class='fa fa-times'</i></div></button>")
-    .on("click", function() {
+    document.querySelector("<button id='lightbox-close-wrapper'><div class='lightbox-close'><i class='fa fa-times'</i></div></button>")
+    .addEventListener("click", function() {
         closeLightbox(id, mediaType);
         exitViewMode();
     })
@@ -2105,7 +2108,7 @@ function changeToViewMode(lightboxDimensions) {
             if (lightboxDimensions.adjustedOn === "width") {
                 d.fy = getTapestryDimensions().height / 2;
             } else {
-                d.fy = screenToSVG(0, $("#header").height() + NORMAL_RADIUS + ($("#spotlight-content").height() / 2)).y;
+                d.fy = screenToSVG(0, document.querySelector("#header").clientHeight + NORMAL_RADIUS + (document.querySelector("#spotlight-content").clientHeight / 2)).y;
             }
         } else if (d.nodeType === "child") {
             d.fx = coordinates[d.id].fx;
@@ -2173,7 +2176,7 @@ function getViewModeCoordinates(lightboxDimensions, children) {
                     } else {
                         coordinates[children[i]] = {
                             "fx": Math.min(getTapestryDimensions().width * ((i - 1) / (children.length - 1)) + nodeRadius, getTapestryDimensions().width - (nodeSpace * 2)),
-                            "fy": screenToSVG(0, (NORMAL_RADIUS * 1.5) + (NORMAL_RADIUS * 0.1) + $("#spotlight-content").height() + $(".mediaButtonIcon").height()).y
+                            "fy": screenToSVG(0, (NORMAL_RADIUS * 1.5) + (NORMAL_RADIUS * 0.1) + document.querySelector("#spotlight-content").clientHeight + document.querySelector(".mediaButtonIcon").clientHeight).y
                         };
                     }
                 }
