@@ -340,10 +340,10 @@ function createRootNodeButton(dataset) {
         $("#root-node-btn").on("click", function(e) {
             // Populate title
             $('#createNewNodeModalLabel').text("Add root node");
-            $("#submit-add-new-node").hide();
-            $("#submit-edit-node").hide();
-            $("#submit-add-root-node").show();
-            $("#appearsat-section").hide();
+            hideDomNode("#submit-add-new-node");
+            hideDomNode("#submit-edit-node");
+            showDomNode("#submit-add-root-node");
+            hideDomNode("#appearsat-section");
             // Show the modal
             $("#createNewNodeModal").modal();
         });
@@ -375,20 +375,19 @@ $("#tapestry-add-modal-div").load(config.addNodeModalUrl, function(responseTxt, 
         });
 
         $("#mediaType").on("change", function() {
-            $("#tapestry-text-content").hide();
-            $("#mp4-content").hide();
-            $("#h5p-content").hide();
+            hideDomNode("#tapestry-text-content");
+            hideDomNode("#mp4-content");
+            hideDomNode("#h5p-content");
             var selectedType = $(this).val();
-            switch(selectedType)
-            {
+            switch (selectedType) {
                 case "video":
-                    $("#mp4-content").show();
+                    showDomNode("#mp4-content");
                     break;
                 case "h5p":
-                    $("#h5p-content").show();
+                    showDomNode("#h5p-content");
                     break;
                 case "text":
-                    $("#tapestry-text-content").show();
+                    showDomNode("#tapestry-text-content");
                     break;
                 default:
                     break;
@@ -413,9 +412,9 @@ $("#tapestry-add-modal-div").load(config.addNodeModalUrl, function(responseTxt, 
         $("#tapestry-lock-node-checkbox").on("change", function(e) {
             e.preventDefault();
             if($(this).is(":checked")) {
-                $("#appears-at-label").show();
+                showDomNode("#appears-at-label");
             } else {
-                $("#appears-at-label").hide();
+                hideDomNode("#appears-at-label");
             }
         });
 
@@ -775,7 +774,7 @@ function tapestryAddEditNode(formData, isEdit, isRoot) {
 
                         tapestry.init(true);
                         tapestryHideAddNodeModal();
-                        $("#root-node-container").hide(); // hide the root node button after creating it.
+                        hideDomNode("#root-node-container");
                     },
                     error: function(e) {
                         console.error("Error with adding permission to root node", e);
@@ -820,7 +819,7 @@ function tapestryHideAddNodeModal() {
     $("#createNewNodeModalBody input[type='url']").val("");
     // Remove Text Area for text node 
     $("#tapestry-node-text-area").val("");
-    $(".permissions-dynamic-row").remove(); // remove the dynamically created permission rows
+    removeParentNode(".permissions-dynamic-row"); // remove the dynamically created permission rows
     // Uncheck all public permissions except read
     $('.public-checkbox').each(function() {
         if ($(this).is(":checked") && this.name !== "read") {
@@ -837,12 +836,12 @@ function tapestryHideAddNodeModal() {
 
     // Uncheck lock node label and hide appears at input
     $("#tapestry-lock-node-checkbox").prop('checked', false);
-    $("#appears-at-label").hide();
+    hideDomNode("#appears-at-label");
 
-    $("#tapestry-text-content").hide();
-    $("#mp4-content").hide();
-    $("#h5p-content").hide();
-    $("#appearsat-section").show();
+    hideDomNode("#tapestry-text-content");
+    hideDomNode("#mp4-content");
+    hideDomNode("#h5p-content");
+    showDomNode("#appearsat-section");
 }
 
 function tapestryValidateNewNode(formData, isRoot) {
@@ -1351,7 +1350,7 @@ function buildNodeContents() {
 
 function rebuildNodeContents() {
     /* Remove text before transition animation */
-    $(".meta").remove();
+    this.removeParentNode(".meta");
 
     /* Commence transition animation */
     nodes.selectAll(".imageOverlay")
@@ -1585,11 +1584,11 @@ function buildPathAndButton() {
     $('.addNodeButton').click(function(){
         // Set up the title of the form
         $('#createNewNodeModalLabel').text("Add new sub-topic to " + tapestry.dataset.nodes[findNodeIndex(root)].title);
-        $("#submit-add-root-node").hide();
-        $("#submit-edit-node").hide();
-        $("#submit-add-new-node").show();
+        hideDomNode("#submit-add-root-node");
+        hideDomNode("#submit-edit-node");
+        showDomNode("#submit-add-new-node");
         if (tapestry.dataset.nodes[findNodeIndex(root)].mediaType !== "video") {
-            $("#appearsat-section").hide();
+            hideDomNode("#appearsat-section");
         }
         // Show the modal
         $("#createNewNodeModal").modal();
@@ -1626,10 +1625,10 @@ function buildPathAndButton() {
     $('.editNodeButton').click(function(){
         // Add in the title for the modal
         $('#createNewNodeModalLabel').text("Edit node: " + tapestry.dataset.nodes[findNodeIndex(root)].title);
-        $("#submit-add-root-node").hide();
-        $("#submit-add-new-node").hide();
-        $("#submit-edit-node").show();
-        $("#appearsat-section").hide();
+        hideDomNode("#submit-add-root-node");
+        hideDomNode("#submit-add-new-node");
+        showDomNode("#submit-edit-node");
+        hideDomNode("#appearsat-section");
 
         // Load the values into input
         $("#add-node-title-input").val(tapestry.dataset.nodes[findNodeIndex(root)].title);
@@ -1640,25 +1639,25 @@ function buildPathAndButton() {
             $("#tapestry-node-description-area").val(tapestry.dataset.nodes[findNodeIndex(root)].description);
         }
 
-        $("#mp4-content").hide();
-        $("#h5p-content").hide();
-        $("#tapestry-text-content").hide();
+        hideDomNode("#mp4-content");
+        hideDomNode("#h5p-content");
+        hideDomNode("#tapestry-text-content");
 
         if (tapestry.dataset.nodes[findNodeIndex(root)].mediaType === "text") {
             $("#mediaType").val("text");
-            $("#tapestry-text-content").show();
+            showDomNode("#tapestry-text-content");
             $("#tapestry-node-text-area").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.textContent);
         } else if (tapestry.dataset.nodes[findNodeIndex(root)].mediaType === "video") {
             if (tapestry.dataset.nodes[findNodeIndex(root)].mediaFormat === "mp4") {
                 $("#mediaType").val("video");
                 $("#mp4-mediaURL-input").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
                 $("#mp4-mediaDuration-input").val(tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration);
-                $("#mp4-content").show();
+                showDomNode("#mp4-content");
             } else if (tapestry.dataset.nodes[findNodeIndex(root)].mediaFormat === "h5p") {
                 $("#mediaType").val("h5p");
                 $("#h5p-mediaURL-input").val(tapestry.dataset.nodes[findNodeIndex(root)].typeData.mediaURL);
                 $("#h5p-mediaDuration-input").val(tapestry.dataset.nodes[findNodeIndex(root)].mediaDuration);
-                $("#h5p-content").show();
+                showDomNode("#h5p-content");
             }
         }
 
@@ -1806,9 +1805,7 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
     .appendTo('#spotlight-content');
 
     setTimeout(function(){
-        $('#spotlight-content').css({
-            opacity: 1
-        });
+        document.getElementById("spotlight-content").style.opacity = 1;
         if (mediaType != 'video') {
             updateMediaIcon(id, mediaType);
         }
@@ -1819,23 +1816,21 @@ function setupLightbox(id, mediaFormat, mediaType, mediaUrl, width, height) {
         if (mediaFormat == "mp4") {
             loadEvent = "loadstart";
         }
-        
+
         media.on(loadEvent, function() {
             changeToViewMode(lightboxDimensions);
+            let spotlightContent = document.getElementById("spotlight-content");
             window.setTimeout(function(){
                 height = $('#spotlight-content > *').outerHeight();
                 width = $('#spotlight-content > *').outerWidth();
 
-                $('#spotlight-content').css({
-                    width: width,
-                    height: height,
-                    transitionDuration: "0.2s"
-                });
+                spotlightContent.style.width = width;
+                spotlightContent.style.height = height;
+                spotlightContent.style.transitionDuration = "0.2s";
+
             }, 2000);
             window.setTimeout(function(){
-                $('#spotlight-content').css({
-                    transitionDuration: "1s"
-                });
+                spotlightContent.style.transitionDuration = "1s";
             }, 200);
         });
     }
@@ -2826,20 +2821,20 @@ function closeLightbox(id, mediaType) {
         if (h5pObj !== undefined && mediaType == "video") {
             var h5pVideo = h5pObj.instances[0].video;
             if (typeof h5pVideo != "undefined" && typeof h5pVideo.pause !== "undefined") {
-            	h5pVideo.pause();
+                h5pVideo.pause();
 			}
         }
     }
-    
+
     updateMediaIcon(id, mediaType, 'play');
 
-    $('#spotlight-overlay').remove();
-    $('#spotlight-content').css('opacity', 0);
+    this.removeParentNode('#spotlight-overlay');
+    document.getElementById("spotlight-content").style.opacity = 0;
 
     // wait for css animation before removing it
     setTimeout(function () {
-        $('#spotlight-content').remove();
-    }, 1000);
+        this.removeParentNode('#spotlight-content');
+    }.bind(this), 1000);
 
     recordAnalyticsEvent('user', 'close', 'lightbox', id);
 }
@@ -2983,3 +2978,22 @@ $(document).ready(function(){
         recordAnalyticsEvent('user', 'click', 'tapestry', null, {'x': x, 'y': y});
     }, true);
 });
+
+function getDomNode(idOrClass){
+    const isClass = idOrClass[0] === ".";
+    idOrClass = idOrClass.substring(1);
+    return isClass ? document.getElementByClassName(idOrClass) : document.getElementById(idOrClass);
+}
+
+function removeParentNode(idOrClass) {
+    let oNode = getDomNode(idOrClass);
+    oNode.parentId.removeChild(oNode);
+}
+
+function hideDomNode(idOrClass) {
+   getDomNode(idOrClass).style.display = "none";
+}
+
+function showDomNode(idOrClass){
+   getDomNode(idOrClass).style.display = "";
+}
