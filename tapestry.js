@@ -2979,21 +2979,33 @@ $(document).ready(function(){
     }, true);
 });
 
-function getDomNode(idOrClass){
+function getDomNodes(idOrClass){
     const isClass = idOrClass[0] === ".";
     idOrClass = idOrClass.substring(1);
-    return isClass ? document.getElementByClassName(idOrClass) : document.getElementById(idOrClass);
+    return isClass ? document.getElementsByClassName(idOrClass) : document.getElementById(idOrClass);
+}
+
+function applyFunction(nodes, fn) {
+    for (let i = 0, len = nodes.length; i < len; i++) {
+        let node = nodes[i];
+        fn.apply(this, node);
+    }
 }
 
 function removeParentNode(idOrClass) {
-    let oNode = getDomNode(idOrClass);
-    oNode.parentId.removeChild(oNode);
+    applyFunction(getDomNodes(idOrClass), function(oNode){
+        oNode.parentId.removeChild(oNode);
+    });
 }
 
 function hideDomNode(idOrClass) {
-   getDomNode(idOrClass).style.display = "none";
+    applyFunction(getDomNodes(idOrClass), function(oNode) {
+        oNode.style.display = "none";
+    });
 }
 
 function showDomNode(idOrClass){
-   getDomNode(idOrClass).style.display = "";
+    applyFunction(getDomNodes(idOrClass), function(oNode) {
+        oNode.style.display = "";
+    });
 }
