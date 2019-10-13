@@ -180,9 +180,7 @@ this.init = function(isReload = false) {
 
     updateTapestrySize();
 
-    $(window).resize(function() {
-        updateTapestrySize();
-    });
+    window.addEventListener('resize', updateTapestrySize);
         
     //---------------------------------------------------
     // 3. SET NODES/LINKS AND CREATE THE SVG OBJECTS
@@ -337,7 +335,9 @@ function createRootNodeButton(dataset) {
             document.getElementById(TAPESTRY_CONTAINER_ID).append(rootNodeDiv);
         }
 
-        $("#root-node-btn").on("click", function(e) {
+        document
+          .getElementById('#root-node-btn')
+          .addEventListener('click', function (e) {
             // Populate title
             $('#createNewNodeModalLabel').text("Add root node");
             $("#submit-add-new-node").hide();
@@ -536,7 +536,9 @@ $("#tapestry-add-modal-div").load(config.addNodeModalUrl, function(responseTxt, 
         });
 
 
-        $("#user-permissions-btn").click(function() {
+        document
+          .getElementById('#user-permissions-btn')
+          .addEventListener('click', function() {
             var userId = $("#user-number-input").val();
             if (userId && onlyContainsDigits(userId) && $("#user-" + userId + "-editcell").val() != "") {
                 appendPermissionsRow(userId, "user");
